@@ -3,6 +3,7 @@ rltk::add_wasm_support!();
 mod components;
 mod map;
 mod player;
+mod rect;
 
 use rltk::{Console, GameState, Rltk, RGB};
 use specs::prelude::*;
@@ -14,26 +15,33 @@ use player::*;
 
 pub struct State {
     ecs: World,
+    pub paused: bool,
 }
 
 impl GameState for State {
     fn tick(&mut self, ctx: &mut Rltk) {
-        ctx.cls();
+        if self.paused {
+            if Some(rltk::VirtualKeyCode::P) == ctx.key {
+                self.paused = false;
+            } else if Some(rltk::VirtualKeyCode::Escape) == ctx.key {
+                ctx.quit();
+            }
+        } else {
+            ctx.cls();
 
-        {
+            self.run_systems();
+
+            player_input(self, ctx);
+
             let map = self.ecs.fetch::<Vec<TileType>>();
             draw_map(&map, ctx);
-        }
 
-        self.run_systems();
+            let positions = self.ecs.read_storage::<Position>();
+            let renderables = self.ecs.read_storage::<Renderable>();
 
-        player_input(self, ctx);
-
-        let positions = self.ecs.read_storage::<Position>();
-        let renderables = self.ecs.read_storage::<Renderable>();
-
-        for (pos, render) in (&positions, &renderables).join() {
-            ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
+            for (pos, render) in (&positions, &renderables).join() {
+                ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
+            }
         }
     }
 }
@@ -47,7 +55,7 @@ impl<'a> System<'a> for WalkingSystem {
         for (_lefty, pos) in (&lefty, &mut pos).join() {
             pos.x -= 1;
             if pos.x < 0 {
-                pos.x = 79;
+                pos.x = MAP_WIDTH - 1;
             }
         }
     }
@@ -74,18 +82,32 @@ impl State {
 }
 
 fn main() {
-    let context = Rltk::init_simple8x8(80, 50, "Hello Rouge World", "resources");
-    let mut gs = State { ecs: World::new() };
+    let context = Rltk::init_simple8x8(
+        MAP_WIDTH as u32,
+        MAP_HEIGHT as u32,
+        "Hello Rouge World",
+        "resources",
+    );
+    let mut gs = State {
+        ecs: World::new(),
+        paused: false,
+    };
     gs.ecs.register::<Position>();
     gs.ecs.register::<Renderable>();
     gs.ecs.register::<LeftMover>();
     gs.ecs.register::<Player>();
 
-    gs.ecs.insert(map::new());
+    let (map, rooms) = map::new_map_rooms_and_corridors();
+    gs.ecs.insert(map);
+
+    let (player_x, player_y) = rooms[0].center();
 
     gs.ecs
         .create_entity()
-        .with(Position { x: 40, y: 25 })
+        .with(Position {
+            x: player_x,
+            y: player_y,
+        })
         .with(Renderable {
             glyph: rltk::to_cp437('@'),
             fg: RGB::named(rltk::YELLOW),
