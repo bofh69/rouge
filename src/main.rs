@@ -1,32 +1,16 @@
 rltk::add_wasm_support!();
+
+mod components;
+mod map;
+mod player;
+
 use rltk::{Console, GameState, Rltk, RGB};
 use specs::prelude::*;
 #[macro_use]
 extern crate specs_derive;
+use components::*;
 use map::*;
 use player::*;
-
-mod map;
-mod player;
-
-#[derive(Component)]
-struct Position {
-    x: i32,
-    y: i32,
-}
-
-#[derive(Component)]
-struct Renderable {
-    glyph: u8,
-    fg: RGB,
-    bg: RGB,
-}
-
-#[derive(Component)]
-struct LeftMover {}
-
-#[derive(Component, Debug)]
-struct Player {}
 
 pub struct State {
     ecs: World,
