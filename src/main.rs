@@ -4,6 +4,7 @@ mod components;
 mod map;
 mod player;
 mod rect;
+mod visibility_system;
 
 use rltk::{Console, GameState, Rltk, RGB};
 use specs::prelude::*;
@@ -12,6 +13,7 @@ extern crate specs_derive;
 use components::*;
 use map::Map;
 use player::*;
+use visibility_system::VisibilitySystem;
 
 pub struct State {
     ecs: World,
@@ -33,8 +35,7 @@ impl GameState for State {
 
             player_input(self, ctx);
 
-            let map = self.ecs.fetch::<Map>();
-            map::draw_map(&map, ctx);
+            map::draw_map(&self.ecs, ctx);
 
             let positions = self.ecs.read_storage::<Position>();
             let renderables = self.ecs.read_storage::<Renderable>();
@@ -77,6 +78,8 @@ impl State {
     fn run_systems(&mut self) {
         let mut lw = WalkingSystem {};
         lw.run_now(&self.ecs);
+        let mut vis = VisibilitySystem {};
+        vis.run_now(&self.ecs);
         self.ecs.maintain();
     }
 }
@@ -99,6 +102,7 @@ fn main() {
     gs.ecs.register::<Renderable>();
     gs.ecs.register::<LeftMover>();
     gs.ecs.register::<Player>();
+    gs.ecs.register::<Viewshed>();
 
     gs.ecs.insert(map);
 
@@ -114,6 +118,11 @@ fn main() {
             bg: RGB::named(rltk::BLACK),
         })
         .with(Player {})
+        .with(Viewshed {
+            visible_tiles: Vec::new(),
+            range: 8,
+            dirty: true,
+        })
         .build();
 
     for i in 0..10 {
