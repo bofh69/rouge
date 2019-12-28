@@ -27,11 +27,11 @@ impl<'a> System<'a> for VisibilitySystem {
                     field_of_view(Point::new(pos.x, pos.y), viewshed.range, &*map);
                 viewshed
                     .visible_tiles
-                    .retain(|p| p.x > 0 && p.x < map.width - 1 && p.y > 0 && p.y < map.height - 1);
+                    .retain(|p| p.x >= 0 && p.x < map.width && p.y >= 0 && p.y < map.height);
 
                 // If this is the player, reveal what they can see
                 let p: Option<&Player> = player.get(ent);
-                if let Some(_) = p {
+                if p.is_some() {
                     for vt in map.visible_tiles.iter_mut() {
                         *vt = false;
                     }
