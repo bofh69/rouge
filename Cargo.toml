@@ -10,3 +10,5 @@ edition = "2018"
 
 [dependencies]
 rltk="0.5.*"
+specs = "0.15.*"
+specs-derive = "0.4.*"
