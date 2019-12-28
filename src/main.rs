@@ -10,7 +10,7 @@ use specs::prelude::*;
 #[macro_use]
 extern crate specs_derive;
 use components::*;
-use map::*;
+use map::Map;
 use player::*;
 
 pub struct State {
@@ -33,8 +33,8 @@ impl GameState for State {
 
             player_input(self, ctx);
 
-            let map = self.ecs.fetch::<Vec<TileType>>();
-            draw_map(&map, ctx);
+            let map = self.ecs.fetch::<Map>();
+            map::draw_map(&map, ctx);
 
             let positions = self.ecs.read_storage::<Position>();
             let renderables = self.ecs.read_storage::<Renderable>();
@@ -55,7 +55,7 @@ impl<'a> System<'a> for WalkingSystem {
         for (_lefty, pos) in (&lefty, &mut pos).join() {
             pos.x -= 1;
             if pos.x < 0 {
-                pos.x = MAP_WIDTH - 1;
+                pos.x = 80 - 1;
             }
         }
     }
@@ -82,9 +82,12 @@ impl State {
 }
 
 fn main() {
+    let map = Map::new_map_rooms_and_corridors();
+    let (player_x, player_y) = map.rooms[0].center();
+
     let context = Rltk::init_simple8x8(
-        MAP_WIDTH as u32,
-        MAP_HEIGHT as u32,
+        map.width as u32,
+        map.height as u32,
         "Hello Rouge World",
         "resources",
     );
@@ -97,10 +100,7 @@ fn main() {
     gs.ecs.register::<LeftMover>();
     gs.ecs.register::<Player>();
 
-    let (map, rooms) = map::new_map_rooms_and_corridors();
     gs.ecs.insert(map);
-
-    let (player_x, player_y) = rooms[0].center();
 
     gs.ecs
         .create_entity()
