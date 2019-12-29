@@ -205,8 +205,9 @@ fn main() {
     gs.ecs.insert(player_entity);
     gs.ecs.insert(RunState::PreRun);
     gs.ecs.insert(gamelog::GameLog {
-        entries: vec!["Welcome to Rouge Rogue".to_string()],
+        entries: vec!["Welcome to Rouge".to_string()],
     });
+    gs.ecs.insert(rng);
 
     rltk::main_loop(context, gs);
 }

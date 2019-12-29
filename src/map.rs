@@ -141,8 +141,6 @@ impl Map {
     pub fn new_map_rooms_and_corridors() -> Map {
         let tiles = vec![TileType::Wall; MAP_COUNT];
 
-        // let mut rng = rltk::RandomNumberGenerator::new();
-
         let rooms: Vec<Rect> = Vec::new();
         const MAX_ROOMS: i32 = 30;
         const MIN_SIZE: i32 = 6;
