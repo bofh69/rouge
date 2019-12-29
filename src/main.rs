@@ -2,6 +2,7 @@ rltk::add_wasm_support!();
 
 mod components;
 mod damage_system;
+mod gui;
 mod map;
 mod map_indexing_sysem;
 mod melee_combat_system;
@@ -75,6 +76,8 @@ impl GameState for State {
                 ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
             }
         }
+
+        gui::draw_ui(&self.ecs, ctx);
     }
 }
 
@@ -117,12 +120,7 @@ fn main() {
     let map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
 
-    let context = Rltk::init_simple8x8(
-        map.width as u32,
-        map.height as u32,
-        "Hello Rouge World",
-        "resources",
-    );
+    let context = Rltk::init_simple8x8(80, 50, "Hello Rouge World", "resources");
     let mut gs = State { ecs: World::new() };
 
     gs.ecs.register::<BlocksTile>();

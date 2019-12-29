@@ -4,7 +4,8 @@ use specs::prelude::*;
 use std::cmp::{max, min};
 
 const MAP_WIDTH: i32 = 80;
-const MAP_HEIGHT: i32 = 50;
+const MAP_HEIGHT: i32 = 43;
+const MAP_COUNT: usize = (MAP_WIDTH * MAP_HEIGHT) as usize;
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum TileType {
@@ -138,7 +139,7 @@ impl Map {
     }
 
     pub fn new_map_rooms_and_corridors() -> Map {
-        let tiles = vec![TileType::Wall; (MAP_WIDTH * MAP_HEIGHT) as usize];
+        let tiles = vec![TileType::Wall; MAP_COUNT];
 
         // let mut rng = rltk::RandomNumberGenerator::new();
 
@@ -152,10 +153,10 @@ impl Map {
             rooms,
             width: MAP_WIDTH,
             height: MAP_HEIGHT,
-            revealed_tiles: vec![false; (MAP_HEIGHT * MAP_WIDTH) as usize],
-            visible_tiles: vec![false; (MAP_HEIGHT * MAP_WIDTH) as usize],
-            blocked: vec![false; (MAP_HEIGHT * MAP_WIDTH) as usize],
-            tile_content: vec![vec![]; (MAP_HEIGHT * MAP_WIDTH) as usize],
+            revealed_tiles: vec![false; MAP_COUNT],
+            visible_tiles: vec![false; MAP_COUNT],
+            blocked: vec![false; MAP_COUNT],
+            tile_content: vec![vec![]; MAP_COUNT],
         };
 
         let mut rng = rltk::RandomNumberGenerator::new();
@@ -163,8 +164,8 @@ impl Map {
         for _i in 0..MAX_ROOMS {
             let w = rng.range(MIN_SIZE, MAX_SIZE);
             let h = rng.range(MIN_SIZE, MAX_SIZE);
-            let x = rng.roll_dice(1, MAP_WIDTH - w - 2) - 1;
-            let y = rng.roll_dice(1, MAP_HEIGHT - h - 2) - 1;
+            let x = rng.roll_dice(1, map.width - w - 1) - 1;
+            let y = rng.roll_dice(1, map.height - h - 1) - 1;
             let new_room = Rect::new(x, y, w, h);
             let mut ok = true;
             for other_room in map.rooms.iter() {
