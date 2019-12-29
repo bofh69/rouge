@@ -3,9 +3,9 @@ use rltk::{Algorithm2D, BaseMap, Console, Point, Rltk, RGB};
 use specs::prelude::*;
 use std::cmp::{max, min};
 
-const MAP_WIDTH: i32 = 80;
-const MAP_HEIGHT: i32 = 43;
-const MAP_COUNT: usize = (MAP_WIDTH * MAP_HEIGHT) as usize;
+pub const MAP_WIDTH: i32 = 80;
+pub const MAP_HEIGHT: i32 = 43;
+pub const MAP_COUNT: usize = (MAP_WIDTH * MAP_HEIGHT) as usize;
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum TileType {
