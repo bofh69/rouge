@@ -3,7 +3,7 @@ pub struct GameLog {
 }
 
 impl GameLog {
-    pub fn log(&mut self, s: &str) {
-        self.entries.push(s.to_string());
+    pub fn log<T: Into<String>>(&mut self, s: T) {
+        self.entries.push(s.into());
     }
 }

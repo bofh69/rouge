@@ -3,6 +3,7 @@ use crate::gamelog::GameLog;
 use crate::map::Map;
 use crate::RunState;
 use crate::State;
+use rltk::Point;
 use rltk::{Rltk, VirtualKeyCode};
 use specs::prelude::*;
 use std::cmp::{max, min};
@@ -60,6 +61,34 @@ pub fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) -> RunState 
     ret
 }
 
+pub fn get_item(ecs: &mut World) -> RunState {
+    let player_pos = ecs.fetch::<Point>();
+    let player_entity = ecs.fetch::<Entity>();
+    let mut gamelog = ecs.write_resource::<GameLog>();
+    let positions = ecs.read_storage::<Position>();
+    let items = ecs.read_storage::<Item>();
+    let entities = ecs.entities();
+    let mut wants_to_pickup = ecs.write_storage::<WantsToPickupItem>();
+
+    for (item_entity, pos, _item) in (&entities, &positions, &items).join() {
+        if pos.x == player_pos.x && pos.y == player_pos.y {
+            wants_to_pickup
+                .insert(
+                    *player_entity,
+                    WantsToPickupItem {
+                        collected_by: *player_entity,
+                        item: item_entity,
+                    },
+                )
+                .expect("Add target failed");
+            return RunState::PlayerTurn;
+        }
+    }
+    gamelog.log("There is nothing you can pickup here!");
+
+    RunState::AwaitingInput
+}
+
 pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
     // Player movement
     match ctx.key {
@@ -73,7 +102,10 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
             VirtualKeyCode::U => try_move_player(1, -1, &mut gs.ecs),
             VirtualKeyCode::B => try_move_player(-1, 1, &mut gs.ecs),
             VirtualKeyCode::N => try_move_player(1, 1, &mut gs.ecs),
+
             VirtualKeyCode::Space => RunState::PlayerTurn,
+
+            VirtualKeyCode::Comma => get_item(&mut gs.ecs),
 
             VirtualKeyCode::Escape => {
                 ctx.quit();

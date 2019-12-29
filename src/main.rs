@@ -4,6 +4,7 @@ mod components;
 mod damage_system;
 mod gamelog;
 mod gui;
+mod inventory_system;
 mod map;
 mod map_indexing_sysem;
 mod melee_combat_system;
@@ -107,6 +108,9 @@ impl State {
         let mut mcs = melee_combat_system::MeleeCombatSystem {};
         mcs.run_now(&self.ecs);
 
+        let mut pickup = inventory_system::ItemCollectionSystem {};
+        pickup.run_now(&self.ecs);
+
         let mut ds = damage_system::DamageSystem {};
         ds.run_now(&self.ecs);
 
@@ -129,14 +133,18 @@ fn main() {
 
     gs.ecs.register::<BlocksTile>();
     gs.ecs.register::<CombatStats>();
+    gs.ecs.register::<Item>();
+    gs.ecs.register::<InBackpack>();
     gs.ecs.register::<Monster>();
     gs.ecs.register::<Name>();
-    gs.ecs.register::<Position>();
     gs.ecs.register::<Player>();
+    gs.ecs.register::<Position>();
+    gs.ecs.register::<Potion>();
     gs.ecs.register::<Renderable>();
     gs.ecs.register::<SufferDamage>();
     gs.ecs.register::<Viewshed>();
     gs.ecs.register::<WantsToMelee>();
+    gs.ecs.register::<WantsToPickupItem>();
 
     gs.ecs.insert(rltk::RandomNumberGenerator::new());
     gs.ecs.insert(RunState::PreRun);
