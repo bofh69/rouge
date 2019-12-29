@@ -20,6 +20,7 @@ pub struct Map {
     pub revealed_tiles: Vec<bool>,
     pub visible_tiles: Vec<bool>,
     pub blocked: Vec<bool>,
+    pub tile_content: Vec<Vec<Entity>>,
 }
 
 impl BaseMap for Map {
@@ -130,6 +131,12 @@ impl Map {
         }
     }
 
+    pub fn clear_content_index(&mut self) {
+        for content in self.tile_content.iter_mut() {
+            content.clear();
+        }
+    }
+
     pub fn new_map_rooms_and_corridors() -> Map {
         let tiles = vec![TileType::Wall; (MAP_WIDTH * MAP_HEIGHT) as usize];
 
@@ -148,6 +155,7 @@ impl Map {
             revealed_tiles: vec![false; (MAP_HEIGHT * MAP_WIDTH) as usize],
             visible_tiles: vec![false; (MAP_HEIGHT * MAP_WIDTH) as usize],
             blocked: vec![false; (MAP_HEIGHT * MAP_WIDTH) as usize],
+            tile_content: vec![vec![]; (MAP_HEIGHT * MAP_WIDTH) as usize],
         };
 
         let mut rng = rltk::RandomNumberGenerator::new();

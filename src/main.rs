@@ -1,8 +1,10 @@
 rltk::add_wasm_support!();
 
 mod components;
+mod damage_system;
 mod map;
 mod map_indexing_sysem;
+mod melee_combat_system;
 mod monster_ai_systems;
 mod player;
 mod rect;
@@ -74,6 +76,14 @@ impl State {
         let mut monai = monster_ai_systems::MonsterAiSystem {};
         monai.run_now(&self.ecs);
 
+        let mut mcs = melee_combat_system::MeleeCombatSystem {};
+        mcs.run_now(&self.ecs);
+
+        let mut ds = damage_system::DamageSystem {};
+        ds.run_now(&self.ecs);
+
+        damage_system::delete_the_dead(&mut self.ecs);
+
         let mut mis = map_indexing_sysem::MapIndexingSystem {};
         mis.run_now(&self.ecs);
 
@@ -96,13 +106,16 @@ fn main() {
         runstate: RunState::Running,
     };
 
+    gs.ecs.register::<BlocksTile>();
+    gs.ecs.register::<CombatStats>();
     gs.ecs.register::<Monster>();
     gs.ecs.register::<Name>();
     gs.ecs.register::<Position>();
     gs.ecs.register::<Player>();
     gs.ecs.register::<Renderable>();
+    gs.ecs.register::<SufferDamage>();
     gs.ecs.register::<Viewshed>();
-    gs.ecs.register::<BlocksTile>();
+    gs.ecs.register::<WantsToMelee>();
 
     let mut rng = rltk::RandomNumberGenerator::new();
 
@@ -130,10 +143,17 @@ fn main() {
             .with(Name {
                 name: format!("{} {}", name, i),
             })
+            .with(CombatStats {
+                hp: 16,
+                max_hp: 16,
+                power: 4,
+                defense: 1,
+            })
             .build();
     }
 
-    gs.ecs
+    let player_entity = gs
+        .ecs
         .create_entity()
         .with(Position {
             x: player_x,
@@ -153,10 +173,17 @@ fn main() {
         .with(Name {
             name: "Player".to_string(),
         })
+        .with(CombatStats {
+            hp: 30,
+            max_hp: 30,
+            power: 5,
+            defense: 2,
+        })
         .build();
 
     gs.ecs.insert(map);
     gs.ecs.insert(rltk::Point::new(player_x, player_y));
+    gs.ecs.insert(player_entity);
 
     rltk::main_loop(context, gs);
 }

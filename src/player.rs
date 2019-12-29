@@ -1,21 +1,47 @@
 use super::map::Map;
-use super::{Player, Position, State};
-use crate::components::Viewshed;
+use crate::components::*;
 use crate::RunState;
-use rltk::{Rltk, VirtualKeyCode};
+use crate::State;
+use rltk::{console, Rltk, VirtualKeyCode};
 use specs::prelude::*;
 use std::cmp::{max, min};
 
 pub fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) -> RunState {
+    let map = ecs.fetch::<Map>();
+
+    let combat_stats = ecs.read_storage::<CombatStats>();
+
     let mut positions = ecs.write_storage::<Position>();
     let mut players = ecs.write_storage::<Player>();
-    let map = ecs.fetch::<Map>();
     let mut viewsheds = ecs.write_storage::<Viewshed>();
+    let mut wants_to_melee = ecs.write_storage::<WantsToMelee>();
+    let entities = ecs.entities();
+
     let mut ret = RunState::Paused;
 
-    for (_player, pos, viewshed) in (&mut players, &mut positions, &mut viewsheds).join() {
+    for (entity, _player, pos, viewshed) in
+        (&entities, &mut players, &mut positions, &mut viewsheds).join()
+    {
         let (x, y) = (pos.x + delta_x, pos.y + delta_y);
         let idx = map.xy_idx(x, y);
+
+        for potential_target in map.tile_content[idx].iter() {
+            let target = combat_stats.get(*potential_target);
+            if target.is_some() {
+                // Attack it
+                console::log(&format!("From Hell's Heart, I stab thee!"));
+                wants_to_melee
+                    .insert(
+                        entity,
+                        WantsToMelee {
+                            target: *potential_target,
+                        },
+                    )
+                    .expect("Add target failed");
+                return RunState::Running; // So we don't move after attacking
+            }
+        }
+
         if !map.blocked[idx] {
             pos.x = min(map.width - 1, max(0, x));
             pos.y = min(map.height - 1, max(0, y));
