@@ -10,15 +10,17 @@ mod melee_combat_system;
 mod monster_ai_systems;
 mod player;
 mod rect;
+mod spawner;
 mod visibility_system;
 
-use rltk::{Console, GameState, Rltk, RGB};
-use specs::prelude::*;
 #[macro_use]
 extern crate specs_derive;
+
 use components::*;
 use map::Map;
 use player::*;
+use rltk::{Console, GameState, Rltk};
+use specs::prelude::*;
 use visibility_system::VisibilitySystem;
 
 #[derive(PartialEq, Copy, Clone)]
@@ -136,78 +138,22 @@ fn main() {
     gs.ecs.register::<Viewshed>();
     gs.ecs.register::<WantsToMelee>();
 
-    let mut rng = rltk::RandomNumberGenerator::new();
-
-    for (i, room) in map.rooms.iter().skip(1).enumerate() {
-        let (x, y) = room.center();
-        let (glyph, name) = match rng.roll_dice(1, 2) {
-            1 => ('g', "goblin".to_string()),
-            _ => ('o', "orc".to_string()),
-        };
-        gs.ecs
-            .create_entity()
-            .with(Position { x, y })
-            .with(Renderable {
-                glyph: rltk::to_cp437(glyph),
-                fg: RGB::named(rltk::RED),
-                bg: RGB::named(rltk::BLACK),
-            })
-            .with(Viewshed {
-                visible_tiles: Vec::new(),
-                range: 8,
-                dirty: true,
-            })
-            .with(BlocksTile {})
-            .with(Monster {})
-            .with(Name {
-                name: format!("{} {}", name, i),
-            })
-            .with(CombatStats {
-                hp: 16,
-                max_hp: 16,
-                power: 4,
-                defense: 1,
-            })
-            .build();
-    }
-
-    let player_entity = gs
-        .ecs
-        .create_entity()
-        .with(Position {
-            x: player_x,
-            y: player_y,
-        })
-        .with(Renderable {
-            glyph: rltk::to_cp437('@'),
-            fg: RGB::named(rltk::YELLOW),
-            bg: RGB::named(rltk::BLACK),
-        })
-        .with(Player {})
-        .with(Viewshed {
-            visible_tiles: Vec::new(),
-            range: 8,
-            dirty: true,
-        })
-        .with(Name {
-            name: "Player".to_string(),
-        })
-        .with(CombatStats {
-            hp: 30,
-            max_hp: 30,
-            power: 5,
-            defense: 2,
-        })
-        .build();
-
-    gs.ecs.insert(map);
-    gs.ecs.insert(rltk::Point::new(player_x, player_y));
-    gs.ecs.insert(player_entity);
+    gs.ecs.insert(rltk::RandomNumberGenerator::new());
     gs.ecs.insert(RunState::PreRun);
     gs.ecs.insert(gamelog::GameLog {
         entries: vec!["Welcome to Rouge".to_string()],
     });
-    gs.ecs.insert(rng);
+
+    for room in map.rooms.iter().skip(1) {
+        let (x, y) = room.center();
+        spawner::random_monster(&mut gs.ecs, x, y);
+    }
+
+    let player_entity = spawner::player(&mut gs.ecs, player_x, player_y);
+
+    gs.ecs.insert(map);
+    gs.ecs.insert(rltk::Point::new(player_x, player_y));
+    gs.ecs.insert(player_entity);
 
     rltk::main_loop(context, gs);
 }
