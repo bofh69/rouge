@@ -17,7 +17,7 @@ pub fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) -> RunState 
     let mut wants_to_melee = ecs.write_storage::<WantsToMelee>();
     let entities = ecs.entities();
 
-    let mut ret = RunState::Paused;
+    let mut ret = RunState::AwaitingInput;
 
     for (entity, _player, pos, viewshed) in
         (&entities, &mut players, &mut positions, &mut viewsheds).join()
@@ -38,7 +38,7 @@ pub fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) -> RunState 
                         },
                     )
                     .expect("Add target failed");
-                return RunState::Running; // So we don't move after attacking
+                return RunState::PlayerTurn;
             }
         }
 
@@ -46,7 +46,7 @@ pub fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) -> RunState 
             pos.x = min(map.width - 1, max(0, x));
             pos.y = min(map.height - 1, max(0, y));
             viewshed.dirty = true;
-            ret = RunState::Running;
+            ret = RunState::PlayerTurn;
 
             // Update player position:
             let mut ppos = ecs.write_resource::<rltk::Point>();
@@ -60,7 +60,7 @@ pub fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) -> RunState 
 pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
     // Player movement
     match ctx.key {
-        None => RunState::Paused, // Nothing happened
+        None => RunState::AwaitingInput, // Nothing happened
         Some(key) => match key {
             VirtualKeyCode::H | VirtualKeyCode::Left => try_move_player(-1, 0, &mut gs.ecs),
             VirtualKeyCode::L | VirtualKeyCode::Right => try_move_player(1, 0, &mut gs.ecs),
@@ -70,13 +70,13 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
             VirtualKeyCode::U => try_move_player(1, -1, &mut gs.ecs),
             VirtualKeyCode::B => try_move_player(-1, 1, &mut gs.ecs),
             VirtualKeyCode::N => try_move_player(1, 1, &mut gs.ecs),
-            VirtualKeyCode::Space => RunState::Running,
+            VirtualKeyCode::Space => RunState::PlayerTurn,
 
             VirtualKeyCode::Escape => {
                 ctx.quit();
-                RunState::Paused
+                RunState::AwaitingInput
             }
-            _ => RunState::Paused,
+            _ => RunState::AwaitingInput,
         },
     }
 }

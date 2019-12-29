@@ -21,24 +21,46 @@ use visibility_system::VisibilitySystem;
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum RunState {
-    Paused,
-    Running,
+    AwaitingInput,
+    PreRun,
+    PlayerTurn,
+    MonsterTurn,
 }
 
 pub struct State {
     ecs: World,
-    pub runstate: RunState,
 }
 
 impl GameState for State {
     fn tick(&mut self, ctx: &mut Rltk) {
         ctx.cls();
 
-        if self.runstate == RunState::Running {
-            self.run_systems();
-            self.runstate = RunState::Paused;
-        } else {
-            self.runstate = player_input(self, ctx);
+        let mut newrunstate = {
+            let runstate = self.ecs.fetch::<RunState>();
+            *runstate
+        };
+
+        match newrunstate {
+            RunState::PreRun => {
+                self.run_systems();
+                newrunstate = RunState::AwaitingInput;
+            }
+            RunState::AwaitingInput => {
+                newrunstate = player_input(self, ctx);
+            }
+            RunState::PlayerTurn => {
+                self.run_systems();
+                newrunstate = RunState::MonsterTurn;
+            }
+            RunState::MonsterTurn => {
+                self.run_systems();
+                newrunstate = RunState::AwaitingInput;
+            }
+        }
+
+        {
+            let mut runwriter = self.ecs.write_resource::<RunState>();
+            *runwriter = newrunstate;
         }
 
         map::draw_map(&self.ecs, ctx);
@@ -101,10 +123,7 @@ fn main() {
         "Hello Rouge World",
         "resources",
     );
-    let mut gs = State {
-        ecs: World::new(),
-        runstate: RunState::Running,
-    };
+    let mut gs = State { ecs: World::new() };
 
     gs.ecs.register::<BlocksTile>();
     gs.ecs.register::<CombatStats>();
@@ -184,6 +203,7 @@ fn main() {
     gs.ecs.insert(map);
     gs.ecs.insert(rltk::Point::new(player_x, player_y));
     gs.ecs.insert(player_entity);
+    gs.ecs.insert(RunState::PreRun);
 
     rltk::main_loop(context, gs);
 }

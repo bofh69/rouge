@@ -1,5 +1,6 @@
 use crate::components::*;
 use crate::map::Map;
+use crate::RunState;
 use rltk::{Algorithm2D, Point};
 use specs::prelude::*;
 
@@ -9,8 +10,9 @@ impl<'a> System<'a> for MonsterAiSystem {
     #[allow(clippy::type_complexity)]
     type SystemData = (
         WriteExpect<'a, Map>,
-        ReadExpect<'a, Point>,
         ReadExpect<'a, Entity>,
+        ReadExpect<'a, RunState>,
+        ReadExpect<'a, Point>,
         ReadStorage<'a, Monster>,
         WriteStorage<'a, Position>,
         WriteStorage<'a, Viewshed>,
@@ -21,14 +23,19 @@ impl<'a> System<'a> for MonsterAiSystem {
     fn run(&mut self, data: Self::SystemData) {
         let (
             mut map,
-            player_pos,
             player_entity,
+            run_state,
+            player_pos,
             monster,
             mut position,
             mut viewshed,
             mut wants_to_melee,
             entities,
         ) = data;
+
+        if *run_state != RunState::MonsterTurn {
+            return;
+        }
 
         for (entity, mut viewshed, _monster, mut pos) in
             (&entities, &mut viewshed, &monster, &mut position).join()
