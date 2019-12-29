@@ -1,4 +1,5 @@
 use crate::components::*;
+use crate::gamelog::GameLog;
 use rltk::{Console, Rltk, RGB};
 use specs::prelude::*;
 
@@ -41,5 +42,12 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
             bar_color,
             RGB::named(rltk::BLACK),
         );
+    }
+    let gamelog = ecs.fetch::<GameLog>();
+    for (i, entry) in gamelog.entries.iter().rev().enumerate() {
+        if i > 4 {
+            break;
+        }
+        ctx.print(1, 48 - i as i32, entry);
     }
 }

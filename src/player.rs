@@ -1,13 +1,16 @@
-use super::map::Map;
 use crate::components::*;
+use crate::gamelog::GameLog;
+use crate::map::Map;
 use crate::RunState;
 use crate::State;
-use rltk::{console, Rltk, VirtualKeyCode};
+use rltk::{Rltk, VirtualKeyCode};
 use specs::prelude::*;
 use std::cmp::{max, min};
 
 pub fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) -> RunState {
     let map = ecs.fetch::<Map>();
+
+    let mut gamelog = ecs.write_resource::<GameLog>();
 
     let combat_stats = ecs.read_storage::<CombatStats>();
 
@@ -29,7 +32,7 @@ pub fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) -> RunState 
             let target = combat_stats.get(*potential_target);
             if target.is_some() {
                 // Attack it
-                console::log(&format!("From Hell's Heart, I stab thee!"));
+                gamelog.log("From Hell's Heart, I stab thee!");
                 wants_to_melee
                     .insert(
                         entity,

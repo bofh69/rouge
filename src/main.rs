@@ -2,6 +2,7 @@ rltk::add_wasm_support!();
 
 mod components;
 mod damage_system;
+mod gamelog;
 mod gui;
 mod map;
 mod map_indexing_sysem;
@@ -202,6 +203,9 @@ fn main() {
     gs.ecs.insert(rltk::Point::new(player_x, player_y));
     gs.ecs.insert(player_entity);
     gs.ecs.insert(RunState::PreRun);
+    gs.ecs.insert(gamelog::GameLog {
+        entries: vec!["Welcome to Rouge Rogue".to_string()],
+    });
 
     rltk::main_loop(context, gs);
 }

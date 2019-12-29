@@ -1,6 +1,6 @@
 extern crate specs;
 use crate::components::*;
-use rltk::console;
+use crate::gamelog::GameLog;
 use specs::prelude::*;
 
 pub struct DamageSystem {}
@@ -29,12 +29,13 @@ pub fn delete_the_dead(ecs: &mut World) {
         let combat_stats = ecs.read_storage::<CombatStats>();
         let players = ecs.read_storage::<Player>();
         let entities = ecs.entities();
+        let mut gamelog = ecs.write_resource::<GameLog>();
         for (entity, stats) in (&entities, &combat_stats).join() {
             if stats.hp < 1 {
                 let player = players.get(entity);
                 match player {
                     None => dead.push(entity),
-                    Some(_) => console::log("You are dead"),
+                    Some(_) => gamelog.log("You are dead"),
                 }
             }
         }
