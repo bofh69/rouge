@@ -1,16 +1,17 @@
 use super::map::{Map, TileType};
 use super::{Player, Position, State};
 use crate::components::Viewshed;
+use crate::RunState;
 use rltk::{Rltk, VirtualKeyCode};
+use specs::prelude::*;
 use std::cmp::{max, min};
 
-use specs::prelude::*;
-
-pub fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
+pub fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) -> RunState {
     let mut positions = ecs.write_storage::<Position>();
     let mut players = ecs.write_storage::<Player>();
     let map = ecs.fetch::<Map>();
     let mut viewsheds = ecs.write_storage::<Viewshed>();
+    let mut ret = RunState::Paused;
 
     for (_player, pos, viewshed) in (&mut players, &mut positions, &mut viewsheds).join() {
         let (x, y) = (pos.x + delta_x, pos.y + delta_y);
@@ -18,14 +19,21 @@ pub fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
             pos.x = min(map.width - 1, max(0, x));
             pos.y = min(map.height - 1, max(0, y));
             viewshed.dirty = true;
+            ret = RunState::Running;
+
+            // Update player position:
+            let mut ppos = ecs.write_resource::<rltk::Point>();
+            ppos.x = x;
+            ppos.y = y;
         }
     }
+    ret
 }
 
-pub fn player_input(gs: &mut State, ctx: &mut Rltk) {
+pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
     // Player movement
     match ctx.key {
-        None => {} // Nothing happened
+        None => RunState::Paused, // Nothing happened
         Some(key) => match key {
             VirtualKeyCode::H | VirtualKeyCode::Left => try_move_player(-1, 0, &mut gs.ecs),
             VirtualKeyCode::L | VirtualKeyCode::Right => try_move_player(1, 0, &mut gs.ecs),
@@ -36,9 +44,11 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) {
             VirtualKeyCode::B => try_move_player(-1, 1, &mut gs.ecs),
             VirtualKeyCode::N => try_move_player(1, 1, &mut gs.ecs),
 
-            VirtualKeyCode::P => gs.paused = !gs.paused,
-            VirtualKeyCode::Escape => ctx.quit(),
-            _ => {}
+            VirtualKeyCode::Escape => {
+                ctx.quit();
+                RunState::Paused
+            }
+            _ => RunState::Paused,
         },
     }
 }
