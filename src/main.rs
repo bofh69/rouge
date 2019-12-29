@@ -121,7 +121,8 @@ fn main() {
     let map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
 
-    let context = Rltk::init_simple8x8(80, 50, "Hello Rouge World", "resources");
+    let mut context = Rltk::init_simple8x8(80, 50, "Hello Rouge World", "resources");
+    context.with_post_scanlines(true);
     let mut gs = State { ecs: World::new() };
 
     gs.ecs.register::<BlocksTile>();
