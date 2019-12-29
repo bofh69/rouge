@@ -1,6 +1,6 @@
 use crate::components::*;
 use crate::map::{Map, TileType};
-use rltk::RandomNumberGenerator;
+use rltk::{console, RandomNumberGenerator};
 use specs::prelude::*;
 use std::cmp::{max, min};
 
@@ -18,25 +18,27 @@ fn try_move_monster(delta_x: i32, delta_y: i32, vs: &mut Viewshed, map: &Map, po
 impl<'a> System<'a> for MonsterAiSystem {
     #[allow(clippy::type_complexity)]
     type SystemData = (
-        WriteStorage<'a, Position>,
-        ReadStorage<'a, Monster>,
-        WriteStorage<'a, Viewshed>,
         ReadExpect<'a, Map>,
         ReadExpect<'a, rltk::Point>,
+        ReadStorage<'a, Monster>,
+        ReadStorage<'a, Name>,
+        WriteStorage<'a, Position>,
+        WriteStorage<'a, Viewshed>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (mut positions, monsters, mut viewsheds, map, ppos) = data;
+        let (map, ppos, monsters, names, mut positions, mut viewsheds) = data;
 
         let mut rnd = RandomNumberGenerator::new();
 
-        for (pos, _mon, vs) in (&mut positions, &monsters, &mut viewsheds).join() {
+        for (_mon, name, vs, pos) in (&monsters, &names, &mut viewsheds, &mut positions).join() {
             if vs.visible_tiles.contains(&*ppos) {
                 match rnd.roll_dice(1, 8) {
                     1 => try_move_monster(-1, 0, vs, &map, pos),
                     2 => try_move_monster(1, 0, vs, &map, pos),
                     3 => try_move_monster(0, -1, vs, &map, pos),
                     4 => try_move_monster(0, 1, vs, &map, pos),
+                    5 => console::log(format!("The {} shouts after you!", name.name)),
                     _ => (),
                 }
             }

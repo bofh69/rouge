@@ -91,25 +91,27 @@ fn main() {
         ecs: World::new(),
         runstate: RunState::Running,
     };
-    gs.ecs.register::<Position>();
-    gs.ecs.register::<Renderable>();
-    gs.ecs.register::<Player>();
-    gs.ecs.register::<Viewshed>();
+
     gs.ecs.register::<Monster>();
+    gs.ecs.register::<Name>();
+    gs.ecs.register::<Position>();
+    gs.ecs.register::<Player>();
+    gs.ecs.register::<Renderable>();
+    gs.ecs.register::<Viewshed>();
 
     let mut rng = rltk::RandomNumberGenerator::new();
 
-    for room in map.rooms.iter().skip(1) {
+    for (i, room) in map.rooms.iter().skip(1).enumerate() {
         let (x, y) = room.center();
-        let glyph = rltk::to_cp437(match rng.roll_dice(1, 2) {
-            1 => 'g',
-            _ => 'o',
-        });
+        let (glyph, name) = match rng.roll_dice(1, 2) {
+            1 => ('g', "goblin".to_string()),
+            _ => ('o', "orc".to_string()),
+        };
         gs.ecs
             .create_entity()
             .with(Position { x, y })
             .with(Renderable {
-                glyph,
+                glyph: rltk::to_cp437(glyph),
                 fg: RGB::named(rltk::RED),
                 bg: RGB::named(rltk::BLACK),
             })
@@ -119,6 +121,7 @@ fn main() {
                 dirty: true,
             })
             .with(Monster {})
+            .with(Name { name: format!("{} {}", name, i)})
             .build();
     }
 
@@ -139,6 +142,7 @@ fn main() {
             range: 8,
             dirty: true,
         })
+        .with(Name { name : "Player".to_string()})
         .build();
 
     gs.ecs.insert(map);
