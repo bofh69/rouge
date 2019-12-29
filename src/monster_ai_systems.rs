@@ -1,45 +1,50 @@
 use crate::components::*;
-use crate::map::{Map, TileType};
-use rltk::{console, RandomNumberGenerator};
+use crate::map::Map;
+use rltk::{console, Algorithm2D, Point};
 use specs::prelude::*;
-use std::cmp::{max, min};
 
 pub struct MonsterAiSystem {}
-
-fn try_move_monster(delta_x: i32, delta_y: i32, vs: &mut Viewshed, map: &Map, pos: &mut Position) {
-    let (x, y) = (pos.x + delta_x, pos.y + delta_y);
-    if map.tiles[map.xy_idx(x, y)] != TileType::Wall {
-        pos.x = min(map.width - 1, max(0, x));
-        pos.y = min(map.height - 1, max(0, y));
-        vs.dirty = true;
-    }
-}
 
 impl<'a> System<'a> for MonsterAiSystem {
     #[allow(clippy::type_complexity)]
     type SystemData = (
-        ReadExpect<'a, Map>,
-        ReadExpect<'a, rltk::Point>,
+        WriteExpect<'a, Map>,
+        ReadExpect<'a, Point>,
+        WriteStorage<'a, Viewshed>,
         ReadStorage<'a, Monster>,
         ReadStorage<'a, Name>,
         WriteStorage<'a, Position>,
-        WriteStorage<'a, Viewshed>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (map, ppos, monsters, names, mut positions, mut viewsheds) = data;
+        let (mut map, player_pos, mut viewshed, monster, name, mut position) = data;
 
-        let mut rnd = RandomNumberGenerator::new();
-
-        for (_mon, name, vs, pos) in (&monsters, &names, &mut viewsheds, &mut positions).join() {
-            if vs.visible_tiles.contains(&*ppos) {
-                match rnd.roll_dice(1, 8) {
-                    1 => try_move_monster(-1, 0, vs, &map, pos),
-                    2 => try_move_monster(1, 0, vs, &map, pos),
-                    3 => try_move_monster(0, -1, vs, &map, pos),
-                    4 => try_move_monster(0, 1, vs, &map, pos),
-                    5 => console::log(format!("The {} shouts after you!", name.name)),
-                    _ => (),
+        for (mut viewshed, _monster, name, mut pos) in
+            (&mut viewshed, &monster, &name, &mut position).join()
+        {
+            let distance =
+                rltk::DistanceAlg::Pythagoras.distance2d(Point::new(pos.x, pos.y), *player_pos);
+            if distance < 1.5 {
+                // Attack goes here
+                console::log(&format!("{} shouts insults", name.name));
+            } else if viewshed.visible_tiles.contains(&*player_pos) {
+                console::log(&format!("{} shouts insults", name.name));
+                let path = rltk::a_star_search(
+                    map.xy_idx(pos.x, pos.y) as i32,
+                    map.xy_idx(player_pos.x, player_pos.y) as i32,
+                    &mut *map,
+                );
+                if path.success && path.steps.len() > 1 {
+                    let old_idx = map.xy_idx(pos.x, pos.y);
+                    let new_pos = map.index_to_point2d(path.steps[1]);
+                    let new_idx = map.xy_idx(new_pos.x, new_pos.y);
+                    if !map.blocked[new_idx] {
+                        pos.x = new_pos.x;
+                        pos.y = new_pos.y;
+                        map.blocked[old_idx] = false;
+                        map.blocked[new_idx] = true;
+                        viewshed.dirty = true;
+                    }
                 }
             }
         }

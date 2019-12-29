@@ -2,6 +2,7 @@ rltk::add_wasm_support!();
 
 mod components;
 mod map;
+mod map_indexing_sysem;
 mod monster_ai_systems;
 mod player;
 mod rect;
@@ -73,6 +74,9 @@ impl State {
         let mut monai = monster_ai_systems::MonsterAiSystem {};
         monai.run_now(&self.ecs);
 
+        let mut mis = map_indexing_sysem::MapIndexingSystem {};
+        mis.run_now(&self.ecs);
+
         self.ecs.maintain();
     }
 }
@@ -98,6 +102,7 @@ fn main() {
     gs.ecs.register::<Player>();
     gs.ecs.register::<Renderable>();
     gs.ecs.register::<Viewshed>();
+    gs.ecs.register::<BlocksTile>();
 
     let mut rng = rltk::RandomNumberGenerator::new();
 
@@ -120,8 +125,11 @@ fn main() {
                 range: 8,
                 dirty: true,
             })
+            .with(BlocksTile {})
             .with(Monster {})
-            .with(Name { name: format!("{} {}", name, i)})
+            .with(Name {
+                name: format!("{} {}", name, i),
+            })
             .build();
     }
 
@@ -142,7 +150,9 @@ fn main() {
             range: 8,
             dirty: true,
         })
-        .with(Name { name : "Player".to_string()})
+        .with(Name {
+            name: "Player".to_string(),
+        })
         .build();
 
     gs.ecs.insert(map);

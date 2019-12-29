@@ -19,6 +19,7 @@ pub struct Map {
     pub height: i32,
     pub revealed_tiles: Vec<bool>,
     pub visible_tiles: Vec<bool>,
+    pub blocked: Vec<bool>,
 }
 
 impl BaseMap for Map {
@@ -26,8 +27,37 @@ impl BaseMap for Map {
         self.tiles[idx as usize] == TileType::Wall
     }
 
-    fn get_available_exits(&self, _idx: i32) -> Vec<(i32, f32)> {
-        Vec::new()
+    fn get_available_exits(&self, idx: i32) -> Vec<(i32, f32)> {
+        let mut exits: Vec<(i32, f32)> = Vec::new();
+        let x = idx % self.width;
+        let y = idx / self.width;
+
+        if self.is_exit_valid(x - 1, y) {
+            exits.push((idx - 1, 1.0))
+        }
+        if self.is_exit_valid(x + 1, y) {
+            exits.push((idx + 1, 1.0))
+        }
+        if self.is_exit_valid(x, y - 1) {
+            exits.push((idx - self.width, 1.0))
+        }
+        if self.is_exit_valid(x, y + 1) {
+            exits.push((idx + self.width, 1.0))
+        }
+        if self.is_exit_valid(x - 1, y - 1) {
+            exits.push(((idx - self.width) - 1, 1.45));
+        }
+        if self.is_exit_valid(x + 1, y - 1) {
+            exits.push(((idx - self.width) + 1, 1.45));
+        }
+        if self.is_exit_valid(x - 1, y + 1) {
+            exits.push(((idx + self.width) - 1, 1.45));
+        }
+        if self.is_exit_valid(x + 1, y + 1) {
+            exits.push(((idx + self.width) + 1, 1.45));
+        }
+
+        exits
     }
 
     fn get_pathing_distance(&self, idx1: i32, idx2: i32) -> f32 {
@@ -59,6 +89,14 @@ impl Map {
         (y * self.width + x) as usize
     }
 
+    fn is_exit_valid(&self, x: i32, y: i32) -> bool {
+        if x < 1 || x > self.width - 1 || y < 1 || y > self.height - 1 {
+            return false;
+        }
+        let idx = self.xy_idx(x, y);
+        !self.blocked[idx]
+    }
+
     fn apply_room_to_map(&mut self, room: &Rect) {
         for y in room.y1 + 1..=room.y2 {
             for x in room.x1 + 1..=room.x2 {
@@ -86,6 +124,12 @@ impl Map {
         }
     }
 
+    pub fn populate_blocked(&mut self) {
+        for (i, tile) in self.tiles.iter_mut().enumerate() {
+            self.blocked[i] = *tile == TileType::Wall;
+        }
+    }
+
     pub fn new_map_rooms_and_corridors() -> Map {
         let tiles = vec![TileType::Wall; (MAP_WIDTH * MAP_HEIGHT) as usize];
 
@@ -103,6 +147,7 @@ impl Map {
             height: MAP_HEIGHT,
             revealed_tiles: vec![false; (MAP_HEIGHT * MAP_WIDTH) as usize],
             visible_tiles: vec![false; (MAP_HEIGHT * MAP_WIDTH) as usize],
+            blocked: vec![false; (MAP_HEIGHT * MAP_WIDTH) as usize],
         };
 
         let mut rng = rltk::RandomNumberGenerator::new();
@@ -135,6 +180,8 @@ impl Map {
                 map.rooms.push(new_room);
             }
         }
+
+        map.populate_blocked();
 
         map
     }

@@ -1,4 +1,4 @@
-use super::map::{Map, TileType};
+use super::map::Map;
 use super::{Player, Position, State};
 use crate::components::Viewshed;
 use crate::RunState;
@@ -15,7 +15,8 @@ pub fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) -> RunState 
 
     for (_player, pos, viewshed) in (&mut players, &mut positions, &mut viewsheds).join() {
         let (x, y) = (pos.x + delta_x, pos.y + delta_y);
-        if map.tiles[map.xy_idx(x, y)] != TileType::Wall {
+        let idx = map.xy_idx(x, y);
+        if !map.blocked[idx] {
             pos.x = min(map.width - 1, max(0, x));
             pos.y = min(map.height - 1, max(0, y));
             viewshed.dirty = true;
@@ -43,6 +44,7 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
             VirtualKeyCode::U => try_move_player(1, -1, &mut gs.ecs),
             VirtualKeyCode::B => try_move_player(-1, 1, &mut gs.ecs),
             VirtualKeyCode::N => try_move_player(1, 1, &mut gs.ecs),
+            VirtualKeyCode::Space => RunState::Running,
 
             VirtualKeyCode::Escape => {
                 ctx.quit();
