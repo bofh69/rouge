@@ -1,5 +1,6 @@
 extern crate specs;
 use super::{gamelog::GameLog, InBackpack, Name, Position, WantsToPickupItem};
+use crate::PlayerEntity;
 use specs::prelude::*;
 
 pub struct ItemCollectionSystem {}
@@ -7,7 +8,7 @@ pub struct ItemCollectionSystem {}
 impl<'a> System<'a> for ItemCollectionSystem {
     #[allow(clippy::type_complexity)]
     type SystemData = (
-        ReadExpect<'a, Entity>,
+        ReadExpect<'a, PlayerEntity>,
         WriteExpect<'a, GameLog>,
         WriteStorage<'a, WantsToPickupItem>,
         WriteStorage<'a, Position>,
@@ -30,7 +31,7 @@ impl<'a> System<'a> for ItemCollectionSystem {
                 )
                 .expect("Unable to insert backpack entry");
 
-            if pickup.collected_by == *player_entity {
+            if pickup.collected_by == player_entity.0 {
                 gamelog.log(format!(
                     "You pick up the {}.",
                     names.get(pickup.item).unwrap().name

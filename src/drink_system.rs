@@ -1,5 +1,6 @@
 use crate::components::*;
 use crate::gamelog::GameLog;
+use crate::PlayerEntity;
 use specs::prelude::*;
 
 pub struct DrinkPotionSystem {}
@@ -8,7 +9,7 @@ impl<'a> System<'a> for DrinkPotionSystem {
     #![allow(clippy::type_complexity)]
     type SystemData = (
         Entities<'a>,
-        ReadExpect<'a, Entity>,
+        ReadExpect<'a, PlayerEntity>,
         WriteExpect<'a, GameLog>,
         ReadStorage<'a, Name>,
         ReadStorage<'a, Potion>,
@@ -32,7 +33,7 @@ impl<'a> System<'a> for DrinkPotionSystem {
         {
             gamelog.log(format!(
                 "{} drink the {}",
-                if drinker_entity == *player_entity {
+                if drinker_entity == player_entity.0 {
                     "You"
                 } else {
                     &name.name

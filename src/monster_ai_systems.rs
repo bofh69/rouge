@@ -1,5 +1,7 @@
 use crate::components::*;
 use crate::map::Map;
+use crate::PlayerEntity;
+use crate::PlayerPosition;
 use crate::RunState;
 use rltk::{Algorithm2D, Point};
 use specs::prelude::*;
@@ -10,9 +12,9 @@ impl<'a> System<'a> for MonsterAiSystem {
     #[allow(clippy::type_complexity)]
     type SystemData = (
         WriteExpect<'a, Map>,
-        ReadExpect<'a, Entity>,
+        ReadExpect<'a, PlayerEntity>,
         ReadExpect<'a, RunState>,
-        ReadExpect<'a, Point>,
+        ReadExpect<'a, PlayerPosition>,
         ReadStorage<'a, Monster>,
         WriteStorage<'a, Position>,
         WriteStorage<'a, Viewshed>,
@@ -40,22 +42,22 @@ impl<'a> System<'a> for MonsterAiSystem {
         for (entity, mut viewshed, _monster, mut pos) in
             (&entities, &mut viewshed, &monster, &mut position).join()
         {
-            let distance =
-                rltk::DistanceAlg::Pythagoras.distance2d(Point::new(pos.x, pos.y), *player_pos);
+            let distance = rltk::DistanceAlg::Pythagoras
+                .distance2d(Point::new(pos.x, pos.y), (*player_pos).into());
             if distance < 1.5 {
                 // Attack goes here
                 wants_to_melee
                     .insert(
                         entity,
                         WantsToMelee {
-                            target: *player_entity,
+                            target: player_entity.0,
                         },
                     )
                     .expect("Unable to insert attack");
-            } else if viewshed.visible_tiles.contains(&*player_pos) {
+            } else if viewshed.visible_tiles.contains(&(*player_pos).into()) {
                 let path = rltk::a_star_search(
                     map.xy_idx(pos.x, pos.y) as i32,
-                    map.xy_idx(player_pos.x, player_pos.y) as i32,
+                    map.xy_idx(player_pos.0, player_pos.1) as i32,
                     &mut *map,
                 );
                 if path.success && path.steps.len() > 1 {

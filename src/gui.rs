@@ -1,6 +1,7 @@
 use crate::components::*;
 use crate::gamelog::GameLog;
 use crate::map::Map;
+use crate::PlayerEntity;
 use crate::State;
 use rltk::{Console, Point, Rltk, VirtualKeyCode, RGB};
 use specs::prelude::*;
@@ -13,14 +14,14 @@ pub enum ItemMenuResult {
 }
 
 pub fn show_inventory(gs: &mut State, ctx: &mut Rltk) -> ItemMenuResult {
-    let player_entity = gs.ecs.fetch::<Entity>();
+    let player_entity = gs.ecs.fetch::<PlayerEntity>();
     let names = gs.ecs.read_storage::<Name>();
     let backpack = gs.ecs.read_storage::<InBackpack>();
     let entities = gs.ecs.entities();
 
     let inventory = (&backpack, &names)
         .join()
-        .filter(|item| item.0.owner == *player_entity);
+        .filter(|item| item.0.owner == player_entity.0);
     let count = inventory.count() as i32;
 
     if count == 0 {
@@ -57,7 +58,7 @@ pub fn show_inventory(gs: &mut State, ctx: &mut Rltk) -> ItemMenuResult {
     let mut items = vec![];
     for (entities, _pack, name) in (&entities, &backpack, &names)
         .join()
-        .filter(|item| item.1.owner == *player_entity)
+        .filter(|item| item.1.owner == player_entity.0)
     {
         items.push(entities);
         ctx.set(

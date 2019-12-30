@@ -34,6 +34,17 @@ pub enum RunState {
     ShowInventory,
 }
 
+pub struct PlayerEntity(Entity);
+
+#[derive(Debug, Copy, Clone)]
+pub struct PlayerPosition(i32, i32);
+
+impl Into<rltk::Point> for PlayerPosition {
+    fn into(self) -> rltk::Point {
+        rltk::Point::new(self.0, self.1)
+    }
+}
+
 pub struct State {
     ecs: World,
 }
@@ -82,11 +93,11 @@ impl GameState for State {
                 gui::ItemMenuResult::Cancel => newrunstate = RunState::AwaitingInput,
                 gui::ItemMenuResult::NoResponse => (),
                 gui::ItemMenuResult::Selected(item_entity) => {
-                    let player_entity = self.ecs.fetch::<Entity>();
+                    let player_entity = self.ecs.fetch::<PlayerEntity>();
                     let mut wants_to_drink = self.ecs.write_storage::<WantsToDrinkPotion>();
                     wants_to_drink
                         .insert(
-                            *player_entity,
+                            player_entity.0,
                             WantsToDrinkPotion {
                                 potion: item_entity,
                             },
@@ -185,8 +196,8 @@ fn main() {
     let player_entity = spawner::player(&mut gs.ecs, player_x, player_y);
 
     gs.ecs.insert(map);
-    gs.ecs.insert(rltk::Point::new(player_x, player_y));
-    gs.ecs.insert(player_entity);
+    gs.ecs.insert(PlayerPosition(player_x, player_y));
+    gs.ecs.insert(PlayerEntity(player_entity));
 
     rltk::main_loop(context, gs);
 }

@@ -1,9 +1,7 @@
 use crate::components::*;
 use crate::gamelog::GameLog;
 use crate::map::Map;
-use crate::RunState;
-use crate::State;
-use rltk::Point;
+use crate::{PlayerEntity, PlayerPosition, RunState, State};
 use rltk::{Rltk, VirtualKeyCode};
 use specs::prelude::*;
 use std::cmp::{max, min};
@@ -53,17 +51,17 @@ pub fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) -> RunState 
             ret = RunState::PlayerTurn;
 
             // Update player position:
-            let mut ppos = ecs.write_resource::<rltk::Point>();
-            ppos.x = x;
-            ppos.y = y;
+            let mut ppos = ecs.write_resource::<PlayerPosition>();
+            ppos.0 = x;
+            ppos.1 = y;
         }
     }
     ret
 }
 
 pub fn get_item(ecs: &mut World) -> RunState {
-    let player_pos = ecs.fetch::<Point>();
-    let player_entity = ecs.fetch::<Entity>();
+    let player_pos = ecs.fetch::<PlayerPosition>();
+    let player_entity = ecs.fetch::<PlayerEntity>();
     let mut gamelog = ecs.write_resource::<GameLog>();
     let positions = ecs.read_storage::<Position>();
     let items = ecs.read_storage::<Item>();
@@ -71,12 +69,12 @@ pub fn get_item(ecs: &mut World) -> RunState {
     let mut wants_to_pickup = ecs.write_storage::<WantsToPickupItem>();
 
     for (item_entity, pos, _item) in (&entities, &positions, &items).join() {
-        if pos.x == player_pos.x && pos.y == player_pos.y {
+        if pos.x == player_pos.0 && pos.y == player_pos.1 {
             wants_to_pickup
                 .insert(
-                    *player_entity,
+                    player_entity.0,
                     WantsToPickupItem {
-                        collected_by: *player_entity,
+                        collected_by: player_entity.0,
                         item: item_entity,
                     },
                 )
