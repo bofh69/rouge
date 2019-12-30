@@ -31,27 +31,36 @@ impl<'a> System<'a> for DrinkPotionSystem {
         for (drinker_entity, wants_to_drink, name) in
             (&entities, &mut wants_to_drinks, &names).join()
         {
-            gamelog.log(format!(
-                "{} drink the {}",
-                if drinker_entity == player_entity.0 {
-                    "You"
-                } else {
-                    &name.name
-                },
-                names.get(wants_to_drink.potion).unwrap().name
-            ));
-            let potion = potions.get(wants_to_drink.potion).unwrap();
-            receive_healths
-                .insert(
-                    drinker_entity,
-                    ReceiveHealth {
-                        amount: potion.heal_amount,
+            let item_name = &names.get(wants_to_drink.potion).unwrap().name;
+            if let Some(potion) = potions.get(wants_to_drink.potion) {
+                gamelog.log(format!(
+                    "{} drink{} the {}",
+                    if drinker_entity == player_entity.0 {
+                        "You"
+                    } else {
+                        &name.name
                     },
-                )
-                .expect("Failed to insert");
-            entities
-                .delete(wants_to_drink.potion)
-                .expect("Delete failed");
+                    if drinker_entity == player_entity.0 {
+                        ""
+                    } else {
+                        "s"
+                    },
+                    item_name
+                ));
+                receive_healths
+                    .insert(
+                        drinker_entity,
+                        ReceiveHealth {
+                            amount: potion.heal_amount,
+                        },
+                    )
+                    .expect("Failed to insert");
+                entities
+                    .delete(wants_to_drink.potion)
+                    .expect("Delete failed");
+            } else if drinker_entity == player_entity.0 {
+                gamelog.log(format!("You cannot drink the {}", item_name));
+            }
         }
 
         wants_to_drinks.clear();
