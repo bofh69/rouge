@@ -44,16 +44,16 @@ pub fn random_monster(ecs: &mut World, x: i32, y: i32) {
         roll = rng.roll_dice(1, 2);
     }
     match roll {
-        1 => orc(ecs, x, y),
-        _ => goblin(ecs, x, y),
+        1 => lamotte(ecs, x, y),
+        _ => janouch(ecs, x, y),
     }
 }
 
-fn orc(ecs: &mut World, x: i32, y: i32) {
-    monster(ecs, x, y, rltk::to_cp437('o'), "Orc");
+fn lamotte(ecs: &mut World, x: i32, y: i32) {
+    monster(ecs, x, y, rltk::to_cp437('l'), "Lamotte");
 }
-fn goblin(ecs: &mut World, x: i32, y: i32) {
-    monster(ecs, x, y, rltk::to_cp437('g'), "Goblin");
+fn janouch(ecs: &mut World, x: i32, y: i32) {
+    monster(ecs, x, y, rltk::to_cp437('j'), "Janouch");
 }
 
 fn monster<S: ToString>(ecs: &mut World, x: i32, y: i32, glyph: u8, name: S) {
