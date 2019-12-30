@@ -1,7 +1,7 @@
 use crate::components::*;
 use crate::gamelog::GameLog;
 use crate::map::Map;
-use crate::{PlayerEntity, PlayerPosition, RunState, State};
+use crate::{InventoryType, PlayerEntity, PlayerPosition, RunState, State};
 use rltk::{Rltk, VirtualKeyCode};
 use specs::prelude::*;
 use std::cmp::{max, min};
@@ -105,7 +105,8 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
 
             VirtualKeyCode::Comma => get_item(&mut gs.ecs),
 
-            VirtualKeyCode::I => RunState::ShowInventory,
+            VirtualKeyCode::I => RunState::ShowInventory(InventoryType::Drink),
+            VirtualKeyCode::D => RunState::ShowInventory(InventoryType::Drop),
 
             VirtualKeyCode::Escape => {
                 ctx.quit();

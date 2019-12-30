@@ -26,12 +26,18 @@ use specs::prelude::*;
 use visibility_system::VisibilitySystem;
 
 #[derive(PartialEq, Copy, Clone)]
+pub enum InventoryType {
+    Drink,
+    Drop,
+}
+
+#[derive(PartialEq, Copy, Clone)]
 pub enum RunState {
     AwaitingInput,
     PreRun,
     PlayerTurn,
     MonsterTurn,
-    ShowInventory,
+    ShowInventory(InventoryType),
 }
 
 pub struct PlayerEntity(Entity);
@@ -42,6 +48,15 @@ pub struct PlayerPosition(i32, i32);
 impl Into<rltk::Point> for PlayerPosition {
     fn into(self) -> rltk::Point {
         rltk::Point::new(self.0, self.1)
+    }
+}
+
+impl Into<Position> for PlayerPosition {
+    fn into(self) -> Position {
+        Position {
+            x: self.0,
+            y: self.1,
+        }
     }
 }
 
@@ -89,20 +104,30 @@ impl GameState for State {
                 self.run_systems();
                 newrunstate = RunState::AwaitingInput;
             }
-            RunState::ShowInventory => match gui::show_inventory(self, ctx) {
+            RunState::ShowInventory(inv_type) => match gui::show_inventory(self, ctx, inv_type) {
                 gui::ItemMenuResult::Cancel => newrunstate = RunState::AwaitingInput,
                 gui::ItemMenuResult::NoResponse => (),
                 gui::ItemMenuResult::Selected(item_entity) => {
                     let player_entity = self.ecs.fetch::<PlayerEntity>();
-                    let mut wants_to_drink = self.ecs.write_storage::<WantsToDrinkPotion>();
-                    wants_to_drink
-                        .insert(
-                            player_entity.0,
-                            WantsToDrinkPotion {
-                                potion: item_entity,
-                            },
-                        )
-                        .expect("Could not insert");
+                    match inv_type {
+                        InventoryType::Drink => {
+                            let mut wants_to_drink = self.ecs.write_storage::<WantsToDrinkPotion>();
+                            wants_to_drink
+                                .insert(
+                                    player_entity.0,
+                                    WantsToDrinkPotion {
+                                        potion: item_entity,
+                                    },
+                                )
+                                .expect("Could not insert");
+                        }
+                        InventoryType::Drop => {
+                            let mut wants_to_drop = self.ecs.write_storage::<WantsToDropItem>();
+                            wants_to_drop
+                                .insert(player_entity.0, WantsToDropItem { item: item_entity })
+                                .expect("Could not insert");
+                        }
+                    }
                     newrunstate = RunState::MonsterTurn;
                 }
             },
@@ -140,6 +165,9 @@ impl State {
         let mut mcs = melee_combat_system::MeleeCombatSystem {};
         mcs.run_now(&self.ecs);
 
+        let mut drop = inventory_system::ItemDroppingSystem {};
+        drop.run_now(&self.ecs);
+
         let mut pickup = inventory_system::ItemCollectionSystem {};
         pickup.run_now(&self.ecs);
 
@@ -162,7 +190,7 @@ fn main() {
     let map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
 
-    let mut context = Rltk::init_simple8x8(80, 50, "Hello Rouge World", "resources");
+    let mut context = Rltk::init_simple8x8(80, 60, "Hello Rouge World", "resources");
     context.with_post_scanlines(true);
     let mut gs = State { ecs: World::new() };
 

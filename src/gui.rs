@@ -1,8 +1,7 @@
 use crate::components::*;
 use crate::gamelog::GameLog;
 use crate::map::Map;
-use crate::PlayerEntity;
-use crate::State;
+use crate::{InventoryType, PlayerEntity, State};
 use rltk::{Console, Point, Rltk, VirtualKeyCode, RGB};
 use specs::prelude::*;
 
@@ -13,7 +12,7 @@ pub enum ItemMenuResult {
     Selected(Entity),
 }
 
-pub fn show_inventory(gs: &mut State, ctx: &mut Rltk) -> ItemMenuResult {
+pub fn show_inventory(gs: &mut State, ctx: &mut Rltk, inv_type: InventoryType) -> ItemMenuResult {
     let player_entity = gs.ecs.fetch::<PlayerEntity>();
     let names = gs.ecs.read_storage::<Name>();
     let backpack = gs.ecs.read_storage::<InBackpack>();
@@ -39,12 +38,16 @@ pub fn show_inventory(gs: &mut State, ctx: &mut Rltk) -> ItemMenuResult {
         RGB::named(rltk::WHITE),
         RGB::named(rltk::BLACK),
     );
+    let title = match inv_type {
+        InventoryType::Drink => "Drink",
+        InventoryType::Drop => "Drop",
+    };
     ctx.print_color(
         18,
         y - 2,
         RGB::named(rltk::YELLOW),
         RGB::named(rltk::BLACK),
-        "Inventory",
+        title,
     );
     ctx.print_color(
         18,
