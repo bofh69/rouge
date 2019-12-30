@@ -83,6 +83,19 @@ fn monster<S: ToString>(ecs: &mut World, x: i32, y: i32, glyph: u8, name: S) {
         .build();
 }
 
+/// Spawns a random monster at a given location
+pub fn random_item(ecs: &mut World, x: i32, y: i32) {
+    let roll: i32;
+    {
+        let mut rng = ecs.write_resource::<RandomNumberGenerator>();
+        roll = rng.roll_dice(1, 2);
+    }
+    match roll {
+        1 => health_potion(ecs, x, y),
+        _ => ball(ecs, x, y),
+    }
+}
+
 fn health_potion(ecs: &mut World, x: i32, y: i32) {
     ecs.create_entity()
         .with(Position { x, y })
@@ -96,6 +109,21 @@ fn health_potion(ecs: &mut World, x: i32, y: i32) {
         })
         .with(Item {})
         .with(Potion { heal_amount: 8 })
+        .build();
+}
+
+fn ball(ecs: &mut World, x: i32, y: i32) {
+    ecs.create_entity()
+        .with(Position { x, y })
+        .with(Renderable {
+            glyph: rltk::to_cp437('*'),
+            fg: RGB::named(rltk::PURPLE),
+            bg: RGB::named(rltk::BLACK),
+        })
+        .with(Name {
+            name: "Ball".to_string(),
+        })
+        .with(Item {})
         .build();
 }
 
@@ -147,6 +175,6 @@ pub fn spawn_room(ecs: &mut World, room: &Rect) {
     for idx in item_spawn_points.iter() {
         let x = *idx % MAP_WIDTH as usize;
         let y = *idx / MAP_WIDTH as usize;
-        health_potion(ecs, x as i32, y as i32);
+        random_item(ecs, x as i32, y as i32);
     }
 }
