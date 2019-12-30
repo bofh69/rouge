@@ -38,7 +38,10 @@ pub struct Position {
 }
 
 #[derive(Component, Debug)]
-pub struct Potion {
+pub struct Consumable {}
+
+#[derive(Component, Debug)]
+pub struct HealthProvider {
     pub heal_amount: i32,
 }
 

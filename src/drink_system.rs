@@ -12,7 +12,8 @@ impl<'a> System<'a> for DrinkPotionSystem {
         ReadExpect<'a, PlayerEntity>,
         WriteExpect<'a, GameLog>,
         ReadStorage<'a, Name>,
-        ReadStorage<'a, Potion>,
+        ReadStorage<'a, Consumable>,
+        ReadStorage<'a, HealthProvider>,
         WriteStorage<'a, WantsToDrinkPotion>,
         WriteStorage<'a, ReceiveHealth>,
     );
@@ -23,7 +24,8 @@ impl<'a> System<'a> for DrinkPotionSystem {
             player_entity,
             mut gamelog,
             names,
-            potions,
+            consumables,
+            healthproviders,
             mut wants_to_drinks,
             mut receive_healths,
         ) = data;
@@ -32,7 +34,7 @@ impl<'a> System<'a> for DrinkPotionSystem {
             (&entities, &mut wants_to_drinks, &names).join()
         {
             let item_name = &names.get(wants_to_drink.potion).unwrap().name;
-            if let Some(potion) = potions.get(wants_to_drink.potion) {
+            if let Some(_consumable) = consumables.get(wants_to_drink.potion) {
                 gamelog.log(format!(
                     "{} drink{} the {}",
                     if drinker_entity == player_entity.0 {
@@ -47,14 +49,16 @@ impl<'a> System<'a> for DrinkPotionSystem {
                     },
                     item_name
                 ));
-                receive_healths
-                    .insert(
-                        drinker_entity,
-                        ReceiveHealth {
-                            amount: potion.heal_amount,
-                        },
-                    )
-                    .expect("Failed to insert");
+                if let Some(health) = healthproviders.get(wants_to_drink.potion) {
+                    receive_healths
+                        .insert(
+                            drinker_entity,
+                            ReceiveHealth {
+                                amount: health.heal_amount,
+                            },
+                        )
+                        .expect("Failed to insert");
+                }
                 entities
                     .delete(wants_to_drink.potion)
                     .expect("Delete failed");

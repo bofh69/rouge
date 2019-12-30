@@ -199,13 +199,14 @@ fn main() {
 
     gs.ecs.register::<BlocksTile>();
     gs.ecs.register::<CombatStats>();
-    gs.ecs.register::<Item>();
+    gs.ecs.register::<Consumable>();
+    gs.ecs.register::<HealthProvider>();
     gs.ecs.register::<InBackpack>();
+    gs.ecs.register::<Item>();
     gs.ecs.register::<Monster>();
     gs.ecs.register::<Name>();
     gs.ecs.register::<Player>();
     gs.ecs.register::<Position>();
-    gs.ecs.register::<Potion>();
     gs.ecs.register::<ReceiveHealth>();
     gs.ecs.register::<Renderable>();
     gs.ecs.register::<SufferDamage>();
