@@ -9,16 +9,28 @@ impl<'a> System<'a> for DamageSystem {
     type SystemData = (
         WriteStorage<'a, CombatStats>,
         WriteStorage<'a, SufferDamage>,
+        WriteStorage<'a, ReceiveHealth>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (mut stats, mut damage) = data;
+        let (mut stats, mut damage, mut health) = data;
 
         for (mut stats, damage) in (&mut stats, &damage).join() {
             stats.hp -= damage.amount;
         }
 
+        // Lets be kind...
+        for (mut stats, health) in (&mut stats, &health).join() {
+            if stats.max_hp == stats.hp {
+                stats.max_hp += 1 + health.amount / 8;
+                stats.hp = stats.max_hp;
+            } else {
+                stats.hp = i32::min(stats.max_hp, stats.hp + health.amount);
+            }
+        }
+
         damage.clear();
+        health.clear();
     }
 }
 

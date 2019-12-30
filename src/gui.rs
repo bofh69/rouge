@@ -1,8 +1,107 @@
 use crate::components::*;
 use crate::gamelog::GameLog;
 use crate::map::Map;
-use rltk::{Console, Point, Rltk, RGB};
+use crate::State;
+use rltk::{Console, Point, Rltk, VirtualKeyCode, RGB};
 use specs::prelude::*;
+
+#[derive(PartialEq, Copy, Clone)]
+pub enum ItemMenuResult {
+    Cancel,
+    NoResponse,
+    Selected(Entity),
+}
+
+pub fn show_inventory(gs: &mut State, ctx: &mut Rltk) -> ItemMenuResult {
+    let player_entity = gs.ecs.fetch::<Entity>();
+    let names = gs.ecs.read_storage::<Name>();
+    let backpack = gs.ecs.read_storage::<InBackpack>();
+    let entities = gs.ecs.entities();
+
+    let inventory = (&backpack, &names)
+        .join()
+        .filter(|item| item.0.owner == *player_entity);
+    let count = inventory.count() as i32;
+
+    if count == 0 {
+        let mut gamelog = gs.ecs.fetch_mut::<GameLog>();
+        gamelog.log("Your backpack is empty");
+        return ItemMenuResult::Cancel;
+    }
+
+    let mut y = 25 - (count / 2);
+    ctx.draw_box(
+        15,
+        y - 2,
+        31,
+        count + 3,
+        RGB::named(rltk::WHITE),
+        RGB::named(rltk::BLACK),
+    );
+    ctx.print_color(
+        18,
+        y - 2,
+        RGB::named(rltk::YELLOW),
+        RGB::named(rltk::BLACK),
+        "Inventory",
+    );
+    ctx.print_color(
+        18,
+        y + count as i32 + 1,
+        RGB::named(rltk::YELLOW),
+        RGB::named(rltk::BLACK),
+        "ESCAPE to cancel",
+    );
+
+    let mut j = 0;
+    let mut items = vec![];
+    for (entities, _pack, name) in (&entities, &backpack, &names)
+        .join()
+        .filter(|item| item.1.owner == *player_entity)
+    {
+        items.push(entities);
+        ctx.set(
+            17,
+            y,
+            RGB::named(rltk::WHITE),
+            RGB::named(rltk::BLACK),
+            rltk::to_cp437('('),
+        );
+        ctx.set(
+            18,
+            y,
+            RGB::named(rltk::YELLOW),
+            RGB::named(rltk::BLACK),
+            97 + j as u8,
+        );
+        ctx.set(
+            19,
+            y,
+            RGB::named(rltk::WHITE),
+            RGB::named(rltk::BLACK),
+            rltk::to_cp437(')'),
+        );
+
+        ctx.print(21, y, &name.name.to_string());
+        y += 1;
+        j += 1;
+    }
+
+    match ctx.key {
+        None => ItemMenuResult::NoResponse,
+        Some(key) => match key {
+            VirtualKeyCode::Escape => ItemMenuResult::Cancel,
+            _ => {
+                let selected = rltk::letter_to_option(key);
+                if selected < 0 || selected >= count as i32 {
+                    ItemMenuResult::NoResponse
+                } else {
+                    ItemMenuResult::Selected(items[selected as usize])
+                }
+            }
+        },
+    }
+}
 
 pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
     ctx.draw_box(

@@ -107,6 +107,8 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
 
             VirtualKeyCode::Comma => get_item(&mut gs.ecs),
 
+            VirtualKeyCode::I => RunState::ShowInventory,
+
             VirtualKeyCode::Escape => {
                 ctx.quit();
                 RunState::AwaitingInput

@@ -2,6 +2,7 @@ rltk::add_wasm_support!();
 
 mod components;
 mod damage_system;
+mod drink_system;
 mod gamelog;
 mod gui;
 mod inventory_system;
@@ -30,6 +31,7 @@ pub enum RunState {
     PreRun,
     PlayerTurn,
     MonsterTurn,
+    ShowInventory,
 }
 
 pub struct State {
@@ -39,6 +41,21 @@ pub struct State {
 impl GameState for State {
     fn tick(&mut self, ctx: &mut Rltk) {
         ctx.cls();
+
+        {
+            map::draw_map(&self.ecs, ctx);
+
+            let map = self.ecs.fetch::<Map>();
+
+            let positions = self.ecs.read_storage::<Position>();
+            let renderables = self.ecs.read_storage::<Renderable>();
+
+            for (pos, render) in (&positions, &renderables).join() {
+                if map.visible_tiles[map.xy_idx(pos.x, pos.y)] {
+                    ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
+                }
+            }
+        }
 
         let mut newrunstate = {
             let runstate = self.ecs.fetch::<RunState>();
@@ -61,24 +78,28 @@ impl GameState for State {
                 self.run_systems();
                 newrunstate = RunState::AwaitingInput;
             }
+            RunState::ShowInventory => match gui::show_inventory(self, ctx) {
+                gui::ItemMenuResult::Cancel => newrunstate = RunState::AwaitingInput,
+                gui::ItemMenuResult::NoResponse => (),
+                gui::ItemMenuResult::Selected(item_entity) => {
+                    let player_entity = self.ecs.fetch::<Entity>();
+                    let mut wants_to_drink = self.ecs.write_storage::<WantsToDrinkPotion>();
+                    wants_to_drink
+                        .insert(
+                            *player_entity,
+                            WantsToDrinkPotion {
+                                potion: item_entity,
+                            },
+                        )
+                        .expect("Could not insert");
+                    newrunstate = RunState::MonsterTurn;
+                }
+            },
         }
 
         {
             let mut runwriter = self.ecs.write_resource::<RunState>();
             *runwriter = newrunstate;
-        }
-
-        map::draw_map(&self.ecs, ctx);
-
-        let map = self.ecs.fetch::<Map>();
-
-        let positions = self.ecs.read_storage::<Position>();
-        let renderables = self.ecs.read_storage::<Renderable>();
-
-        for (pos, render) in (&positions, &renderables).join() {
-            if map.visible_tiles[map.xy_idx(pos.x, pos.y)] {
-                ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
-            }
         }
 
         gui::draw_ui(&self.ecs, ctx);
@@ -111,6 +132,9 @@ impl State {
         let mut pickup = inventory_system::ItemCollectionSystem {};
         pickup.run_now(&self.ecs);
 
+        let mut drink = drink_system::DrinkPotionSystem {};
+        drink.run_now(&self.ecs);
+
         let mut ds = damage_system::DamageSystem {};
         ds.run_now(&self.ecs);
 
@@ -140,9 +164,12 @@ fn main() {
     gs.ecs.register::<Player>();
     gs.ecs.register::<Position>();
     gs.ecs.register::<Potion>();
+    gs.ecs.register::<ReceiveHealth>();
     gs.ecs.register::<Renderable>();
     gs.ecs.register::<SufferDamage>();
     gs.ecs.register::<Viewshed>();
+    gs.ecs.register::<WantsToDrinkPotion>();
+    gs.ecs.register::<WantsToDropItem>();
     gs.ecs.register::<WantsToMelee>();
     gs.ecs.register::<WantsToPickupItem>();
 

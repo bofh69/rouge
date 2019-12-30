@@ -42,6 +42,11 @@ pub struct Potion {
     pub heal_amount: i32,
 }
 
+#[derive(Component, Debug)]
+pub struct ReceiveHealth {
+    pub amount: i32,
+}
+
 #[derive(Component)]
 pub struct Renderable {
     pub glyph: u8,
@@ -59,6 +64,16 @@ pub struct Viewshed {
     pub visible_tiles: Vec<rltk::Point>,
     pub range: i32,
     pub dirty: bool,
+}
+
+#[derive(Component, Debug)]
+pub struct WantsToDrinkPotion {
+    pub potion: Entity,
+}
+
+#[derive(Component, Debug)]
+pub struct WantsToDropItem {
+    pub potion: Entity,
 }
 
 #[derive(Component, Debug, Clone)]
