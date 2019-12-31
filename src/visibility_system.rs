@@ -1,4 +1,3 @@
-extern crate specs;
 use super::map::Map;
 use super::{Position, Viewshed};
 use crate::components::Player;

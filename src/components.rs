@@ -18,6 +18,11 @@ pub struct InBackpack {
 }
 
 #[derive(Component, Debug)]
+pub struct InflictsDamage {
+    pub damage: i32,
+}
+
+#[derive(Component, Debug)]
 pub struct Item {}
 
 #[derive(Component, Debug)]
@@ -46,6 +51,11 @@ pub struct HealthProvider {
 }
 
 #[derive(Component, Debug)]
+pub struct Ranged {
+    pub range: i32,
+}
+
+#[derive(Component, Debug)]
 pub struct ReceiveHealth {
     pub amount: i32,
 }
@@ -70,9 +80,10 @@ pub struct Viewshed {
     pub dirty: bool,
 }
 
-#[derive(Component, Debug)]
-pub struct WantsToDrinkPotion {
-    pub potion: Entity,
+#[derive(Component, Debug, Clone)]
+pub struct WantsToUseItem {
+    pub item: Entity,
+    pub target: Option<rltk::Point>,
 }
 
 #[derive(Component, Debug)]

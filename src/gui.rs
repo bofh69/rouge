@@ -1,6 +1,8 @@
 use crate::components::*;
 use crate::gamelog::GameLog;
 use crate::map::Map;
+use crate::map::{MAP_HEIGHT, MAP_WIDTH};
+use crate::PlayerPosition;
 use crate::{InventoryType, PlayerEntity, State};
 use rltk::{Console, Point, Rltk, VirtualKeyCode, RGB};
 use specs::prelude::*;
@@ -9,10 +11,105 @@ use specs::prelude::*;
 pub enum ItemMenuResult {
     Cancel,
     NoResponse,
-    Selected(Entity),
+    Selected,
 }
 
-pub fn show_inventory(gs: &mut State, ctx: &mut Rltk, inv_type: InventoryType) -> ItemMenuResult {
+pub fn ask_bool(ctx: &mut Rltk, question: &str) -> (ItemMenuResult, bool) {
+    let width = question.len() as i32;
+
+    ctx.draw_box_double(
+        MAP_WIDTH / 2 - width - 1,
+        MAP_HEIGHT / 2 - 2,
+        width + 3,
+        2,
+        RGB::named(rltk::YELLOW),
+        RGB::named(rltk::BLACK),
+    );
+
+    ctx.print_color(
+        MAP_WIDTH / 2 - width + 1,
+        MAP_HEIGHT / 2 - 1,
+        RGB::named(rltk::YELLOW),
+        RGB::named(rltk::BLACK),
+        question,
+    );
+
+    match ctx.key {
+        Some(VirtualKeyCode::Y) => (ItemMenuResult::Selected, true),
+        Some(VirtualKeyCode::N) => (ItemMenuResult::Selected, false),
+        Some(VirtualKeyCode::Escape) => (ItemMenuResult::Cancel, false),
+        _ => (ItemMenuResult::NoResponse, false),
+    }
+}
+
+pub fn show_targeting(
+    gs: &mut State,
+    ctx: &mut Rltk,
+    range: i32,
+) -> (ItemMenuResult, Option<Point>) {
+    if Some(VirtualKeyCode::Escape) == ctx.key {
+        return (ItemMenuResult::Cancel, None);
+    }
+
+    let player_pos = gs.ecs.fetch::<PlayerPosition>();
+    let player_entity = gs.ecs.fetch::<PlayerEntity>().0;
+    let viewsheds = gs.ecs.read_storage::<Viewshed>();
+
+    ctx.print_color(
+        5,
+        0,
+        RGB::named(rltk::YELLOW),
+        RGB::named(rltk::BLACK),
+        "Select Target:",
+    );
+
+    // Highlight available target cells
+    let mut available_cells = Vec::new();
+    let visible = viewsheds.get(player_entity);
+    if let Some(visible) = visible {
+        // We have a viewshed
+        for idx in visible.visible_tiles.iter() {
+            let distance = rltk::DistanceAlg::Pythagoras.distance2d((*player_pos).into(), *idx);
+            if distance <= range as f32 {
+                ctx.set_bg(idx.x, idx.y, RGB::named(rltk::BLUE));
+                available_cells.push(idx);
+            }
+        }
+    } else {
+        return (ItemMenuResult::Cancel, None);
+    }
+
+    // Draw mouse cursor
+    let mouse_pos = ctx.mouse_pos();
+    let mut valid_target = false;
+    for idx in available_cells.iter() {
+        if idx.x == mouse_pos.0 && idx.y == mouse_pos.1 {
+            valid_target = true;
+        }
+    }
+    if valid_target {
+        ctx.set_bg(mouse_pos.0, mouse_pos.1, RGB::named(rltk::CYAN));
+        if ctx.left_click {
+            return (
+                ItemMenuResult::Selected,
+                Some(Point::new(mouse_pos.0, mouse_pos.1)),
+            );
+        }
+    } else {
+        ctx.set_bg(mouse_pos.0, mouse_pos.1, RGB::named(rltk::RED));
+        if ctx.left_click {
+            return (ItemMenuResult::Cancel, None);
+        }
+    }
+
+    (ItemMenuResult::NoResponse, None)
+}
+
+pub fn show_inventory(
+    gs: &mut State,
+    ctx: &mut Rltk,
+    inv_type: InventoryType,
+) -> (ItemMenuResult, Option<Entity>) {
     let player_entity = gs.ecs.fetch::<PlayerEntity>();
     let names = gs.ecs.read_storage::<Name>();
     let backpack = gs.ecs.read_storage::<InBackpack>();
@@ -26,7 +123,7 @@ pub fn show_inventory(gs: &mut State, ctx: &mut Rltk, inv_type: InventoryType) -
     if count == 0 {
         let mut gamelog = gs.ecs.fetch_mut::<GameLog>();
         gamelog.log("Your backpack is empty");
-        return ItemMenuResult::Cancel;
+        return (ItemMenuResult::Cancel, None);
     }
 
     let mut y = 25 - (count / 2);
@@ -39,7 +136,7 @@ pub fn show_inventory(gs: &mut State, ctx: &mut Rltk, inv_type: InventoryType) -
         RGB::named(rltk::BLACK),
     );
     let title = match inv_type {
-        InventoryType::Drink => "Drink",
+        InventoryType::Apply => "Use",
         InventoryType::Drop => "Drop",
     };
     ctx.print_color(
@@ -92,15 +189,15 @@ pub fn show_inventory(gs: &mut State, ctx: &mut Rltk, inv_type: InventoryType) -
     }
 
     match ctx.key {
-        None => ItemMenuResult::NoResponse,
+        None => (ItemMenuResult::NoResponse, None),
         Some(key) => match key {
-            VirtualKeyCode::Escape => ItemMenuResult::Cancel,
+            VirtualKeyCode::Escape => (ItemMenuResult::Cancel, None),
             _ => {
                 let selected = rltk::letter_to_option(key);
                 if selected < 0 || selected >= count as i32 {
-                    ItemMenuResult::NoResponse
+                    (ItemMenuResult::NoResponse, None)
                 } else {
-                    ItemMenuResult::Selected(items[selected as usize])
+                    (ItemMenuResult::Selected, Some(items[selected as usize]))
                 }
             }
         },

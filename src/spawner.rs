@@ -87,13 +87,13 @@ fn monster<S: ToString>(ecs: &mut World, x: i32, y: i32, glyph: u8, name: S) {
 
 /// Spawns a random monster at a given location
 pub fn random_item(ecs: &mut World, x: i32, y: i32) {
-    let roll: i32;
-    {
+    let roll = {
         let mut rng = ecs.write_resource::<RandomNumberGenerator>();
-        roll = rng.roll_dice(1, 2);
-    }
+        rng.roll_dice(1, 3)
+    };
     match roll {
         1 => health_potion(ecs, x, y),
+        2 => magic_missile_scroll(ecs, x, y),
         _ => ball(ecs, x, y),
     }
 }
@@ -129,6 +129,25 @@ fn ball(ecs: &mut World, x: i32, y: i32) {
             name: "Ball".to_string(),
         })
         .with(Item {})
+        .build();
+}
+
+fn magic_missile_scroll(ecs: &mut World, x: i32, y: i32) {
+    ecs.create_entity()
+        .with(Position { x, y })
+        .with(Renderable {
+            glyph: rltk::to_cp437('%'),
+            fg: RGB::named(rltk::CYAN),
+            bg: RGB::named(rltk::BLACK),
+            render_order: 2,
+        })
+        .with(Name {
+            name: "Magic Missile Scroll".to_string(),
+        })
+        .with(Item {})
+        .with(Consumable {})
+        .with(Ranged { range: 6 })
+        .with(InflictsDamage { damage: 8 })
         .build();
 }
 

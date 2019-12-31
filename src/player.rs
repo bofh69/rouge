@@ -105,13 +105,10 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
 
             VirtualKeyCode::Comma => get_item(&mut gs.ecs),
 
-            VirtualKeyCode::I => RunState::ShowInventory(InventoryType::Drink),
+            VirtualKeyCode::A => RunState::ShowInventory(InventoryType::Apply),
             VirtualKeyCode::D => RunState::ShowInventory(InventoryType::Drop),
 
-            VirtualKeyCode::Escape => {
-                ctx.quit();
-                RunState::AwaitingInput
-            }
+            VirtualKeyCode::Escape => RunState::ReallyQuit,
             _ => RunState::AwaitingInput,
         },
     }

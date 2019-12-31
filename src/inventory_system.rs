@@ -1,4 +1,3 @@
-extern crate specs;
 use crate::components::{InBackpack, Name, Position, WantsToDropItem, WantsToPickupItem};
 use crate::gamelog::GameLog;
 use crate::{PlayerEntity, PlayerPosition};

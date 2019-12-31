@@ -1,4 +1,3 @@
-extern crate specs;
 use crate::components::*;
 use crate::gamelog::GameLog;
 use specs::prelude::*;

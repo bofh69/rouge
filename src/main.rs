@@ -27,17 +27,19 @@ use visibility_system::VisibilitySystem;
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum InventoryType {
-    Drink,
+    Apply,
     Drop,
 }
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum RunState {
     AwaitingInput,
+    ReallyQuit,
     PreRun,
     PlayerTurn,
     MonsterTurn,
     ShowInventory(InventoryType),
+    ShowTargeting(i32, Entity),
 }
 
 pub struct PlayerEntity(Entity);
@@ -99,6 +101,13 @@ impl GameState for State {
             RunState::AwaitingInput => {
                 newrunstate = player_input(self, ctx);
             }
+            RunState::ReallyQuit => match gui::ask_bool(ctx, "Really quit?") {
+                (gui::ItemMenuResult::Selected, false) | (gui::ItemMenuResult::Cancel, _) => {
+                    newrunstate = RunState::AwaitingInput
+                }
+                (gui::ItemMenuResult::Selected, true) => ctx.quit(),
+                _ => (),
+            },
             RunState::PlayerTurn => {
                 self.run_systems();
                 newrunstate = RunState::MonsterTurn;
@@ -108,32 +117,60 @@ impl GameState for State {
                 newrunstate = RunState::AwaitingInput;
             }
             RunState::ShowInventory(inv_type) => match gui::show_inventory(self, ctx, inv_type) {
-                gui::ItemMenuResult::Cancel => newrunstate = RunState::AwaitingInput,
-                gui::ItemMenuResult::NoResponse => (),
-                gui::ItemMenuResult::Selected(item_entity) => {
+                (gui::ItemMenuResult::Cancel, _) => newrunstate = RunState::AwaitingInput,
+                (gui::ItemMenuResult::Selected, Some(item_entity)) => {
                     let player_entity = self.ecs.fetch::<PlayerEntity>();
                     match inv_type {
-                        InventoryType::Drink => {
-                            let mut wants_to_drink = self.ecs.write_storage::<WantsToDrinkPotion>();
-                            wants_to_drink
-                                .insert(
-                                    player_entity.0,
-                                    WantsToDrinkPotion {
-                                        potion: item_entity,
-                                    },
-                                )
-                                .expect("Could not insert");
+                        InventoryType::Apply => {
+                            if let Some(range) = self.ecs.read_storage::<Ranged>().get(item_entity)
+                            {
+                                newrunstate = RunState::ShowTargeting(range.range, item_entity);
+                            } else {
+                                let mut wants_to_drink = self.ecs.write_storage::<WantsToUseItem>();
+                                wants_to_drink
+                                    .insert(
+                                        player_entity.0,
+                                        WantsToUseItem {
+                                            item: item_entity,
+                                            target: None,
+                                        },
+                                    )
+                                    .expect("Could not insert");
+                                newrunstate = RunState::PlayerTurn;
+                            }
                         }
                         InventoryType::Drop => {
                             let mut wants_to_drop = self.ecs.write_storage::<WantsToDropItem>();
                             wants_to_drop
                                 .insert(player_entity.0, WantsToDropItem { item: item_entity })
                                 .expect("Could not insert");
+                            newrunstate = RunState::PlayerTurn;
                         }
                     }
-                    newrunstate = RunState::PlayerTurn;
                 }
+                _ => (),
             },
+            RunState::ShowTargeting(range, item_entity) => {
+                match gui::show_targeting(self, ctx, range) {
+                    (gui::ItemMenuResult::Cancel, _) => newrunstate = RunState::AwaitingInput,
+                    (gui::ItemMenuResult::Selected, Some(target_position)) => {
+                        let player_entity = self.ecs.fetch::<PlayerEntity>();
+
+                        let mut wants_to_use = self.ecs.write_storage::<WantsToUseItem>();
+                        wants_to_use
+                            .insert(
+                                player_entity.0,
+                                WantsToUseItem {
+                                    item: item_entity,
+                                    target: Some(target_position),
+                                },
+                            )
+                            .expect("Could not insert");
+                        newrunstate = RunState::PlayerTurn;
+                    }
+                    _ => (),
+                }
+            }
         }
 
         {
@@ -193,7 +230,7 @@ fn main() {
     let map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
 
-    let mut context = Rltk::init_simple8x8(80, 60, "Hello Rouge World", "resources");
+    let mut context = Rltk::init_simple8x8(80, 50, "Rouge World", "resources");
     context.with_post_scanlines(true);
     let mut gs = State { ecs: World::new() };
 
@@ -202,19 +239,21 @@ fn main() {
     gs.ecs.register::<Consumable>();
     gs.ecs.register::<HealthProvider>();
     gs.ecs.register::<InBackpack>();
+    gs.ecs.register::<InflictsDamage>();
     gs.ecs.register::<Item>();
     gs.ecs.register::<Monster>();
     gs.ecs.register::<Name>();
     gs.ecs.register::<Player>();
     gs.ecs.register::<Position>();
     gs.ecs.register::<ReceiveHealth>();
+    gs.ecs.register::<Ranged>();
     gs.ecs.register::<Renderable>();
     gs.ecs.register::<SufferDamage>();
     gs.ecs.register::<Viewshed>();
-    gs.ecs.register::<WantsToDrinkPotion>();
     gs.ecs.register::<WantsToDropItem>();
     gs.ecs.register::<WantsToMelee>();
     gs.ecs.register::<WantsToPickupItem>();
+    gs.ecs.register::<WantsToUseItem>();
 
     gs.ecs.insert(rltk::RandomNumberGenerator::new());
     gs.ecs.insert(RunState::PreRun);
