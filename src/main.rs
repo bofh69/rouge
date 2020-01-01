@@ -1,8 +1,8 @@
 rltk::add_wasm_support!();
 
 mod components;
+mod consume_system;
 mod damage_system;
-mod drink_system;
 mod gamelog;
 mod gui;
 mod inventory_system;
@@ -49,6 +49,7 @@ pub struct PlayerPosition(i32, i32);
 
 impl Into<rltk::Point> for PlayerPosition {
     fn into(self) -> rltk::Point {
+        /* Should go via Camera */
         rltk::Point::new(self.0, self.1)
     }
 }
@@ -211,7 +212,7 @@ impl State {
         let mut pickup = inventory_system::ItemCollectionSystem {};
         pickup.run_now(&self.ecs);
 
-        let mut drink = drink_system::DrinkPotionSystem {};
+        let mut drink = consume_system::UseItemSystem {};
         drink.run_now(&self.ecs);
 
         let mut ds = damage_system::DamageSystem {};
@@ -234,6 +235,7 @@ fn main() {
     context.with_post_scanlines(true);
     let mut gs = State { ecs: World::new() };
 
+    gs.ecs.register::<AreaOfEffect>();
     gs.ecs.register::<BlocksTile>();
     gs.ecs.register::<CombatStats>();
     gs.ecs.register::<Consumable>();
