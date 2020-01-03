@@ -104,7 +104,7 @@ impl GameState for State {
 
         {
             let mut camera_sys = CameraSystem {};
-            camera_sys.run_now(&mut self.ecs);
+            camera_sys.run_now(&self.ecs);
 
             map::draw_map(&self.ecs, ctx);
 
@@ -116,13 +116,13 @@ impl GameState for State {
 
             let mut data = (&positions, &renderables)
                 .join()
-                .filter(|(p, _)| camera.is_in_view(&p.0))
+                .filter(|(p, _)| camera.is_in_view(p.0))
                 .collect::<Vec<_>>();
             data.sort_by(|&a, &b| b.1.render_order.cmp(&a.1.render_order));
 
             for (pos, render) in data.iter() {
-                if map.visible_tiles[map.pos_to_idx(&pos)] {
-                    let point = camera.transform_map_pos(&pos.0);
+                if map.visible_tiles[map.pos_to_idx(**pos)] {
+                    let point = camera.transform_map_pos(pos.0);
                     ctx.set(point.x, point.y, render.fg, render.bg, render.glyph);
                 }
             }
@@ -311,7 +311,7 @@ fn main() {
         x: player_x,
         y: player_y,
     });
-    gs.ecs.insert(Camera::new(&player_pos, 80, 43));
+    gs.ecs.insert(Camera::new(player_pos, 80, 43));
     gs.ecs.insert(map);
     gs.ecs.insert(player_pos);
     gs.ecs.insert(PlayerEntity(player_entity));

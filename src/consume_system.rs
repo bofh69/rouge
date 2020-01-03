@@ -70,14 +70,14 @@ impl<'a> System<'a> for UseItemSystem {
                         match area_effect {
                             None => {
                                 // Single target in tile
-                                let idx = map.map_pos_to_idx(&target);
+                                let idx = map.map_pos_to_idx(target);
                                 for mob in map.tile_content[idx].iter() {
                                     targets.push(*mob);
                                 }
                             }
                             Some(area_effect) => {
                                 // AoE
-                                let screen_point = camera.transform_map_pos(&target).into();
+                                let screen_point = camera.transform_map_pos(target).into();
                                 for tile_point in
                                     rltk::field_of_view(screen_point, area_effect.radius, &*map)
                                         .iter()
@@ -89,8 +89,8 @@ impl<'a> System<'a> for UseItemSystem {
                                         })
                                         .map(|p| ScreenPosition { x: p.x, y: p.y })
                                 {
-                                    let idx = map
-                                        .map_pos_to_idx(&camera.transform_screen_pos(&tile_point));
+                                    let idx =
+                                        map.map_pos_to_idx(camera.transform_screen_pos(tile_point));
                                     for mob in map.tile_content[idx].iter() {
                                         targets.push(*mob);
                                     }

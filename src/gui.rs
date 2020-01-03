@@ -74,9 +74,9 @@ pub fn show_targeting(
     if let Some(visible) = visible {
         // We have a viewshed
         for pos in visible.visible_tiles.iter() {
-            let point = camera.transform_map_pos(pos);
+            let point = camera.transform_map_pos(*pos);
             let distance = rltk::DistanceAlg::Pythagoras
-                .distance2d(camera.transform_map_pos(&player_pos.0).into(), point.into());
+                .distance2d(camera.transform_map_pos(player_pos.0).into(), point.into());
             if distance <= range as f32 {
                 ctx.set_bg(point.x, point.y, RGB::named(rltk::BLUE));
                 available_cells.push(point);
@@ -99,7 +99,7 @@ pub fn show_targeting(
         if ctx.left_click {
             return (
                 ItemMenuResult::Selected,
-                Some(camera.transform_screen_pos(&ScreenPosition {
+                Some(camera.transform_screen_pos(ScreenPosition {
                     x: mouse_pos.0,
                     y: mouse_pos.1,
                 })),
@@ -277,7 +277,7 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
     }
     let mut tooltip: Vec<String> = Vec::new();
     for (name, position) in (&names, &positions).join() {
-        let pos = camera.transform_map_pos(&position.0);
+        let pos = camera.transform_map_pos(position.0);
         if pos.x == mouse_pos.0 && pos.y == mouse_pos.1 {
             tooltip.push(name.name.to_string());
         }

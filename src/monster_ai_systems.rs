@@ -54,12 +54,12 @@ impl<'a> System<'a> for MonsterAiSystem {
                     .expect("Unable to insert attack");
             } else if viewshed.visible_tiles.contains(&player_pos.0) {
                 let path = rltk::a_star_search(
-                    map.pos_to_idx(&pos) as i32,
-                    map.map_pos_to_idx(&player_pos.0) as i32,
+                    map.pos_to_idx(*pos) as i32,
+                    map.map_pos_to_idx(player_pos.0) as i32,
                     &mut *map,
                 );
                 if path.success && path.steps.len() > 1 {
-                    let old_idx = map.pos_to_idx(&pos);
+                    let old_idx = map.pos_to_idx(*pos);
                     let new_idx = path.steps[1] as usize;
                     let new_pos = map.index_to_point2d(new_idx as i32);
                     if !map.blocked[new_idx] {

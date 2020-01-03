@@ -95,11 +95,11 @@ impl Map {
         (y * self.width + x) as usize
     }
 
-    pub fn pos_to_idx(&self, pos: &Position) -> usize {
+    pub fn pos_to_idx(&self, pos: Position) -> usize {
         (pos.0.y * self.width + pos.0.x) as usize
     }
 
-    pub fn map_pos_to_idx(&self, pos: &MapPosition) -> usize {
+    pub fn map_pos_to_idx(&self, pos: MapPosition) -> usize {
         (pos.y * self.width + pos.x) as usize
     }
 
@@ -213,7 +213,7 @@ pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
     for y in 0..camera.height() {
         for x in 0..camera.width() {
             let point = ScreenPosition { x, y };
-            let pos = camera.transform_screen_pos(&point);
+            let pos = camera.transform_screen_pos(point);
             if pos.x < 0 || pos.x >= map.width || pos.y < 0 || pos.y >= map.height {
                 ctx.set(
                     x,
@@ -223,7 +223,7 @@ pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
                     rltk::to_cp437('¿'),
                 );
             } else {
-                let idx = map.map_pos_to_idx(&pos);
+                let idx = map.map_pos_to_idx(pos);
                 let tile = map.tiles[idx];
                 // Render a tile depending upon the tile type
                 if map.revealed_tiles[idx] {

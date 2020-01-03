@@ -20,7 +20,7 @@ impl<'a> System<'a> for MapIndexingSystem {
         map.clear_content_index();
 
         for (entity, _block, pos) in (&entities, &blocks, &positions).join() {
-            let idx = map.pos_to_idx(&pos);
+            let idx = map.pos_to_idx(*pos);
             map.blocked[idx] = true;
             map.tile_content[idx].push(entity);
         }
