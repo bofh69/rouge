@@ -1,10 +1,14 @@
+use crate::camera::Camera;
+use crate::components::Position;
 use crate::rect::Rect;
+use crate::MapPosition;
+use crate::ScreenPosition;
 use rltk::{Algorithm2D, BaseMap, Console, Point, Rltk, RGB};
 use specs::prelude::*;
 use std::cmp::{max, min};
 
-pub const MAP_WIDTH: i32 = 80;
-pub const MAP_HEIGHT: i32 = 43;
+pub const MAP_WIDTH: i32 = 120;
+pub const MAP_HEIGHT: i32 = 60;
 pub const MAP_COUNT: usize = (MAP_WIDTH * MAP_HEIGHT) as usize;
 
 #[derive(PartialEq, Copy, Clone)]
@@ -87,22 +91,30 @@ impl Algorithm2D for Map {
 }
 
 impl Map {
-    pub fn xy_idx(&self, x: i32, y: i32) -> usize {
+    pub fn xy_to_idx(&self, x: i32, y: i32) -> usize {
         (y * self.width + x) as usize
+    }
+
+    pub fn pos_to_idx(&self, pos: &Position) -> usize {
+        (pos.0.y * self.width + pos.0.x) as usize
+    }
+
+    pub fn map_pos_to_idx(&self, pos: &MapPosition) -> usize {
+        (pos.y * self.width + pos.x) as usize
     }
 
     fn is_exit_valid(&self, x: i32, y: i32) -> bool {
         if x < 1 || x > self.width - 1 || y < 1 || y > self.height - 1 {
             return false;
         }
-        let idx = self.xy_idx(x, y);
+        let idx = self.xy_to_idx(x, y);
         !self.blocked[idx]
     }
 
     fn apply_room_to_map(&mut self, room: &Rect) {
         for y in room.y1 + 1..=room.y2 {
             for x in room.x1 + 1..=room.x2 {
-                let idx = self.xy_idx(x, y);
+                let idx = self.xy_to_idx(x, y);
                 self.tiles[idx] = TileType::Floor;
             }
         }
@@ -110,7 +122,7 @@ impl Map {
 
     fn apply_horizontal_tunnel(&mut self, x1: i32, x2: i32, y: i32) {
         for x in min(x1, x2)..=max(x1, x2) {
-            let idx = self.xy_idx(x, y);
+            let idx = self.xy_to_idx(x, y);
             if idx > 0 && idx < (self.width * self.height) as usize {
                 self.tiles[idx] = TileType::Floor;
             }
@@ -119,7 +131,7 @@ impl Map {
 
     fn apply_vertical_tunnel(&mut self, y1: i32, y2: i32, x: i32) {
         for y in min(y1, y2)..=max(y1, y2) {
-            let idx = self.xy_idx(x, y);
+            let idx = self.xy_to_idx(x, y);
             if idx > 0 && idx < (self.width * self.height) as usize {
                 self.tiles[idx] = TileType::Floor;
             }
@@ -196,33 +208,43 @@ impl Map {
 
 pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
     let map = ecs.fetch::<Map>();
+    let camera = ecs.fetch::<Camera>();
 
-    let mut y = 0;
-    let mut x = 0;
-    for (idx, tile) in map.tiles.iter().enumerate() {
-        // Render a tile depending upon the tile type
-        if map.revealed_tiles[idx] {
-            let glyph;
-            let mut fg;
-            match tile {
-                TileType::Floor => {
-                    fg = RGB::from_f32(0.5, 0.5, 0.5);
-                    glyph = rltk::to_cp437('.');
-                }
-                TileType::Wall => {
-                    fg = RGB::from_f32(0.0, 1.0, 0.0);
-                    glyph = rltk::to_cp437('#');
+    for y in 0..camera.height() {
+        for x in 0..camera.width() {
+            let point = ScreenPosition { x, y };
+            let pos = camera.transform_screen_pos(&point);
+            if pos.x < 0 || pos.x >= map.width || pos.y < 0 || pos.y >= map.height {
+                ctx.set(
+                    x,
+                    y,
+                    RGB::from_f32(0., 0., 0.),
+                    RGB::from_f32(0., 0., 0.),
+                    rltk::to_cp437('¿'),
+                );
+            } else {
+                let idx = map.map_pos_to_idx(&pos);
+                let tile = map.tiles[idx];
+                // Render a tile depending upon the tile type
+                if map.revealed_tiles[idx] {
+                    let glyph;
+                    let mut fg;
+                    match tile {
+                        TileType::Floor => {
+                            fg = RGB::from_f32(0.5, 0.5, 0.5);
+                            glyph = rltk::to_cp437('.');
+                        }
+                        TileType::Wall => {
+                            fg = RGB::from_f32(0.0, 1.0, 0.0);
+                            glyph = rltk::to_cp437('#');
+                        }
+                    }
+                    if !map.visible_tiles[idx] {
+                        fg = fg.to_greyscale();
+                    }
+                    ctx.set(x, y, fg, RGB::from_f32(0., 0., 0.), glyph);
                 }
             }
-            if !map.visible_tiles[idx] {
-                fg = fg.to_greyscale();
-            }
-            ctx.set(x, y, fg, RGB::from_f32(0., 0., 0.), glyph);
-        } // Move the coordinates
-        x += 1;
-        if x > map.width - 1 {
-            x = 0;
-            y += 1;
         }
     }
 }

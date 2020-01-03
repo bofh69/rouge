@@ -32,7 +32,7 @@ impl<'a> System<'a> for ItemDroppingSystem {
 
         for (dropper_entity, drop) in (&entities, &wants_to_drop).join() {
             positions
-                .insert(drop.item, (*player_position).into())
+                .insert(drop.item, player_position.0.into())
                 .expect("Insert failed");
             backpack
                 .remove(drop.item)

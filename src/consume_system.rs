@@ -1,7 +1,9 @@
+use crate::camera::Camera;
 use crate::components::*;
 use crate::gamelog::GameLog;
 use crate::map::Map;
 use crate::PlayerEntity;
+use crate::ScreenPosition;
 use specs::prelude::*;
 
 pub struct UseItemSystem {}
@@ -10,6 +12,7 @@ impl<'a> System<'a> for UseItemSystem {
     #![allow(clippy::type_complexity)]
     type SystemData = (
         Entities<'a>,
+        ReadExpect<'a, Camera>,
         ReadExpect<'a, Map>,
         ReadExpect<'a, PlayerEntity>,
         WriteExpect<'a, GameLog>,
@@ -26,6 +29,7 @@ impl<'a> System<'a> for UseItemSystem {
     fn run(&mut self, data: Self::SystemData) {
         let (
             entities,
+            camera,
             map,
             player_entity,
             mut gamelog,
@@ -66,23 +70,27 @@ impl<'a> System<'a> for UseItemSystem {
                         match area_effect {
                             None => {
                                 // Single target in tile
-                                let idx = map.xy_idx(target.x, target.y);
+                                let idx = map.map_pos_to_idx(&target);
                                 for mob in map.tile_content[idx].iter() {
                                     targets.push(*mob);
                                 }
                             }
                             Some(area_effect) => {
                                 // AoE
-                                let mut blast_tiles =
-                                    rltk::field_of_view(target, area_effect.radius, &*map);
-                                blast_tiles.retain(|p| {
-                                    p.x > 0
-                                        && p.x < map.width - 1
-                                        && p.y > 0
-                                        && p.y < map.height - 1
-                                });
-                                for tile_idx in blast_tiles.iter() {
-                                    let idx = map.xy_idx(tile_idx.x, tile_idx.y);
+                                let screen_point = camera.transform_map_pos(&target).into();
+                                for tile_point in
+                                    rltk::field_of_view(screen_point, area_effect.radius, &*map)
+                                        .iter()
+                                        .filter(|p| {
+                                            p.x >= 0
+                                                && p.x < camera.width()
+                                                && p.y >= 0
+                                                && p.y < camera.height()
+                                        })
+                                        .map(|p| ScreenPosition { x: p.x, y: p.y })
+                                {
+                                    let idx = map
+                                        .map_pos_to_idx(&camera.transform_screen_pos(&tile_point));
                                     for mob in map.tile_content[idx].iter() {
                                         targets.push(*mob);
                                     }

@@ -1,8 +1,6 @@
 use crate::components::*;
 use crate::map::Map;
-use crate::PlayerEntity;
-use crate::PlayerPosition;
-use crate::RunState;
+use crate::{PlayerEntity, PlayerPosition, RunState};
 use rltk::{Algorithm2D, Point};
 use specs::prelude::*;
 
@@ -43,7 +41,7 @@ impl<'a> System<'a> for MonsterAiSystem {
             (&entities, &mut viewshed, &monster, &mut position).join()
         {
             let distance = rltk::DistanceAlg::Pythagoras
-                .distance2d(Point::new(pos.x, pos.y), (*player_pos).into());
+                .distance2d(Point::new(pos.0.x, pos.0.y), player_pos.0.into());
             if distance < 1.5 {
                 // Attack goes here
                 wants_to_melee
@@ -54,19 +52,19 @@ impl<'a> System<'a> for MonsterAiSystem {
                         },
                     )
                     .expect("Unable to insert attack");
-            } else if viewshed.visible_tiles.contains(&(*player_pos).into()) {
+            } else if viewshed.visible_tiles.contains(&player_pos.0) {
                 let path = rltk::a_star_search(
-                    map.xy_idx(pos.x, pos.y) as i32,
-                    map.xy_idx(player_pos.0, player_pos.1) as i32,
+                    map.pos_to_idx(&pos) as i32,
+                    map.map_pos_to_idx(&player_pos.0) as i32,
                     &mut *map,
                 );
                 if path.success && path.steps.len() > 1 {
-                    let old_idx = map.xy_idx(pos.x, pos.y);
-                    let new_pos = map.index_to_point2d(path.steps[1]);
-                    let new_idx = map.xy_idx(new_pos.x, new_pos.y);
+                    let old_idx = map.pos_to_idx(&pos);
+                    let new_idx = path.steps[1] as usize;
+                    let new_pos = map.index_to_point2d(new_idx as i32);
                     if !map.blocked[new_idx] {
-                        pos.x = new_pos.x;
-                        pos.y = new_pos.y;
+                        pos.0.x = new_pos.x;
+                        pos.0.y = new_pos.y;
                         map.blocked[old_idx] = false;
                         map.blocked[new_idx] = true;
                         viewshed.dirty = true;

@@ -24,8 +24,8 @@ pub fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) -> RunState 
     for (entity, _player, pos, viewshed) in
         (&entities, &mut players, &mut positions, &mut viewsheds).join()
     {
-        let (x, y) = (pos.x + delta_x, pos.y + delta_y);
-        let idx = map.xy_idx(x, y);
+        let (x, y) = (pos.0.x + delta_x, pos.0.y + delta_y);
+        let idx = map.xy_to_idx(x, y);
 
         for potential_target in map.tile_content[idx].iter() {
             let target = combat_stats.get(*potential_target);
@@ -45,22 +45,21 @@ pub fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) -> RunState 
         }
 
         if !map.blocked[idx] {
-            pos.x = min(map.width - 1, max(0, x));
-            pos.y = min(map.height - 1, max(0, y));
+            pos.0.x = min(map.width - 1, max(0, x));
+            pos.0.y = min(map.height - 1, max(0, y));
             viewshed.dirty = true;
             ret = RunState::PlayerTurn;
 
             // Update player position:
             let mut ppos = ecs.write_resource::<PlayerPosition>();
-            ppos.0 = x;
-            ppos.1 = y;
+            *ppos = PlayerPosition(pos.0);
         }
     }
     ret
 }
 
 pub fn get_item(ecs: &mut World) -> RunState {
-    let player_pos = ecs.fetch::<PlayerPosition>();
+    let player_pos = ecs.fetch::<PlayerPosition>().0;
     let player_entity = ecs.fetch::<PlayerEntity>();
     let mut gamelog = ecs.write_resource::<GameLog>();
     let positions = ecs.read_storage::<Position>();
@@ -69,7 +68,7 @@ pub fn get_item(ecs: &mut World) -> RunState {
     let mut wants_to_pickup = ecs.write_storage::<WantsToPickupItem>();
 
     for (item_entity, pos, _item) in (&entities, &positions, &items).join() {
-        if pos.x == player_pos.0 && pos.y == player_pos.1 {
+        if pos.0 == player_pos {
             wants_to_pickup
                 .insert(
                     player_entity.0,

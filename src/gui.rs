@@ -1,8 +1,10 @@
+use crate::camera::Camera;
 use crate::components::*;
 use crate::gamelog::GameLog;
 use crate::map::Map;
-use crate::map::{MAP_HEIGHT, MAP_WIDTH};
+use crate::MapPosition;
 use crate::PlayerPosition;
+use crate::ScreenPosition;
 use crate::{InventoryType, PlayerEntity, State};
 use rltk::{Console, Point, Rltk, VirtualKeyCode, RGB};
 use specs::prelude::*;
@@ -17,9 +19,11 @@ pub enum ItemMenuResult {
 pub fn ask_bool(ctx: &mut Rltk, question: &str) -> (ItemMenuResult, bool) {
     let width = question.len() as i32;
 
+    let (screen_width, screen_height) = ctx.get_char_size();
+
     ctx.draw_box_double(
-        MAP_WIDTH / 2 - width - 1,
-        MAP_HEIGHT / 2 - 2,
+        screen_width as i32 / 2 - width - 1,
+        screen_height as i32 / 2 - 2,
         width + 3,
         2,
         RGB::named(rltk::YELLOW),
@@ -27,8 +31,8 @@ pub fn ask_bool(ctx: &mut Rltk, question: &str) -> (ItemMenuResult, bool) {
     );
 
     ctx.print_color(
-        MAP_WIDTH / 2 - width + 1,
-        MAP_HEIGHT / 2 - 1,
+        screen_width as i32 / 2 - width + 1,
+        screen_height as i32 / 2 - 1,
         RGB::named(rltk::YELLOW),
         RGB::named(rltk::BLACK),
         question,
@@ -46,11 +50,12 @@ pub fn show_targeting(
     gs: &mut State,
     ctx: &mut Rltk,
     range: i32,
-) -> (ItemMenuResult, Option<Point>) {
+) -> (ItemMenuResult, Option<MapPosition>) {
     if Some(VirtualKeyCode::Escape) == ctx.key {
         return (ItemMenuResult::Cancel, None);
     }
 
+    let camera = gs.ecs.fetch::<Camera>();
     let player_pos = gs.ecs.fetch::<PlayerPosition>();
     let player_entity = gs.ecs.fetch::<PlayerEntity>().0;
     let viewsheds = gs.ecs.read_storage::<Viewshed>();
@@ -68,11 +73,13 @@ pub fn show_targeting(
     let visible = viewsheds.get(player_entity);
     if let Some(visible) = visible {
         // We have a viewshed
-        for idx in visible.visible_tiles.iter() {
-            let distance = rltk::DistanceAlg::Pythagoras.distance2d((*player_pos).into(), *idx);
+        for pos in visible.visible_tiles.iter() {
+            let point = camera.transform_map_pos(pos);
+            let distance = rltk::DistanceAlg::Pythagoras
+                .distance2d(camera.transform_map_pos(&player_pos.0).into(), point.into());
             if distance <= range as f32 {
-                ctx.set_bg(idx.x, idx.y, RGB::named(rltk::BLUE));
-                available_cells.push(idx);
+                ctx.set_bg(point.x, point.y, RGB::named(rltk::BLUE));
+                available_cells.push(point);
             }
         }
     } else {
@@ -92,7 +99,10 @@ pub fn show_targeting(
         if ctx.left_click {
             return (
                 ItemMenuResult::Selected,
-                Some(Point::new(mouse_pos.0, mouse_pos.1)),
+                Some(camera.transform_screen_pos(&ScreenPosition {
+                    x: mouse_pos.0,
+                    y: mouse_pos.1,
+                })),
             );
         }
     } else {
@@ -256,6 +266,7 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
 }
 
 fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
+    let camera = *(ecs.fetch::<Camera>());
     let map = ecs.fetch::<Map>();
     let names = ecs.read_storage::<Name>();
     let positions = ecs.read_storage::<Position>();
@@ -266,7 +277,8 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
     }
     let mut tooltip: Vec<String> = Vec::new();
     for (name, position) in (&names, &positions).join() {
-        if position.x == mouse_pos.0 && position.y == mouse_pos.1 {
+        let pos = camera.transform_map_pos(&position.0);
+        if pos.x == mouse_pos.0 && pos.y == mouse_pos.1 {
             tooltip.push(name.name.to_string());
         }
     }

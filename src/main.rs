@@ -1,5 +1,6 @@
 rltk::add_wasm_support!();
 
+mod camera;
 mod components;
 mod consume_system;
 mod damage_system;
@@ -18,10 +19,12 @@ mod visibility_system;
 #[macro_use]
 extern crate specs_derive;
 
+use crate::camera::CameraSystem;
+use camera::Camera;
 use components::*;
 use map::Map;
 use player::*;
-use rltk::{Console, GameState, Rltk};
+use rltk::{Console, GameState, Point, Rltk};
 use specs::prelude::*;
 use visibility_system::VisibilitySystem;
 
@@ -42,24 +45,44 @@ pub enum RunState {
     ShowTargeting(i32, Entity),
 }
 
-pub struct PlayerEntity(Entity);
+#[derive(PartialEq, Debug, Copy, Clone)]
+pub struct MapPosition {
+    pub x: i32,
+    pub y: i32,
+}
 
-#[derive(Debug, Copy, Clone)]
-pub struct PlayerPosition(i32, i32);
-
-impl Into<rltk::Point> for PlayerPosition {
-    fn into(self) -> rltk::Point {
-        /* Should go via Camera */
-        rltk::Point::new(self.0, self.1)
+impl Into<Point> for MapPosition {
+    fn into(self) -> Point {
+        Point::new(self.x, self.y)
     }
 }
 
+impl From<PlayerPosition> for MapPosition {
+    fn from(pos: PlayerPosition) -> Self {
+        pos.0
+    }
+}
+
+#[derive(PartialEq, Debug, Copy, Clone)]
+pub struct ScreenPosition {
+    pub x: i32,
+    pub y: i32,
+}
+
+impl Into<Point> for ScreenPosition {
+    fn into(self) -> Point {
+        Point::new(self.x, self.y)
+    }
+}
+
+pub struct PlayerEntity(Entity);
+
+#[derive(Debug, Copy, Clone)]
+pub struct PlayerPosition(pub MapPosition);
+
 impl Into<Position> for PlayerPosition {
     fn into(self) -> Position {
-        Position {
-            x: self.0,
-            y: self.1,
-        }
+        Position(self.0)
     }
 }
 
@@ -72,19 +95,27 @@ impl GameState for State {
         ctx.cls();
 
         {
+            let mut camera_sys = CameraSystem {};
+            camera_sys.run_now(&mut self.ecs);
+
             map::draw_map(&self.ecs, ctx);
 
             let map = self.ecs.fetch::<Map>();
 
+            let camera = self.ecs.fetch::<Camera>();
             let positions = self.ecs.read_storage::<Position>();
             let renderables = self.ecs.read_storage::<Renderable>();
 
-            let mut data = (&positions, &renderables).join().collect::<Vec<_>>();
+            let mut data = (&positions, &renderables)
+                .join()
+                .filter(|(p, _)| camera.is_in_view(&p.0))
+                .collect::<Vec<_>>();
             data.sort_by(|&a, &b| b.1.render_order.cmp(&a.1.render_order));
 
             for (pos, render) in data.iter() {
-                if map.visible_tiles[map.xy_idx(pos.x, pos.y)] {
-                    ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
+                if map.visible_tiles[map.pos_to_idx(&pos)] {
+                    let point = camera.transform_map_pos(&pos.0);
+                    ctx.set(point.x, point.y, render.fg, render.bg, render.glyph);
                 }
             }
         }
@@ -268,8 +299,13 @@ fn main() {
     }
     let player_entity = spawner::player(&mut gs.ecs, player_x, player_y);
 
+    let player_pos = PlayerPosition(MapPosition {
+        x: player_x,
+        y: player_y,
+    });
+    gs.ecs.insert(Camera::new(&player_pos, 80, 43));
     gs.ecs.insert(map);
-    gs.ecs.insert(PlayerPosition(player_x, player_y));
+    gs.ecs.insert(player_pos);
     gs.ecs.insert(PlayerEntity(player_entity));
 
     rltk::main_loop(context, gs);

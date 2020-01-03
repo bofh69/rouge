@@ -1,3 +1,4 @@
+use crate::MapPosition;
 use rltk::RGB;
 use specs::prelude::*;
 
@@ -15,6 +16,14 @@ pub struct CombatStats {
     pub hp: i32,
     pub defense: i32,
     pub power: i32,
+}
+
+#[derive(Component, Debug)]
+pub struct Consumable {}
+
+#[derive(Component, Debug)]
+pub struct HealthProvider {
+    pub heal_amount: i32,
 }
 
 #[derive(Component, Debug, Clone)]
@@ -41,18 +50,13 @@ pub struct Name {
 #[derive(Component, Debug)]
 pub struct Player {}
 
-#[derive(Component)]
-pub struct Position {
-    pub x: i32,
-    pub y: i32,
-}
+#[derive(PartialEq, Component, Copy, Clone, Debug)]
+pub struct Position(pub MapPosition);
 
-#[derive(Component, Debug)]
-pub struct Consumable {}
-
-#[derive(Component, Debug)]
-pub struct HealthProvider {
-    pub heal_amount: i32,
+impl From<MapPosition> for Position {
+    fn from(pos: MapPosition) -> Self {
+        Position(pos)
+    }
 }
 
 #[derive(Component, Debug)]
@@ -80,7 +84,7 @@ pub struct SufferDamage {
 
 #[derive(Component)]
 pub struct Viewshed {
-    pub visible_tiles: Vec<rltk::Point>,
+    pub visible_tiles: Vec<MapPosition>,
     pub range: i32,
     pub dirty: bool,
 }
@@ -88,7 +92,7 @@ pub struct Viewshed {
 #[derive(Component, Debug, Clone)]
 pub struct WantsToUseItem {
     pub item: Entity,
-    pub target: Option<rltk::Point>,
+    pub target: Option<MapPosition>,
 }
 
 #[derive(Component, Debug)]

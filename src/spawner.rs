@@ -1,6 +1,7 @@
 use crate::components::*;
 use crate::map::MAP_WIDTH;
 use crate::rect::Rect;
+use crate::MapPosition;
 use rltk::{RandomNumberGenerator, RGB};
 use specs::prelude::*;
 
@@ -9,10 +10,10 @@ pub const MAX_ITEMS: i32 = 3;
 
 pub fn player(ecs: &mut World, player_x: i32, player_y: i32) -> Entity {
     ecs.create_entity()
-        .with(Position {
+        .with(Position(MapPosition {
             x: player_x,
             y: player_y,
-        })
+        }))
         .with(Renderable {
             glyph: rltk::to_cp437('@'),
             fg: RGB::named(rltk::YELLOW),
@@ -59,7 +60,7 @@ fn janouch(ecs: &mut World, x: i32, y: i32) {
 
 fn monster<S: ToString>(ecs: &mut World, x: i32, y: i32, glyph: u8, name: S) {
     ecs.create_entity()
-        .with(Position { x, y })
+        .with(Position(MapPosition { x, y }))
         .with(Renderable {
             glyph,
             fg: RGB::named(rltk::RED),
@@ -101,7 +102,7 @@ pub fn random_item(ecs: &mut World, x: i32, y: i32) {
 
 fn health_potion(ecs: &mut World, x: i32, y: i32) {
     ecs.create_entity()
-        .with(Position { x, y })
+        .with(Position(MapPosition { x, y }))
         .with(Renderable {
             glyph: rltk::to_cp437('¡'),
             fg: RGB::named(rltk::MAGENTA),
@@ -119,7 +120,7 @@ fn health_potion(ecs: &mut World, x: i32, y: i32) {
 
 fn ball(ecs: &mut World, x: i32, y: i32) {
     ecs.create_entity()
-        .with(Position { x, y })
+        .with(Position(MapPosition { x, y }))
         .with(Renderable {
             glyph: rltk::to_cp437('*'),
             fg: RGB::named(rltk::PURPLE),
@@ -135,7 +136,7 @@ fn ball(ecs: &mut World, x: i32, y: i32) {
 
 fn magic_missile_scroll(ecs: &mut World, x: i32, y: i32) {
     ecs.create_entity()
-        .with(Position { x, y })
+        .with(Position(MapPosition { x, y }))
         .with(Renderable {
             glyph: rltk::to_cp437('?'),
             fg: RGB::named(rltk::CYAN),
@@ -154,7 +155,7 @@ fn magic_missile_scroll(ecs: &mut World, x: i32, y: i32) {
 
 fn fireball_scroll(ecs: &mut World, x: i32, y: i32) {
     ecs.create_entity()
-        .with(Position { x, y })
+        .with(Position(MapPosition { x, y }))
         .with(Renderable {
             glyph: rltk::to_cp437('?'),
             fg: RGB::named(rltk::ORANGE),
