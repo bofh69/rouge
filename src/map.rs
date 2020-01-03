@@ -9,11 +9,27 @@ use std::cmp::{max, min};
 
 pub const MAP_WIDTH: i32 = 120;
 pub const MAP_HEIGHT: i32 = 60;
-pub const MAP_COUNT: usize = (MAP_WIDTH * MAP_HEIGHT) as usize;
 
-#[derive(PartialEq, Copy, Clone)]
+#[derive(PartialEq, Copy, Clone, Debug)]
+pub enum WallType {
+    Vertical,          /* - */
+    Horizontal,        /* | */
+    TopLeftCorner,     /* ┌ */
+    TopRightCorner,    /* ┐ */
+    BottomLeftCorner,  /* └ */
+    BottomRightCorner, /* ┘ */
+    TeeDown,           /* T */
+    TeeUp,             /* ┴ */
+    TeeLeft,           /* ├ */
+    TeeRight,          /* ┤ */
+    Cross,             /* + */
+    Pilar,             /* ● */
+}
+
+#[derive(PartialEq, Copy, Clone, Debug)]
 pub enum TileType {
-    Wall,
+    Stone,
+    Wall(WallType),
     Floor,
 }
 
@@ -30,7 +46,11 @@ pub struct Map {
 
 impl BaseMap for Map {
     fn is_opaque(&self, idx: i32) -> bool {
-        self.tiles[idx as usize] == TileType::Wall
+        match self.tiles[idx as usize] {
+            TileType::Wall(_) => true,
+            TileType::Stone => true,
+            _ => false,
+        }
     }
 
     fn get_available_exits(&self, idx: i32) -> Vec<(i32, f32)> {
@@ -140,7 +160,127 @@ impl Map {
 
     pub fn populate_blocked(&mut self) {
         for (i, tile) in self.tiles.iter_mut().enumerate() {
-            self.blocked[i] = *tile == TileType::Wall;
+            self.blocked[i] = match *tile {
+                TileType::Wall(_) => true,
+                TileType::Stone => true,
+                _ => false,
+            }
+        }
+    }
+
+    pub fn is_solid(&self, pos: Point) -> bool {
+        if !self.in_bounds(pos) {
+            return true;
+        }
+        let idx = self.point2d_to_index(pos);
+        match self.tiles[idx as usize] {
+            TileType::Wall(_) => true,
+            TileType::Stone => true,
+            _ => false,
+        }
+    }
+
+    // Create points surrounding (x, y)
+    fn points_around(x: i32, y: i32) -> Vec<Point> {
+        vec![
+            Point::new(x - 1, y - 1),
+            Point::new(x, y - 1),
+            Point::new(x + 1, y - 1),
+            Point::new(x - 1, y),
+            Point::new(x + 1, y),
+            Point::new(x - 1, y + 1),
+            Point::new(x, y + 1),
+            Point::new(x + 1, y + 1),
+        ]
+    }
+
+    fn wall_continues(&self, pos: Point, dx: i32, dy: i32) -> bool {
+        let new_pos = Point::new(pos.x + dx, pos.y + dy);
+        if !self.is_solid(new_pos) {
+            return false;
+        }
+        if dx != 0 {
+            if !self.is_solid(Point::new(pos.x + dx, pos.y - 1))
+                || !self.is_solid(Point::new(pos.x + dx, pos.y))
+                || !self.is_solid(Point::new(pos.x + dx, pos.y + 1))
+                || !self.is_solid(Point::new(pos.x, pos.y - 1))
+                || !self.is_solid(Point::new(pos.x, pos.y + 1))
+            {
+                return true;
+            }
+        } else {
+            if !self.is_solid(Point::new(pos.x - 1, pos.y + dy))
+                || !self.is_solid(Point::new(pos.x, pos.y + dy))
+                || !self.is_solid(Point::new(pos.x + 1, pos.y + dy))
+                || !self.is_solid(Point::new(pos.x - 1, pos.y))
+                || !self.is_solid(Point::new(pos.x + 1, pos.y))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    fn fix_walls(&mut self) {
+        /* Remove single walls completely surrounded */
+        /* Change single walls completely lonely */
+        for y in 0..self.height {
+            for x in 0..self.width {
+                let pos = Point::new(x, y);
+                if self.is_solid(pos) {
+                    let idx = self.point2d_to_index(pos) as usize;
+                    let count_walls = Self::points_around(x, y)
+                        .iter()
+                        .filter(|p| !self.is_solid(**p))
+                        .count();
+                    if count_walls == 0 {
+                        self.tiles[idx] = TileType::Stone;
+                    } else if count_walls == 8 {
+                        self.tiles[idx] = TileType::Wall(WallType::Pilar);
+                    }
+                }
+            }
+        }
+        for y in 0..self.height {
+            for x in 0..self.width {
+                let pos = Point::new(x, y);
+                let idx = self.xy_to_idx(x, y);
+                if let TileType::Wall(_) = self.tiles[idx] {
+                    let mut walls = 0;
+                    if self.wall_continues(pos, -1, 0) {
+                        walls += 1;
+                    }
+                    if self.wall_continues(pos, 1, 0) {
+                        walls += 2;
+                    }
+                    if self.wall_continues(pos, 0, -1) {
+                        walls += 4;
+                    }
+                    if self.wall_continues(pos, 0, 1) {
+                        walls += 8;
+                    }
+                    let walltype = match walls {
+                        0 => WallType::Pilar,
+                        1 => WallType::Horizontal,
+                        2 => WallType::Horizontal,
+                        3 => WallType::Horizontal,
+                        4 => WallType::Vertical,
+                        5 => WallType::BottomRightCorner,
+                        6 => WallType::BottomLeftCorner,
+                        7 => WallType::TeeUp,
+                        8 => WallType::Vertical,
+                        9 => WallType::TopRightCorner,
+                        10 => WallType::TopLeftCorner,
+                        11 => WallType::TeeDown,
+                        12 => WallType::Vertical,
+                        13 => WallType::TeeLeft,
+                        14 => WallType::TeeRight,
+                        15 => WallType::Cross,
+                        _ => unreachable!(),
+                    };
+                    self.tiles[idx] = TileType::Wall(walltype);
+                }
+            }
         }
     }
 
@@ -150,24 +290,29 @@ impl Map {
         }
     }
 
-    pub fn new_map_rooms_and_corridors() -> Map {
-        let tiles = vec![TileType::Wall; MAP_COUNT];
-
+    fn new(width: i32, height: i32) -> Map {
+        let size = (width * height) as usize;
+        let tiles = vec![TileType::Wall(WallType::Cross); size];
         let rooms: Vec<Rect> = Vec::new();
+
+        Map {
+            tiles,
+            rooms,
+            width,
+            height,
+            revealed_tiles: vec![false; size],
+            visible_tiles: vec![false; size],
+            blocked: vec![false; size],
+            tile_content: vec![vec![]; size],
+        }
+    }
+
+    pub fn new_map_rooms_and_corridors() -> Map {
         const MAX_ROOMS: i32 = 30;
         const MIN_SIZE: i32 = 6;
         const MAX_SIZE: i32 = 10;
 
-        let mut map = Map {
-            tiles,
-            rooms,
-            width: MAP_WIDTH,
-            height: MAP_HEIGHT,
-            revealed_tiles: vec![false; MAP_COUNT],
-            visible_tiles: vec![false; MAP_COUNT],
-            blocked: vec![false; MAP_COUNT],
-            tile_content: vec![vec![]; MAP_COUNT],
-        };
+        let mut map = Map::new(MAP_WIDTH, MAP_HEIGHT);
 
         let mut rng = rltk::RandomNumberGenerator::new();
 
@@ -199,6 +344,8 @@ impl Map {
                 map.rooms.push(new_room);
             }
         }
+
+        map.fix_walls();
 
         map.populate_blocked();
 
@@ -234,7 +381,72 @@ pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
                             fg = RGB::from_f32(0.5, 0.5, 0.5);
                             glyph = rltk::to_cp437('.');
                         }
-                        TileType::Wall => {
+                        TileType::Wall(WallType::Vertical) => {
+                            fg = RGB::from_f32(0.0, 1.0, 0.0);
+                            glyph = rltk::to_cp437('│');
+                        }
+                        TileType::Wall(WallType::Horizontal) => {
+                            fg = RGB::from_f32(0.0, 1.0, 0.0);
+                            glyph = rltk::to_cp437('─');
+                        }
+                        TileType::Wall(WallType::TopLeftCorner) => {
+                            fg = RGB::from_f32(0.0, 1.0, 0.0);
+                            glyph = rltk::to_cp437('┌');
+                        }
+                        TileType::Wall(WallType::TopRightCorner) => {
+                            fg = RGB::from_f32(0.0, 1.0, 0.0);
+                            glyph = rltk::to_cp437('┐');
+                        }
+                        TileType::Wall(WallType::BottomLeftCorner) => {
+                            fg = RGB::from_f32(0.0, 1.0, 0.0);
+                            glyph = rltk::to_cp437('└');
+                        }
+                        TileType::Wall(WallType::BottomRightCorner) => {
+                            fg = RGB::from_f32(0.0, 1.0, 0.0);
+                            glyph = rltk::to_cp437('┘');
+                        }
+                        TileType::Wall(WallType::TeeDown) => {
+                            fg = RGB::from_f32(0.0, 1.0, 0.0);
+                            if y < map.height - 1 && map.revealed_tiles[idx + map.width as usize] {
+                                glyph = rltk::to_cp437('┬');
+                            } else {
+                                glyph = rltk::to_cp437('─');
+                            }
+                        }
+                        TileType::Wall(WallType::TeeUp) => {
+                            fg = RGB::from_f32(0.0, 1.0, 0.0);
+                            if y > 0 && map.revealed_tiles[idx - map.width as usize] {
+                                glyph = rltk::to_cp437('┴');
+                            } else {
+                                glyph = rltk::to_cp437('─');
+                            }
+                        }
+                        TileType::Wall(WallType::TeeRight) => {
+                            fg = RGB::from_f32(0.0, 1.0, 0.0);
+                            if x < map.width - 1 && map.revealed_tiles[idx + 1] {
+                                glyph = rltk::to_cp437('├');
+                            } else {
+                                glyph = rltk::to_cp437('│');
+                            }
+                        }
+                        TileType::Wall(WallType::TeeLeft) => {
+                            fg = RGB::from_f32(0.0, 1.0, 0.0);
+                            if x > 0 && map.revealed_tiles[idx - 1] {
+                                glyph = rltk::to_cp437('┤');
+                            } else {
+                                glyph = rltk::to_cp437('│');
+                            }
+                        }
+                        TileType::Wall(WallType::Cross) => {
+                            fg = RGB::from_f32(0.0, 1.0, 0.0);
+                            // TODO: What walls have been seen?
+                            glyph = rltk::to_cp437('┼');
+                        }
+                        TileType::Wall(WallType::Pilar) => {
+                            fg = RGB::from_f32(0.0, 1.0, 0.0);
+                            glyph = 9;
+                        }
+                        TileType::Stone => {
                             fg = RGB::from_f32(0.0, 1.0, 0.0);
                             glyph = rltk::to_cp437('#');
                         }
@@ -246,5 +458,46 @@ pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    #[test]
+    fn fix_walls() {
+        use super::*;
+        let mut map = Map::new(5, 5);
+        map.fix_walls();
+        assert_eq!(map.tiles, vec![TileType::Stone; 5 * 5]);
+        for tile in map.tiles.iter_mut() {
+            *tile = TileType::Floor;
+        }
+        /* .....
+         * ...--
+         * .---
+         * .|...
+         * .....
+         */
+        map.tiles[2 * 5 + 3] = TileType::Wall(WallType::Cross);
+        map.tiles[2 * 5 + 4] = TileType::Wall(WallType::Cross);
+        map.tiles[3 * 5 + 1] = TileType::Wall(WallType::Cross);
+        map.tiles[3 * 5 + 2] = TileType::Wall(WallType::Cross);
+        map.tiles[3 * 5 + 3] = TileType::Wall(WallType::Cross);
+        map.tiles[3 * 5 + 4] = TileType::Wall(WallType::Cross);
+        map.tiles[4 * 5 + 1] = TileType::Wall(WallType::Cross);
+        map.fix_walls();
+        assert_eq!(
+            map.tiles[2 * 5 + 3],
+            TileType::Wall(WallType::TopLeftCorner)
+        );
+        assert_eq!(map.tiles[2 * 5 + 4], TileType::Wall(WallType::Horizontal));
+        assert_eq!(
+            map.tiles[3 * 5 + 1],
+            TileType::Wall(WallType::TopLeftCorner)
+        );
+        assert_eq!(map.tiles[3 * 5 + 2], TileType::Wall(WallType::Horizontal));
+        assert_eq!(map.tiles[3 * 5 + 3], TileType::Wall(WallType::TeeUp));
+        assert_eq!(map.tiles[4 * 5 + 1], TileType::Wall(WallType::Vertical));
     }
 }
