@@ -63,6 +63,14 @@ impl From<PlayerPosition> for MapPosition {
     }
 }
 
+impl std::ops::Sub<MapPosition> for MapPosition {
+    type Output = Point;
+
+    fn sub(self, rhs: MapPosition) -> Self::Output {
+        Point::new(self.x - rhs.x, self.y - rhs.y)
+    }
+}
+
 #[derive(PartialEq, Debug, Copy, Clone)]
 pub struct ScreenPosition {
     pub x: i32,
