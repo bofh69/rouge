@@ -66,8 +66,8 @@ impl Camera {
         self.sub_tile_offset = (0.0, 0.0);
 
         let (x, y) = (
-            i32::min(MAP_WIDTH - self.w - 1, i32::max(0, (pos.0).x - self.w / 2)),
-            i32::min(MAP_HEIGHT - self.h - 1, i32::max(0, (pos.0).y - self.h / 2)),
+            i32::min(MAP_WIDTH - self.w, i32::max(0, (pos.0).x - self.w / 2)),
+            i32::min(MAP_HEIGHT - self.h, i32::max(0, (pos.0).y - self.h / 2)),
         );
 
         self.offset = MapPosition { x, y };
@@ -75,8 +75,8 @@ impl Camera {
 
     pub fn move_view(&mut self, dx: i32, dy: i32) {
         let (x, y) = (
-            i32::min(MAP_WIDTH - self.w - 1, i32::max(0, self.offset.x + dx)),
-            i32::min(MAP_HEIGHT - self.h - 1, i32::max(0, self.offset.y + dy)),
+            i32::min(MAP_WIDTH - self.w, i32::max(0, self.offset.x + dx)),
+            i32::min(MAP_HEIGHT - self.h, i32::max(0, self.offset.y + dy)),
         );
 
         self.offset = MapPosition { x, y };
