@@ -12,6 +12,16 @@ pub struct Camera {
     old_player_pos: MapPosition,
 }
 
+fn diff_to_interval(v: i32, min: i32, max: i32) -> i32 {
+    if v < min {
+        min - v
+    } else if v > max {
+        max - v
+    } else {
+        0
+    }
+}
+
 pub struct CameraSystem {}
 
 impl<'a> System<'a> for CameraSystem {
@@ -25,7 +35,16 @@ impl<'a> System<'a> for CameraSystem {
         if !camera.is_in_view(&pos) {
             camera.center(&player_position);
         } else {
-            // TODO: Update
+            if camera.old_player_pos != pos {
+                let screen_pos = pos - camera.offset;
+                let (dx, dy);
+                dx = diff_to_interval(screen_pos.x, camera.w / 3, 2 * camera.w / 3);
+                dy = diff_to_interval(screen_pos.y, camera.h / 3, 2 * camera.h / 3);
+
+                camera.move_view(-dx, -dy);
+
+                camera.old_player_pos = pos;
+            }
         }
     }
 }
@@ -49,8 +68,17 @@ impl Camera {
         self.sub_tile_offset = (0.0, 0.0);
 
         let (x, y) = (
-            i32::min(MAP_WIDTH, i32::max(0, (pos.0).x - self.w / 2)),
-            i32::min(MAP_HEIGHT, i32::max(0, (pos.0).y - self.h / 2)),
+            i32::min(MAP_WIDTH-self.w-1, i32::max(0, (pos.0).x - self.w / 2)),
+            i32::min(MAP_HEIGHT-self.h-1, i32::max(0, (pos.0).y - self.h / 2)),
+        );
+
+        self.offset = MapPosition { x, y };
+    }
+
+    pub fn move_view(&mut self, dx: i32, dy: i32) {
+        let (x, y) = (
+            i32::min(MAP_WIDTH - self.w - 1, i32::max(0, self.offset.x + dx)),
+            i32::min(MAP_HEIGHT - self.h - 1, i32::max(0, self.offset.y + dy)),
         );
 
         self.offset = MapPosition { x, y };
