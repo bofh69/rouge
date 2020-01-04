@@ -208,17 +208,15 @@ impl Map {
             {
                 return true;
             }
-        } else {
-            if !self.is_solid(Point::new(pos.x - 1, pos.y + dy))
-                || !self.is_solid(Point::new(pos.x, pos.y + dy))
-                || !self.is_solid(Point::new(pos.x + 1, pos.y + dy))
-                || !self.is_solid(Point::new(pos.x - 1, pos.y))
-                || !self.is_solid(Point::new(pos.x + 1, pos.y))
-            {
-                return true;
-            }
+        } else if !self.is_solid(Point::new(pos.x - 1, pos.y + dy))
+            || !self.is_solid(Point::new(pos.x, pos.y + dy))
+            || !self.is_solid(Point::new(pos.x + 1, pos.y + dy))
+            || !self.is_solid(Point::new(pos.x - 1, pos.y))
+            || !self.is_solid(Point::new(pos.x + 1, pos.y))
+        {
+            return true;
         }
-        return false;
+        false
     }
 
     fn fix_walls(&mut self) {
@@ -353,6 +351,72 @@ impl Map {
     }
 }
 
+fn get_glyph_for_wall(map: &Map, idx: usize, x: i32, y: i32, walltype: WallType) -> u8 {
+    let mut walls = 0;
+
+    if x > 0 && map.revealed_tiles[idx - 1 as usize] {
+        walls += 1 // Left
+    }
+    if x < map.width - 1 && map.revealed_tiles[idx + 1 as usize] {
+        walls += 2 // Right
+    }
+    if y > 0 && map.revealed_tiles[idx - map.width as usize] {
+        walls += 4 // up
+    }
+    if y < map.height - 1 && map.revealed_tiles[idx + map.width as usize] {
+        walls += 8 // Down
+    }
+
+    match walltype {
+        WallType::Vertical => rltk::to_cp437('│'),
+        WallType::Horizontal => rltk::to_cp437('─'),
+        WallType::TopLeftCorner => rltk::to_cp437('┌'),
+        WallType::TopRightCorner => rltk::to_cp437('┐'),
+        WallType::BottomLeftCorner => rltk::to_cp437('└'),
+        WallType::BottomRightCorner => rltk::to_cp437('┘'),
+        WallType::TeeDown => match walls & (1 + 2 + 8) {
+            9 => rltk::to_cp437('┐'),
+            10 => rltk::to_cp437('┌'),
+            11 => rltk::to_cp437('┬'),
+            _ => rltk::to_cp437('─'),
+        },
+        WallType::TeeUp => match walls & (1 + 2 + 4) {
+            5 => rltk::to_cp437('┘'),
+            6 => rltk::to_cp437('└'),
+            7 => rltk::to_cp437('┴'),
+            _ => rltk::to_cp437('─'),
+        },
+        WallType::TeeRight => match walls & (2 + 4 + 8) {
+            6 => rltk::to_cp437('└'),
+            10 => rltk::to_cp437('┌'),
+            14 => rltk::to_cp437('├'),
+            _ => rltk::to_cp437('│'),
+        },
+        WallType::TeeLeft => match walls & (1 + 4 + 8) {
+            5 => rltk::to_cp437('┘'),
+            9 => rltk::to_cp437('┐'),
+            13 => rltk::to_cp437('┤'),
+            _ => rltk::to_cp437('│'),
+        },
+        WallType::Cross => match walls & (1 + 2 + 4 + 8) {
+            4 => rltk::to_cp437('┴'),
+            5 => rltk::to_cp437('┘'),
+            6 => rltk::to_cp437('└'),
+            7 => rltk::to_cp437('┴'),
+            8 => rltk::to_cp437('┬'),
+            9 => rltk::to_cp437('┐'),
+            10 => rltk::to_cp437('┌'),
+            11 => rltk::to_cp437('┬'),
+            12 => rltk::to_cp437('│'),
+            13 => rltk::to_cp437('┤'),
+            14 => rltk::to_cp437('├'),
+            15 => rltk::to_cp437('┼'),
+            _ => rltk::to_cp437('─'),
+        },
+        WallType::Pilar => 9, /* o */
+    }
+}
+
 pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
     let map = ecs.fetch::<Map>();
     let camera = ecs.fetch::<Camera>();
@@ -381,70 +445,9 @@ pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
                             fg = RGB::from_f32(0.5, 0.5, 0.5);
                             glyph = rltk::to_cp437('.');
                         }
-                        TileType::Wall(WallType::Vertical) => {
-                            fg = RGB::from_f32(0.0, 1.0, 0.0);
-                            glyph = rltk::to_cp437('│');
-                        }
-                        TileType::Wall(WallType::Horizontal) => {
-                            fg = RGB::from_f32(0.0, 1.0, 0.0);
-                            glyph = rltk::to_cp437('─');
-                        }
-                        TileType::Wall(WallType::TopLeftCorner) => {
-                            fg = RGB::from_f32(0.0, 1.0, 0.0);
-                            glyph = rltk::to_cp437('┌');
-                        }
-                        TileType::Wall(WallType::TopRightCorner) => {
-                            fg = RGB::from_f32(0.0, 1.0, 0.0);
-                            glyph = rltk::to_cp437('┐');
-                        }
-                        TileType::Wall(WallType::BottomLeftCorner) => {
-                            fg = RGB::from_f32(0.0, 1.0, 0.0);
-                            glyph = rltk::to_cp437('└');
-                        }
-                        TileType::Wall(WallType::BottomRightCorner) => {
-                            fg = RGB::from_f32(0.0, 1.0, 0.0);
-                            glyph = rltk::to_cp437('┘');
-                        }
-                        TileType::Wall(WallType::TeeDown) => {
-                            fg = RGB::from_f32(0.0, 1.0, 0.0);
-                            if y < map.height - 1 && map.revealed_tiles[idx + map.width as usize] {
-                                glyph = rltk::to_cp437('┬');
-                            } else {
-                                glyph = rltk::to_cp437('─');
-                            }
-                        }
-                        TileType::Wall(WallType::TeeUp) => {
-                            fg = RGB::from_f32(0.0, 1.0, 0.0);
-                            if y > 0 && map.revealed_tiles[idx - map.width as usize] {
-                                glyph = rltk::to_cp437('┴');
-                            } else {
-                                glyph = rltk::to_cp437('─');
-                            }
-                        }
-                        TileType::Wall(WallType::TeeRight) => {
-                            fg = RGB::from_f32(0.0, 1.0, 0.0);
-                            if x < map.width - 1 && map.revealed_tiles[idx + 1] {
-                                glyph = rltk::to_cp437('├');
-                            } else {
-                                glyph = rltk::to_cp437('│');
-                            }
-                        }
-                        TileType::Wall(WallType::TeeLeft) => {
-                            fg = RGB::from_f32(0.0, 1.0, 0.0);
-                            if x > 0 && map.revealed_tiles[idx - 1] {
-                                glyph = rltk::to_cp437('┤');
-                            } else {
-                                glyph = rltk::to_cp437('│');
-                            }
-                        }
-                        TileType::Wall(WallType::Cross) => {
-                            fg = RGB::from_f32(0.0, 1.0, 0.0);
-                            // TODO: What walls have been seen?
-                            glyph = rltk::to_cp437('┼');
-                        }
-                        TileType::Wall(WallType::Pilar) => {
-                            fg = RGB::from_f32(0.0, 1.0, 0.0);
-                            glyph = 9;
+                        TileType::Wall(walltype) => {
+                            fg = RGB::from_f32(0.7, 0.9, 0.7);
+                            glyph = get_glyph_for_wall(&*map, idx, x, y, walltype)
                         }
                         TileType::Stone => {
                             fg = RGB::from_f32(0.0, 1.0, 0.0);
