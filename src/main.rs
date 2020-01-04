@@ -271,6 +271,20 @@ fn main() {
     let (player_x, player_y) = map.rooms[0].center();
 
     let mut context = Rltk::init_simple8x8(80, 50, "Rouge World", "resources");
+    /*
+    let cw = context.backend.platform.context_wrapper.as_ref();
+    let mh = cw
+        .expect("Unref context wrapper")
+        .el
+        .available_monitors()
+        .nth(0)
+        .expect("Getting first monitor");
+    cw.unwrap()
+        .wc
+        .window()
+        .set_fullscreen(Some(glutin::window::Fullscreen::Borderless(mh)));
+    */
+
     context.with_post_scanlines(true);
     let mut gs = State { ecs: World::new() };
 
