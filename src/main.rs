@@ -63,6 +63,17 @@ impl From<PlayerPosition> for MapPosition {
     }
 }
 
+impl std::ops::Add<(i32, i32)> for MapPosition {
+    type Output = MapPosition;
+
+    fn add(self, rhs: (i32, i32)) -> Self::Output {
+        MapPosition {
+            x: self.x + rhs.0,
+            y: self.y + rhs.1,
+        }
+    }
+}
+
 impl std::ops::Sub<MapPosition> for MapPosition {
     type Output = Point;
 
@@ -84,6 +95,40 @@ impl Into<Point> for ScreenPosition {
 }
 
 pub struct PlayerEntity(Entity);
+
+#[derive(PartialEq, Debug, Copy, Clone)]
+pub enum Direction {
+    West = 1,
+    East = 2,
+    South = 4,
+    SouthWest = 5,
+    SouthEast = 6,
+    North = 8,
+    NorthWest = 9,
+    NorthEast = 10,
+}
+
+impl From<Direction> for (i32, i32) {
+    fn from(dir: Direction) -> Self {
+        match dir {
+            Direction::West => (-1, 0),
+            Direction::East => (1, 0),
+            Direction::South => (0, 1),
+            Direction::SouthWest => (-1, 1),
+            Direction::SouthEast => (1, 1),
+            Direction::North => (0, -1),
+            Direction::NorthWest => (-1, -1),
+            Direction::NorthEast => (1, -1),
+        }
+    }
+}
+
+#[derive(PartialEq, Debug, Copy, Clone)]
+pub enum PlayerTarget {
+    None,
+    Position(MapPosition),
+    Dir(Direction),
+}
 
 #[derive(Debug, Copy, Clone)]
 pub struct PlayerPosition(pub MapPosition);
@@ -329,6 +374,7 @@ fn main() {
     gs.ecs.insert(map);
     gs.ecs.insert(player_pos);
     gs.ecs.insert(PlayerEntity(player_entity));
+    gs.ecs.insert(PlayerTarget::None);
 
     rltk::main_loop(context, gs);
 }

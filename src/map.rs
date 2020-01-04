@@ -42,6 +42,7 @@ pub struct Map {
     pub visible_tiles: Vec<bool>,
     pub blocked: Vec<bool>,
     pub tile_content: Vec<Vec<Entity>>,
+    only_revealed: bool,
 }
 
 impl BaseMap for Map {
@@ -123,12 +124,23 @@ impl Map {
         (pos.y * self.width + pos.x) as usize
     }
 
-    fn is_exit_valid(&self, x: i32, y: i32) -> bool {
+    pub fn is_exit_valid(&self, x: i32, y: i32) -> bool {
         if x < 1 || x > self.width - 1 || y < 1 || y > self.height - 1 {
             return false;
         }
         let idx = self.xy_to_idx(x, y);
+        if self.only_revealed && !self.revealed_tiles[idx] {
+            return false
+        }
         !self.blocked[idx]
+    }
+
+    pub fn search_only_revealed(&mut self) {
+        self.only_revealed = true
+    }
+
+    pub fn search_also_revealed(&mut self) {
+        self.only_revealed = false
     }
 
     fn apply_room_to_map(&mut self, room: &Rect) {
@@ -302,6 +314,7 @@ impl Map {
             visible_tiles: vec![false; size],
             blocked: vec![false; size],
             tile_content: vec![vec![]; size],
+            only_revealed: false,
         }
     }
 
@@ -357,13 +370,13 @@ fn get_glyph_for_wall(map: &Map, idx: usize, x: i32, y: i32, walltype: WallType)
     if x > 0 && map.revealed_tiles[idx - 1 as usize] {
         walls += 1 // Left
     }
-    if x < map.width - 1 && map.revealed_tiles[idx + 1 as usize] {
+    if x < map.width - 2 && map.revealed_tiles[idx + 1 as usize] {
         walls += 2 // Right
     }
     if y > 0 && map.revealed_tiles[idx - map.width as usize] {
         walls += 4 // up
     }
-    if y < map.height - 1 && map.revealed_tiles[idx + map.width as usize] {
+    if y < map.height - 2 && map.revealed_tiles[idx + map.width as usize] {
         walls += 8 // Down
     }
 
@@ -447,7 +460,7 @@ pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
                         }
                         TileType::Wall(walltype) => {
                             fg = RGB::from_f32(0.7, 0.9, 0.7);
-                            glyph = get_glyph_for_wall(&*map, idx, x, y, walltype)
+                            glyph = get_glyph_for_wall(&*map, idx, pos.x, pos.y, walltype)
                         }
                         TileType::Stone => {
                             fg = RGB::from_f32(0.0, 1.0, 0.0);

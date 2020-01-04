@@ -1,23 +1,26 @@
 use super::map::Map;
-use super::{Position, Viewshed};
+use crate::components::Monster;
 use crate::components::Player;
-use crate::MapPosition;
+use crate::{MapPosition, PlayerTarget, Position, Viewshed};
 use rltk::field_of_view;
 use specs::prelude::*;
 
 pub struct VisibilitySystem {}
 
 impl<'a> System<'a> for VisibilitySystem {
+    #[allow(clippy::type_complexity)]
     type SystemData = (
         WriteExpect<'a, Map>,
+        WriteExpect<'a, PlayerTarget>,
         Entities<'a>,
         WriteStorage<'a, Viewshed>,
         ReadStorage<'a, Position>,
         ReadStorage<'a, Player>,
+        ReadStorage<'a, Monster>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (mut map, entities, mut viewshed, pos, player) = data;
+        let (mut map, mut player_target, entities, mut viewshed, pos, player, monsters) = data;
 
         for (ent, viewshed, pos) in (&entities, &mut viewshed, &pos).join() {
             if viewshed.dirty {
@@ -36,12 +39,21 @@ impl<'a> System<'a> for VisibilitySystem {
                     for vt in map.visible_tiles.iter_mut() {
                         *vt = false;
                     }
+                    let mut curr_target = *player_target;
 
                     for vis in viewshed.visible_tiles.iter() {
                         let idx = map.map_pos_to_idx(*vis);
                         map.revealed_tiles[idx] = true;
                         map.visible_tiles[idx] = true;
+                        if PlayerTarget::None != curr_target {
+                            for ent in map.tile_content[idx].iter() {
+                                if monsters.get(*ent).is_some() {
+                                    curr_target = PlayerTarget::None
+                                }
+                            }
+                        }
                     }
+                    *player_target = curr_target;
                 }
 
                 viewshed.dirty = false;
