@@ -5,7 +5,7 @@ use crate::map::Map;
 use crate::MapPosition;
 use crate::PlayerPosition;
 use crate::ScreenPosition;
-use crate::{InventoryType, PlayerEntity, State};
+use crate::{InventoryType, PlayerEntity};
 use rltk::{Console, Point, Rltk, VirtualKeyCode, RGB};
 use specs::prelude::*;
 
@@ -14,6 +14,101 @@ pub enum ItemMenuResult {
     Cancel,
     NoResponse,
     Selected,
+}
+
+#[derive(PartialEq, Copy, Clone)]
+pub enum MainMenuState {
+    New,
+    Load,
+    Save,
+    Quit,
+}
+
+#[derive(PartialEq, Copy, Clone)]
+pub enum MainMenuResult {
+    Selected(MainMenuState),
+    NoSelection(MainMenuState),
+}
+
+pub fn show_main_menu(ctx: &mut Rltk, current_state: MainMenuState) -> MainMenuResult {
+    let (screen_width, screen_height) = ctx.get_char_size();
+    let text_width = 7;
+    let x = (screen_width / 2 - text_width / 2) as i32;
+    let y = (screen_height / 2 - 2) as i32;
+
+    ctx.print_color(
+        x - 4,
+        y - 2,
+        RGB::named(rltk::ORANGERED2),
+        RGB::named(rltk::BLACK),
+        "Welcome to Rouge",
+    );
+
+    ctx.draw_box_double(
+        x,
+        y,
+        text_width as i32,
+        5,
+        RGB::named(rltk::DEEPSKYBLUE),
+        RGB::named(rltk::BLACK),
+    );
+
+    let x = x + 1;
+
+    let black = RGB::named(rltk::BLACK);
+    let white = RGB::named(rltk::WHITE);
+
+    let (fg, bg) = if current_state == MainMenuState::New {
+        (black, white)
+    } else {
+        (white, black)
+    };
+    ctx.print_color(x, y + 1, fg, bg, " New  ");
+    let (fg, bg) = if current_state == MainMenuState::Load {
+        (black, white)
+    } else {
+        (white, black)
+    };
+    ctx.print_color(x, y + 2, fg, bg, " Load ");
+    let (fg, bg) = if current_state == MainMenuState::Save {
+        (black, white)
+    } else {
+        (white, black)
+    };
+    ctx.print_color(x, y + 3, fg, bg, " Save ");
+    let (fg, bg) = if current_state == MainMenuState::Quit {
+        (black, white)
+    } else {
+        (white, black)
+    };
+    ctx.print_color(x, y + 4, fg, bg, " Quit ");
+
+    match ctx.key {
+        Some(rltk::VirtualKeyCode::Down) | Some(rltk::VirtualKeyCode::J) => {
+            use MainMenuState::*;
+            let current_state = match current_state {
+                New => Load,
+                Load => Save,
+                Save => Quit,
+                Quit => New,
+            };
+            MainMenuResult::NoSelection(current_state)
+        }
+        Some(rltk::VirtualKeyCode::Up) | Some(rltk::VirtualKeyCode::K) => {
+            use MainMenuState::*;
+            let current_state = match current_state {
+                New => Quit,
+                Load => New,
+                Save => Load,
+                Quit => Save,
+            };
+            MainMenuResult::NoSelection(current_state)
+        }
+        Some(VirtualKeyCode::Return) | Some(VirtualKeyCode::Space) => {
+            MainMenuResult::Selected(current_state)
+        }
+        _ => MainMenuResult::NoSelection(current_state),
+    }
 }
 
 pub fn ask_bool(ctx: &mut Rltk, question: &str) -> (ItemMenuResult, bool) {
@@ -47,7 +142,7 @@ pub fn ask_bool(ctx: &mut Rltk, question: &str) -> (ItemMenuResult, bool) {
 }
 
 pub fn show_targeting(
-    gs: &mut State,
+    ecs: &mut World,
     ctx: &mut Rltk,
     range: i32,
 ) -> (ItemMenuResult, Option<MapPosition>) {
@@ -55,10 +150,10 @@ pub fn show_targeting(
         return (ItemMenuResult::Cancel, None);
     }
 
-    let camera = gs.ecs.fetch::<Camera>();
-    let player_pos = gs.ecs.fetch::<PlayerPosition>();
-    let player_entity = gs.ecs.fetch::<PlayerEntity>().0;
-    let viewsheds = gs.ecs.read_storage::<Viewshed>();
+    let camera = ecs.fetch::<Camera>();
+    let player_pos = ecs.fetch::<PlayerPosition>();
+    let player_entity = ecs.fetch::<PlayerEntity>().0;
+    let viewsheds = ecs.read_storage::<Viewshed>();
 
     ctx.print_color(
         5,
@@ -116,14 +211,14 @@ pub fn show_targeting(
 }
 
 pub fn show_inventory(
-    gs: &mut State,
+    ecs: &mut World,
     ctx: &mut Rltk,
     inv_type: InventoryType,
 ) -> (ItemMenuResult, Option<Entity>) {
-    let player_entity = gs.ecs.fetch::<PlayerEntity>();
-    let names = gs.ecs.read_storage::<Name>();
-    let backpack = gs.ecs.read_storage::<InBackpack>();
-    let entities = gs.ecs.entities();
+    let player_entity = ecs.fetch::<PlayerEntity>();
+    let names = ecs.read_storage::<Name>();
+    let backpack = ecs.read_storage::<InBackpack>();
+    let entities = ecs.entities();
 
     let inventory = (&backpack, &names)
         .join()
@@ -131,7 +226,7 @@ pub fn show_inventory(
     let count = inventory.count() as i32;
 
     if count == 0 {
-        let mut gamelog = gs.ecs.fetch_mut::<GameLog>();
+        let mut gamelog = ecs.fetch_mut::<GameLog>();
         gamelog.log("Your backpack is empty");
         return (ItemMenuResult::Cancel, None);
     }

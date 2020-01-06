@@ -4,13 +4,14 @@ use crate::rect::Rect;
 use crate::MapPosition;
 use crate::ScreenPosition;
 use rltk::{Algorithm2D, BaseMap, Console, Point, Rltk, RGB};
+use serde::{Deserialize, Serialize};
 use specs::prelude::*;
 use std::cmp::{max, min};
 
 pub const MAP_WIDTH: i32 = 120;
 pub const MAP_HEIGHT: i32 = 60;
 
-#[derive(PartialEq, Copy, Clone, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Copy, Clone, Debug)]
 pub enum WallType {
     Vertical,          /* - */
     Horizontal,        /* | */
@@ -26,13 +27,14 @@ pub enum WallType {
     Pilar,             /* ● */
 }
 
-#[derive(PartialEq, Copy, Clone, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Copy, Clone, Debug)]
 pub enum TileType {
     Stone,
     Wall(WallType),
     Floor,
 }
 
+#[derive(Default, Serialize, Deserialize, Clone)]
 pub struct Map {
     pub tiles: Vec<TileType>,
     pub rooms: Vec<Rect>,
@@ -41,6 +43,8 @@ pub struct Map {
     pub revealed_tiles: Vec<bool>,
     pub visible_tiles: Vec<bool>,
     pub blocked: Vec<bool>,
+    #[serde(skip_serializing)]
+    #[serde(skip_deserializing)]
     pub tile_content: Vec<Vec<Entity>>,
     only_revealed: bool,
 }
@@ -130,7 +134,7 @@ impl Map {
         }
         let idx = self.xy_to_idx(x, y);
         if self.only_revealed && !self.revealed_tiles[idx] {
-            return false
+            return false;
         }
         !self.blocked[idx]
     }

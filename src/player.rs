@@ -3,7 +3,7 @@ use crate::components::*;
 use crate::gamelog::GameLog;
 use crate::map::Map;
 use crate::{Direction, PlayerTarget, ScreenPosition};
-use crate::{InventoryType, PlayerEntity, PlayerPosition, RunState, State};
+use crate::{InventoryType, PlayerEntity, PlayerPosition, RunState};
 use rltk::{Algorithm2D, Rltk, VirtualKeyCode};
 use specs::prelude::*;
 use std::cmp::{max, min};
@@ -88,17 +88,17 @@ pub fn get_item(ecs: &mut World) -> RunState {
     RunState::AwaitingInput
 }
 
-fn init_auto_walk(gs: &State, pos: ScreenPosition) {
-    let camera = gs.ecs.fetch::<Camera>();
-    let map = gs.ecs.fetch::<Map>();
+fn init_auto_walk(ecs: &World, pos: ScreenPosition) {
+    let camera = ecs.fetch::<Camera>();
+    let map = ecs.fetch::<Map>();
     let map_pos = camera.transform_screen_pos(pos);
     let idx = map.map_pos_to_idx(map_pos);
 
     if camera.is_in_view(map_pos) && map.revealed_tiles[idx] {
-        let mut target_pos = gs.ecs.fetch_mut::<PlayerTarget>();
+        let mut target_pos = ecs.fetch_mut::<PlayerTarget>();
         *target_pos = PlayerTarget::Position(map_pos);
     } else {
-        let mut target_pos = gs.ecs.fetch_mut::<PlayerTarget>();
+        let mut target_pos = ecs.fetch_mut::<PlayerTarget>();
         *target_pos = PlayerTarget::None;
     }
 }
@@ -109,12 +109,12 @@ pub fn try_auto_walk_player(dir: Direction, ecs: &mut World) {
     *player_target = PlayerTarget::Dir(dir);
 }
 
-fn get_auto_walk_dest(gs: &mut State) -> Option<(i32, i32)> {
-    let player_target = gs.ecs.fetch::<PlayerTarget>();
+fn get_auto_walk_dest(ecs: &mut World) -> Option<(i32, i32)> {
+    let player_target = ecs.fetch::<PlayerTarget>();
     match *player_target {
         PlayerTarget::Position(map_pos) => {
-            let mut map = gs.ecs.fetch_mut::<Map>();
-            let player_pos = gs.ecs.fetch::<PlayerPosition>().0;
+            let mut map = ecs.fetch_mut::<Map>();
+            let player_pos = ecs.fetch::<PlayerPosition>().0;
 
             let old_idx = map.map_pos_to_idx(player_pos) as i32;
             map.search_only_revealed();
@@ -129,8 +129,8 @@ fn get_auto_walk_dest(gs: &mut State) -> Option<(i32, i32)> {
             }
         }
         PlayerTarget::Dir(dir) => {
-            let player_pos = gs.ecs.fetch::<PlayerPosition>().0;
-            let map = gs.ecs.fetch::<Map>();
+            let player_pos = ecs.fetch::<PlayerPosition>().0;
+            let map = ecs.fetch::<Map>();
             let (dx, dy) = dir.into();
             let new_pos = player_pos + (dx, dy);
             if map.is_exit_valid(new_pos.x, new_pos.y) {
@@ -142,46 +142,42 @@ fn get_auto_walk_dest(gs: &mut State) -> Option<(i32, i32)> {
     None
 }
 
-fn auto_walk(gs: &mut State) -> RunState {
-    let dest = get_auto_walk_dest(gs);
+fn auto_walk(ecs: &mut World) -> RunState {
+    let dest = get_auto_walk_dest(ecs);
 
     if let Some((dx, dy)) = dest {
-        if try_move_player(dx, dy, &mut gs.ecs) == RunState::PlayerTurn {
+        if try_move_player(dx, dy, ecs) == RunState::PlayerTurn {
             return RunState::PlayerTurn;
         }
     }
-    clear_auto_walk(gs);
+    clear_auto_walk(ecs);
     RunState::AwaitingInput
 }
 
-fn clear_auto_walk(gs: &mut State) {
-    let mut player_target = gs.ecs.fetch_mut::<PlayerTarget>();
+fn clear_auto_walk(ecs: &mut World) {
+    let mut player_target = ecs.fetch_mut::<PlayerTarget>();
     *player_target = PlayerTarget::None;
 }
 
-pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
+pub fn player_input(ecs: &mut World, ctx: &mut Rltk) -> RunState {
     if ctx.left_click {
         let pos = ctx.mouse_pos();
         let pos = ScreenPosition { x: pos.0, y: pos.1 };
-        init_auto_walk(gs, pos);
-        auto_walk(gs)
+        init_auto_walk(ecs, pos);
+        auto_walk(ecs)
     } else if ctx.shift {
-        clear_auto_walk(gs);
+        clear_auto_walk(ecs);
         if let Some(key) = ctx.key {
             use Direction::*;
             match key {
-                VirtualKeyCode::H | VirtualKeyCode::Left => try_auto_walk_player(West, &mut gs.ecs),
-                VirtualKeyCode::L | VirtualKeyCode::Right => {
-                    try_auto_walk_player(East, &mut gs.ecs)
-                }
-                VirtualKeyCode::K | VirtualKeyCode::Up => try_auto_walk_player(North, &mut gs.ecs),
-                VirtualKeyCode::J | VirtualKeyCode::Down => {
-                    try_auto_walk_player(South, &mut gs.ecs)
-                }
-                VirtualKeyCode::Y => try_auto_walk_player(NorthWest, &mut gs.ecs),
-                VirtualKeyCode::U => try_auto_walk_player(NorthEast, &mut gs.ecs),
-                VirtualKeyCode::B => try_auto_walk_player(SouthWest, &mut gs.ecs),
-                VirtualKeyCode::N => try_auto_walk_player(SouthEast, &mut gs.ecs),
+                VirtualKeyCode::H | VirtualKeyCode::Left => try_auto_walk_player(West, ecs),
+                VirtualKeyCode::L | VirtualKeyCode::Right => try_auto_walk_player(East, ecs),
+                VirtualKeyCode::K | VirtualKeyCode::Up => try_auto_walk_player(North, ecs),
+                VirtualKeyCode::J | VirtualKeyCode::Down => try_auto_walk_player(South, ecs),
+                VirtualKeyCode::Y => try_auto_walk_player(NorthWest, ecs),
+                VirtualKeyCode::U => try_auto_walk_player(NorthEast, ecs),
+                VirtualKeyCode::B => try_auto_walk_player(SouthWest, ecs),
+                VirtualKeyCode::N => try_auto_walk_player(SouthEast, ecs),
                 _ => (),
             }
         }
@@ -189,21 +185,21 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
     } else {
         match ctx.key {
             Some(key) => {
-                clear_auto_walk(gs);
+                clear_auto_walk(ecs);
                 match key {
                     // Player movement
-                    VirtualKeyCode::H | VirtualKeyCode::Left => try_move_player(-1, 0, &mut gs.ecs),
-                    VirtualKeyCode::L | VirtualKeyCode::Right => try_move_player(1, 0, &mut gs.ecs),
-                    VirtualKeyCode::K | VirtualKeyCode::Up => try_move_player(0, -1, &mut gs.ecs),
-                    VirtualKeyCode::J | VirtualKeyCode::Down => try_move_player(0, 1, &mut gs.ecs),
-                    VirtualKeyCode::Y => try_move_player(-1, -1, &mut gs.ecs),
-                    VirtualKeyCode::U => try_move_player(1, -1, &mut gs.ecs),
-                    VirtualKeyCode::B => try_move_player(-1, 1, &mut gs.ecs),
-                    VirtualKeyCode::N => try_move_player(1, 1, &mut gs.ecs),
+                    VirtualKeyCode::H | VirtualKeyCode::Left => try_move_player(-1, 0, ecs),
+                    VirtualKeyCode::L | VirtualKeyCode::Right => try_move_player(1, 0, ecs),
+                    VirtualKeyCode::K | VirtualKeyCode::Up => try_move_player(0, -1, ecs),
+                    VirtualKeyCode::J | VirtualKeyCode::Down => try_move_player(0, 1, ecs),
+                    VirtualKeyCode::Y => try_move_player(-1, -1, ecs),
+                    VirtualKeyCode::U => try_move_player(1, -1, ecs),
+                    VirtualKeyCode::B => try_move_player(-1, 1, ecs),
+                    VirtualKeyCode::N => try_move_player(1, 1, ecs),
 
                     VirtualKeyCode::Space => RunState::PlayerTurn,
 
-                    VirtualKeyCode::Comma => get_item(&mut gs.ecs),
+                    VirtualKeyCode::Comma => get_item(ecs),
 
                     VirtualKeyCode::A => RunState::ShowInventory(InventoryType::Apply),
                     VirtualKeyCode::D => RunState::ShowInventory(InventoryType::Drop),
@@ -212,7 +208,7 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
                     _ => RunState::AwaitingInput,
                 }
             }
-            _ => auto_walk(gs),
+            _ => auto_walk(ecs),
         }
     }
 }
