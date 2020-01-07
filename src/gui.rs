@@ -163,12 +163,29 @@ pub fn show_main_menu(ctx: &mut Rltk, current_state: MainMenuState) -> MainMenuR
     let y = (screen_height / 2 - 2) as i32;
 
     ctx.print_color(
-        x - 4,
-        y - 2,
+        (80-14)/2,
+        11,
+        RGB::named(rltk::YELLOW),
+        RGB::named(rltk::BLACK),
+        "Welcome to ...");
+
+for (y, line) in vec![
+".########...#######..##.....##..######...########",
+".##.....##.##.....##.##.....##.##....##..##......",
+".##.....##.##.....##.##.....##.##........##......",
+".########..##.....##.##.....##.##...####.######..",
+".##...##...##.....##.##.....##.##....##..##......",
+".##....##..##.....##.##.....##.##....##..##......",
+".##.....##..#######...#######...######...########",
+].iter().enumerate() {
+    ctx.print_color(
+        15,
+        14+y as i32,
         RGB::named(rltk::ORANGERED2),
         RGB::named(rltk::BLACK),
-        "Welcome to Rouge",
-    );
+        line);
+
+}
 
     ctx.draw_box_double(
         x,
