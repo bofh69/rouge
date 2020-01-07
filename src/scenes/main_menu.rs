@@ -17,10 +17,6 @@ impl Scene<World> for MainMenuScene {
                 // TODO
                 SceneResult::Pop
             }
-            Selected(Save) => {
-                // TODO
-                SceneResult::Pop
-            }
             NoSelection(state) => {
                 self.state = state;
                 SceneResult::Continue

@@ -18,7 +18,6 @@ pub enum ItemMenuResult {
 pub enum MainMenuState {
     New,
     Load,
-    Save,
     Quit,
 }
 
@@ -213,12 +212,6 @@ for (y, line) in vec![
         (white, black)
     };
     ctx.print_color(x, y + 2, fg, bg, " Load ");
-    let (fg, bg) = if current_state == MainMenuState::Save {
-        (black, white)
-    } else {
-        (white, black)
-    };
-    ctx.print_color(x, y + 3, fg, bg, " Save ");
     let (fg, bg) = if current_state == MainMenuState::Quit {
         (black, white)
     } else {
@@ -231,8 +224,7 @@ for (y, line) in vec![
             use MainMenuState::*;
             let current_state = match current_state {
                 New => Load,
-                Load => Save,
-                Save => Quit,
+                Load => Quit,
                 Quit => New,
             };
             MainMenuResult::NoSelection(current_state)
@@ -242,8 +234,7 @@ for (y, line) in vec![
             let current_state = match current_state {
                 New => Quit,
                 Load => New,
-                Save => Load,
-                Quit => Save,
+                Quit => Load,
             };
             MainMenuResult::NoSelection(current_state)
         }
