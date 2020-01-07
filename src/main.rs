@@ -40,7 +40,7 @@ pub enum RunState {
     PlayerTurn,
     MonsterTurn,
     ShowInventory(InventoryType),
-    ShowTargeting(i32, Entity),
+    ShowTargeting(gui::TargetingInfo, Entity),
 }
 
 #[derive(PartialEq, Debug, Copy, Clone)]
@@ -89,6 +89,12 @@ pub struct ScreenPosition {
 impl Into<Point> for ScreenPosition {
     fn into(self) -> Point {
         Point::new(self.x, self.y)
+    }
+}
+
+impl Into<(i32, i32)> for ScreenPosition {
+    fn into(self) -> (i32, i32) {
+        (self.x, self.y)
     }
 }
 
@@ -220,8 +226,8 @@ fn main() {
     }
     let player_entity = spawner::player(&mut gs.ecs, player_x, player_y);
 
-    let data = serde_json::to_string(&map).unwrap();
-    println!("{}", data);
+    // let data = serde_json::to_string(&map).unwrap();
+    // println!("{}", data);
 
     let player_pos = PlayerPosition(MapPosition {
         x: player_x,

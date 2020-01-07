@@ -2,9 +2,7 @@ use crate::camera::Camera;
 use crate::components::*;
 use crate::gamelog::GameLog;
 use crate::map::Map;
-use crate::MapPosition;
-use crate::PlayerPosition;
-use crate::ScreenPosition;
+use crate::{Direction, MapPosition, PlayerPosition, ScreenPosition};
 use crate::{InventoryType, PlayerEntity};
 use rltk::{Console, Point, Rltk, VirtualKeyCode, RGB};
 use specs::prelude::*;
@@ -28,6 +26,134 @@ pub enum MainMenuState {
 pub enum MainMenuResult {
     Selected(MainMenuState),
     NoSelection(MainMenuState),
+}
+
+pub fn key_to_dir(key: VirtualKeyCode) -> Option<Direction> {
+    match key {
+        VirtualKeyCode::H | VirtualKeyCode::Left => Some(Direction::West),
+        VirtualKeyCode::L | VirtualKeyCode::Right => Some(Direction::East),
+        VirtualKeyCode::K | VirtualKeyCode::Up => Some(Direction::North),
+        VirtualKeyCode::J | VirtualKeyCode::Down => Some(Direction::South),
+        VirtualKeyCode::Y => Some(Direction::NorthWest),
+        VirtualKeyCode::U => Some(Direction::NorthEast),
+        VirtualKeyCode::B => Some(Direction::SouthWest),
+        VirtualKeyCode::N => Some(Direction::SouthEast),
+        _ => None,
+    }
+}
+
+#[derive(PartialEq, Copy, Clone)]
+pub struct TargetingInfo {
+    range: i32,
+    last_mouse_pos: (i32, i32),
+    current_pos: (i32, i32),
+}
+
+impl TargetingInfo {
+    pub fn new(range: i32, start_pos: ScreenPosition, ctx: &mut Rltk) -> Self {
+        Self {
+            range,
+            last_mouse_pos: ctx.mouse_pos(),
+            current_pos: start_pos.into(),
+        }
+    }
+
+    pub fn show_targeting(
+        &mut self,
+        ecs: &mut World,
+        ctx: &mut Rltk,
+    ) -> (ItemMenuResult, Option<MapPosition>) {
+        if Some(VirtualKeyCode::Escape) == ctx.key {
+            return (ItemMenuResult::Cancel, None);
+        }
+
+        if self.last_mouse_pos != ctx.mouse_pos() {
+            self.last_mouse_pos = ctx.mouse_pos();
+            self.current_pos = ctx.mouse_pos();
+        } else if ctx.left_click {
+            self.current_pos = ctx.mouse_pos();
+        } else if let Some(key) = ctx.key {
+            if let Some(dir) = key_to_dir(key) {
+                let (dx, dy) = dir.into();
+                self.current_pos = (self.current_pos.0 + dx, self.current_pos.1 + dy);
+            }
+        }
+
+        let camera = ecs.fetch::<Camera>();
+        let player_pos = ecs.fetch::<PlayerPosition>();
+        let player_entity = ecs.fetch::<PlayerEntity>().0;
+        let viewsheds = ecs.read_storage::<Viewshed>();
+
+        ctx.print_color(
+            5,
+            0,
+            RGB::named(rltk::YELLOW),
+            RGB::named(rltk::BLACK),
+            "Select Target:",
+        );
+
+        // Highlight available target cells
+        let mut available_cells = Vec::new();
+        let visible = viewsheds.get(player_entity);
+        if let Some(visible) = visible {
+            // We have a viewshed
+            for pos in visible.visible_tiles.iter() {
+                let point = camera.transform_map_pos(*pos);
+                let distance = rltk::DistanceAlg::Pythagoras
+                    .distance2d(camera.transform_map_pos(player_pos.0).into(), point.into());
+                if distance <= self.range as f32 {
+                    ctx.set_bg(point.x, point.y, RGB::named(rltk::BLUE));
+                    available_cells.push(point);
+                }
+            }
+        } else {
+            return (ItemMenuResult::Cancel, None);
+        }
+
+        // Draw mouse cursor
+        let mut valid_target = false;
+        for idx in available_cells.iter() {
+            if idx.x == self.current_pos.0 && idx.y == self.current_pos.1 {
+                valid_target = true;
+            }
+        }
+        if valid_target {
+            ctx.set_bg(
+                self.current_pos.0,
+                self.current_pos.1,
+                RGB::named(rltk::CYAN),
+            );
+
+            match (ctx.key, ctx.left_click) {
+                (_, true)
+                | (Some(VirtualKeyCode::Return), _)
+                | (Some(VirtualKeyCode::Space), _) => {
+                    return (
+                        ItemMenuResult::Selected,
+                        Some(camera.transform_screen_pos(ScreenPosition {
+                            x: self.current_pos.0,
+                            y: self.current_pos.1,
+                        })),
+                    );
+                }
+                _ => (),
+            }
+        } else {
+            ctx.set_bg(
+                self.current_pos.0,
+                self.current_pos.1,
+                RGB::named(rltk::RED),
+            );
+            match (ctx.key, ctx.left_click) {
+                (Some(VirtualKeyCode::Return), _) | (_, true) => {
+                    return (ItemMenuResult::Cancel, None)
+                }
+                _ => (),
+            }
+        }
+
+        (ItemMenuResult::NoResponse, None)
+    }
 }
 
 pub fn show_main_menu(ctx: &mut Rltk, current_state: MainMenuState) -> MainMenuResult {
@@ -139,75 +265,6 @@ pub fn ask_bool(ctx: &mut Rltk, question: &str) -> (ItemMenuResult, bool) {
         Some(VirtualKeyCode::Escape) => (ItemMenuResult::Cancel, false),
         _ => (ItemMenuResult::NoResponse, false),
     }
-}
-
-pub fn show_targeting(
-    ecs: &mut World,
-    ctx: &mut Rltk,
-    range: i32,
-) -> (ItemMenuResult, Option<MapPosition>) {
-    if Some(VirtualKeyCode::Escape) == ctx.key {
-        return (ItemMenuResult::Cancel, None);
-    }
-
-    let camera = ecs.fetch::<Camera>();
-    let player_pos = ecs.fetch::<PlayerPosition>();
-    let player_entity = ecs.fetch::<PlayerEntity>().0;
-    let viewsheds = ecs.read_storage::<Viewshed>();
-
-    ctx.print_color(
-        5,
-        0,
-        RGB::named(rltk::YELLOW),
-        RGB::named(rltk::BLACK),
-        "Select Target:",
-    );
-
-    // Highlight available target cells
-    let mut available_cells = Vec::new();
-    let visible = viewsheds.get(player_entity);
-    if let Some(visible) = visible {
-        // We have a viewshed
-        for pos in visible.visible_tiles.iter() {
-            let point = camera.transform_map_pos(*pos);
-            let distance = rltk::DistanceAlg::Pythagoras
-                .distance2d(camera.transform_map_pos(player_pos.0).into(), point.into());
-            if distance <= range as f32 {
-                ctx.set_bg(point.x, point.y, RGB::named(rltk::BLUE));
-                available_cells.push(point);
-            }
-        }
-    } else {
-        return (ItemMenuResult::Cancel, None);
-    }
-
-    // Draw mouse cursor
-    let mouse_pos = ctx.mouse_pos();
-    let mut valid_target = false;
-    for idx in available_cells.iter() {
-        if idx.x == mouse_pos.0 && idx.y == mouse_pos.1 {
-            valid_target = true;
-        }
-    }
-    if valid_target {
-        ctx.set_bg(mouse_pos.0, mouse_pos.1, RGB::named(rltk::CYAN));
-        if ctx.left_click {
-            return (
-                ItemMenuResult::Selected,
-                Some(camera.transform_screen_pos(ScreenPosition {
-                    x: mouse_pos.0,
-                    y: mouse_pos.1,
-                })),
-            );
-        }
-    } else {
-        ctx.set_bg(mouse_pos.0, mouse_pos.1, RGB::named(rltk::RED));
-        if ctx.left_click {
-            return (ItemMenuResult::Cancel, None);
-        }
-    }
-
-    (ItemMenuResult::NoResponse, None)
 }
 
 pub fn show_inventory(

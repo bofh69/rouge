@@ -168,17 +168,8 @@ pub fn player_input(ecs: &mut World, ctx: &mut Rltk) -> RunState {
     } else if ctx.shift {
         clear_auto_walk(ecs);
         if let Some(key) = ctx.key {
-            use Direction::*;
-            match key {
-                VirtualKeyCode::H | VirtualKeyCode::Left => try_auto_walk_player(West, ecs),
-                VirtualKeyCode::L | VirtualKeyCode::Right => try_auto_walk_player(East, ecs),
-                VirtualKeyCode::K | VirtualKeyCode::Up => try_auto_walk_player(North, ecs),
-                VirtualKeyCode::J | VirtualKeyCode::Down => try_auto_walk_player(South, ecs),
-                VirtualKeyCode::Y => try_auto_walk_player(NorthWest, ecs),
-                VirtualKeyCode::U => try_auto_walk_player(NorthEast, ecs),
-                VirtualKeyCode::B => try_auto_walk_player(SouthWest, ecs),
-                VirtualKeyCode::N => try_auto_walk_player(SouthEast, ecs),
-                _ => (),
+            if let Some(dir) = crate::gui::key_to_dir(key) {
+                try_auto_walk_player(dir, ecs)
             }
         }
         RunState::AwaitingInput

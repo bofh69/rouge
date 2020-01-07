@@ -4,6 +4,7 @@ use crate::components::*;
 use crate::map::Map;
 use crate::player::player_input;
 use crate::visibility_system::VisibilitySystem;
+use crate::PlayerPosition;
 use crate::{gui, PlayerEntity, RunState};
 use rltk::*;
 use specs::prelude::*;
@@ -74,7 +75,12 @@ impl Scene<World> for GameScene {
                     match inv_type {
                         crate::InventoryType::Apply => {
                             if let Some(range) = ecs.read_storage::<Ranged>().get(item_entity) {
-                                newrunstate = RunState::ShowTargeting(range.range, item_entity);
+                                let player_position = ecs.fetch::<PlayerPosition>().0;
+                                let camera = ecs.fetch::<Camera>();
+                                let start_pos = camera.transform_map_pos(player_position);
+                                let targeting_info =
+                                    gui::TargetingInfo::new(range.range, start_pos, ctx);
+                                newrunstate = RunState::ShowTargeting(targeting_info, item_entity);
                             } else {
                                 let mut wants_to_drink = ecs.write_storage::<WantsToUseItem>();
                                 wants_to_drink
@@ -100,8 +106,8 @@ impl Scene<World> for GameScene {
                 }
                 _ => (),
             },
-            RunState::ShowTargeting(range, item_entity) => {
-                match gui::show_targeting(ecs, ctx, range) {
+            RunState::ShowTargeting(ref mut targeting_info, item_entity) => {
+                match targeting_info.show_targeting(ecs, ctx) {
                     (gui::ItemMenuResult::Cancel, _) => newrunstate = RunState::AwaitingInput,
                     (gui::ItemMenuResult::Selected, Some(target_position)) => {
                         let player_entity = ecs.fetch::<PlayerEntity>();
