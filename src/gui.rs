@@ -7,6 +7,8 @@ use crate::{InventoryType, PlayerEntity};
 use rltk::{Console, Point, Rltk, VirtualKeyCode, RGB};
 use specs::prelude::*;
 
+const BOTTOM_HEIGHT : i32 = 7;
+
 #[derive(PartialEq, Copy, Clone)]
 pub enum ItemMenuResult {
     Cancel,
@@ -74,7 +76,15 @@ impl TargetingInfo {
         } else if let Some(key) = ctx.key {
             if let Some(dir) = key_to_dir(key) {
                 let (dx, dy) = dir.into();
-                self.current_pos = (self.current_pos.0 + dx, self.current_pos.1 + dy);
+                let temp_pos = (self.current_pos.0 + dx, self.current_pos.1 + dy);
+                let (screen_width, screen_height) = ctx.get_char_size();
+                if temp_pos.0 >= 0
+                    && temp_pos.0 < screen_width as i32
+                    && temp_pos.1 >= 0
+                    && temp_pos.1 < (screen_height as i32 - BOTTOM_HEIGHT)
+                {
+                    self.current_pos = temp_pos;
+                }
             }
         }
 
@@ -162,29 +172,33 @@ pub fn show_main_menu(ctx: &mut Rltk, current_state: MainMenuState) -> MainMenuR
     let y = (screen_height / 2 - 2) as i32;
 
     ctx.print_color(
-        (80-14)/2,
+        (80 - 14) / 2,
         11,
         RGB::named(rltk::YELLOW),
         RGB::named(rltk::BLACK),
-        "Welcome to ...");
+        "Welcome to ...",
+    );
 
-for (y, line) in vec![
-".########...#######..##.....##..######...########",
-".##.....##.##.....##.##.....##.##....##..##......",
-".##.....##.##.....##.##.....##.##........##......",
-".########..##.....##.##.....##.##...####.######..",
-".##...##...##.....##.##.....##.##....##..##......",
-".##....##..##.....##.##.....##.##....##..##......",
-".##.....##..#######...#######...######...########",
-].iter().enumerate() {
-    ctx.print_color(
-        15,
-        14+y as i32,
-        RGB::named(rltk::ORANGERED2),
-        RGB::named(rltk::BLACK),
-        line);
-
-}
+    for (y, line) in vec![
+        ".########...#######..##.....##..######...########",
+        ".##.....##.##.....##.##.....##.##....##..##......",
+        ".##.....##.##.....##.##.....##.##........##......",
+        ".########..##.....##.##.....##.##...####.######..",
+        ".##...##...##.....##.##.....##.##....##..##......",
+        ".##....##..##.....##.##.....##.##....##..##......",
+        ".##.....##..#######...#######...######...########",
+    ]
+    .iter()
+    .enumerate()
+    {
+        ctx.print_color(
+            15,
+            14 + y as i32,
+            RGB::named(rltk::ORANGERED2),
+            RGB::named(rltk::BLACK),
+            line,
+        );
+    }
 
     ctx.draw_box_double(
         x,
@@ -375,10 +389,13 @@ pub fn show_inventory(
 }
 
 pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
+    let (screen_width, screen_height) = ctx.get_char_size();
+    let (screen_width, screen_height) = (screen_width as i32, screen_height as i32);
+    let bottom_start = screen_height - BOTTOM_HEIGHT;
     ctx.draw_box(
         0,
-        43,
-        79,
+        bottom_start,
+        screen_width - 1,
         6,
         RGB::named(rltk::WHITE),
         RGB::named(rltk::BLACK),
@@ -390,7 +407,7 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
         let health = format!(" HP: {} / {} ", stats.hp, stats.max_hp);
         ctx.print_color(
             12,
-            43,
+            bottom_start,
             RGB::named(rltk::YELLOW),
             RGB::named(rltk::BLACK),
             &health,
@@ -406,7 +423,7 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
 
         ctx.draw_bar_horizontal(
             28,
-            43,
+            bottom_start,
             51,
             stats.hp,
             stats.max_hp,
@@ -419,7 +436,7 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
         if i > 4 {
             break;
         }
-        ctx.print(1, 48 - i as i32, entry);
+        ctx.print(1, screen_height - 2 - i as i32, entry);
     }
 
     draw_tooltips(ecs, ctx);

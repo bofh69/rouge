@@ -169,10 +169,12 @@ impl GameState for State {
 impl State {}
 
 fn main() {
+    const SCREEN_WIDTH: u32 = 80;
+    const SCREEN_HEIGHT: u32 = 50;
     let map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
 
-    let mut context = Rltk::init_simple8x8(80, 50, "Rouge World", "resources");
+    let mut context = Rltk::init_simple8x8(SCREEN_WIDTH, SCREEN_HEIGHT, "Rouge World", "resources");
     /*
     let cw = context.backend.platform.context_wrapper.as_ref();
     let mh = cw
@@ -233,7 +235,11 @@ fn main() {
         x: player_x,
         y: player_y,
     });
-    gs.ecs.insert(Camera::new(player_pos, 80, 43));
+    gs.ecs.insert(Camera::new(
+        player_pos,
+        SCREEN_WIDTH as i32,
+        SCREEN_HEIGHT as i32 - 7,
+    ));
     gs.ecs.insert(map);
     gs.ecs.insert(player_pos);
     gs.ecs.insert(PlayerEntity(player_entity));
