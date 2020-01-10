@@ -1,4 +1,6 @@
-use crate::components::{InBackpack, Name, Position, WantsToDropItem, WantsToPickupItem};
+use crate::components::{
+    InBackpack, ItemIndex, Name, Position, WantsToDropItem, WantsToPickupItem,
+};
 use crate::gamelog::GameLog;
 use crate::{PlayerEntity, PlayerPosition};
 use specs::prelude::*;
@@ -56,17 +58,60 @@ impl<'a> System<'a> for ItemCollectionSystem {
     type SystemData = (
         ReadExpect<'a, PlayerEntity>,
         WriteExpect<'a, GameLog>,
-        WriteStorage<'a, WantsToPickupItem>,
-        WriteStorage<'a, Position>,
         ReadStorage<'a, Name>,
         WriteStorage<'a, InBackpack>,
+        WriteStorage<'a, ItemIndex>,
+        WriteStorage<'a, Position>,
+        WriteStorage<'a, WantsToPickupItem>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (player_entity, mut gamelog, mut wants_pickup, mut positions, names, mut backpack) =
-            data;
+        let (
+            player_entity,
+            mut gamelog,
+            names,
+            mut backpack,
+            mut item_index,
+            mut positions,
+            mut wants_pickup,
+        ) = data;
 
         for pickup in wants_pickup.join() {
+            if pickup.collected_by == player_entity.0 {
+                let mut possible_indexes = std::collections::HashSet::new();
+                for c in 0..52 {
+                    possible_indexes.insert(c);
+                }
+                for (item_idx, in_backpack) in (&item_index, &backpack).join() {
+                    if in_backpack.owner == player_entity.0 {
+                        possible_indexes.remove(&item_idx.index);
+                    }
+                }
+                let mut possible_indexes: Vec<_> = possible_indexes.drain().collect();
+                possible_indexes.sort();
+
+                let mut idx = 255u8;
+                if let Some(ItemIndex { index }) = item_index.get(pickup.item) {
+                    if possible_indexes.contains(index) {
+                        idx = *index;
+                    }
+                }
+                if idx == 255u8 {
+                    if possible_indexes.is_empty() {
+                        gamelog.log("Your backpack is full.");
+                        continue;
+                    }
+                    idx = possible_indexes[0];
+                    item_index
+                        .insert(pickup.item, ItemIndex { index: idx })
+                        .expect("Unable to insert ItemIndex entry");
+                }
+                gamelog.log(format!(
+                    "You pick up the {} ({}).",
+                    names.get(pickup.item).unwrap().name,
+                    crate::gui::index_to_letter(idx)
+                ));
+            }
             positions.remove(pickup.item);
             backpack
                 .insert(
@@ -76,13 +121,6 @@ impl<'a> System<'a> for ItemCollectionSystem {
                     },
                 )
                 .expect("Unable to insert backpack entry");
-
-            if pickup.collected_by == player_entity.0 {
-                gamelog.log(format!(
-                    "You pick up the {}.",
-                    names.get(pickup.item).unwrap().name
-                ));
-            }
         }
         wants_pickup.clear();
     }

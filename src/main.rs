@@ -203,6 +203,7 @@ fn main() {
     gs.ecs.register::<InBackpack>();
     gs.ecs.register::<InflictsDamage>();
     gs.ecs.register::<Item>();
+    gs.ecs.register::<ItemIndex>();
     gs.ecs.register::<Monster>();
     gs.ecs.register::<Name>();
     gs.ecs.register::<Player>();

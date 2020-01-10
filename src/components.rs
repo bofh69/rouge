@@ -39,6 +39,11 @@ pub struct InflictsDamage {
 #[derive(Component, Debug)]
 pub struct Item {}
 
+#[derive(Component, Debug, Clone)]
+pub struct ItemIndex {
+    pub index: u8,
+}
+
 #[derive(Component, Debug)]
 pub struct Monster {}
 

@@ -7,7 +7,7 @@ use crate::{InventoryType, PlayerEntity};
 use rltk::{Console, Point, Rltk, VirtualKeyCode, RGB};
 use specs::prelude::*;
 
-const BOTTOM_HEIGHT : i32 = 7;
+const BOTTOM_HEIGHT: i32 = 7;
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum ItemMenuResult {
@@ -40,6 +40,42 @@ pub fn key_to_dir(key: VirtualKeyCode) -> Option<Direction> {
         VirtualKeyCode::B => Some(Direction::SouthWest),
         VirtualKeyCode::N => Some(Direction::SouthEast),
         _ => None,
+    }
+}
+
+pub fn index_to_letter(idx: u8) -> char {
+    if idx > 25 {
+        index_to_letter(idx - 26).to_ascii_uppercase()
+    } else {
+        match idx {
+            0 => 'a',
+            1 => 'b',
+            2 => 'c',
+            3 => 'd',
+            4 => 'e',
+            5 => 'f',
+            6 => 'g',
+            7 => 'h',
+            8 => 'i',
+            9 => 'j',
+            10 => 'k',
+            11 => 'l',
+            12 => 'm',
+            13 => 'n',
+            14 => 'o',
+            15 => 'p',
+            16 => 'q',
+            17 => 'r',
+            18 => 's',
+            19 => 't',
+            20 => 'u',
+            21 => 'b',
+            22 => 'w',
+            23 => 'x',
+            24 => 'y',
+            25 => 'z',
+            _ => panic!("Too large index"),
+        }
     }
 }
 
@@ -297,12 +333,16 @@ pub fn show_inventory(
     let player_entity = ecs.fetch::<PlayerEntity>();
     let names = ecs.read_storage::<Name>();
     let backpack = ecs.read_storage::<InBackpack>();
+    let item_index = ecs.read_storage::<ItemIndex>();
     let entities = ecs.entities();
 
-    let inventory = (&backpack, &names)
+    let mut inventory: Vec<_> = (&entities, &backpack, &item_index, &names)
         .join()
-        .filter(|item| item.0.owner == player_entity.0);
-    let count = inventory.count() as i32;
+        .filter(|item| item.1.owner == player_entity.0)
+        .map(|(entity, _item, idx, name)| (entity, idx.index, name))
+        .collect();
+    let count = inventory.len() as i32;
+    inventory.sort_by(|a, b| a.1.cmp(&b.1));
 
     if count == 0 {
         let mut gamelog = ecs.fetch_mut::<GameLog>();
@@ -338,13 +378,9 @@ pub fn show_inventory(
         "ESCAPE to cancel",
     );
 
-    let mut j = 0;
-    let mut items = vec![];
-    for (entities, _pack, name) in (&entities, &backpack, &names)
-        .join()
-        .filter(|item| item.1.owner == player_entity.0)
-    {
-        items.push(entities);
+    let mut items = std::collections::HashMap::new();
+    for (entities, index, name) in inventory {
+        items.insert(index, entities);
         ctx.set(
             17,
             y,
@@ -357,7 +393,7 @@ pub fn show_inventory(
             y,
             RGB::named(rltk::YELLOW),
             RGB::named(rltk::BLACK),
-            97 + j as u8,
+            rltk::to_cp437(index_to_letter(index)),
         );
         ctx.set(
             19,
@@ -369,7 +405,6 @@ pub fn show_inventory(
 
         ctx.print(21, y, &name.name.to_string());
         y += 1;
-        j += 1;
     }
 
     match ctx.key {
@@ -378,10 +413,21 @@ pub fn show_inventory(
             VirtualKeyCode::Escape => (ItemMenuResult::Cancel, None),
             _ => {
                 let selected = rltk::letter_to_option(key);
-                if selected < 0 || selected >= count as i32 {
+                if selected < 0 {
                     (ItemMenuResult::NoResponse, None)
                 } else {
-                    (ItemMenuResult::Selected, Some(items[selected as usize]))
+                    let mut selected = selected as u8;
+                    if ctx.shift {
+                        selected += 27u8;
+                    }
+                    if !items.contains_key(&selected) {
+                        (ItemMenuResult::NoResponse, None)
+                    } else {
+                        (
+                            ItemMenuResult::Selected,
+                            Some(*items.get(&selected).unwrap()),
+                        )
+                    }
                 }
             }
         },
