@@ -16,7 +16,7 @@ pub enum ItemMenuResult {
     Selected,
 }
 
-#[derive(PartialEq, Copy, Clone)]
+#[derive(PartialEq, Copy, Clone, Debug)]
 pub enum MainMenuState {
     New,
     Load,
@@ -105,6 +105,7 @@ impl TargetingInfo {
         }
 
         if self.last_mouse_pos != ctx.mouse_pos() {
+            println!("Mouse pos {:?} - {:?}", ctx.mouse_pos, ctx.width_pixels);
             self.last_mouse_pos = ctx.mouse_pos();
             self.current_pos = ctx.mouse_pos();
         } else if ctx.left_click {

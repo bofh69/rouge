@@ -24,7 +24,9 @@ use camera::Camera;
 use components::*;
 use map::Map;
 use rltk::{GameState, Point, Rltk};
+use serde::{Deserialize, Serialize};
 use specs::prelude::*;
+use specs::saveload::{SimpleMarker, SimpleMarkerAllocator};
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum InventoryType {
@@ -41,9 +43,10 @@ pub enum RunState {
     MonsterTurn,
     ShowInventory(InventoryType),
     ShowTargeting(gui::TargetingInfo, Entity),
+    SaveGame,
 }
 
-#[derive(PartialEq, Debug, Copy, Clone)]
+#[derive(PartialEq, Serialize, Deserialize, Debug, Copy, Clone)]
 pub struct MapPosition {
     pub x: i32,
     pub y: i32,
@@ -211,6 +214,8 @@ fn main() {
     gs.ecs.register::<ReceiveHealth>();
     gs.ecs.register::<Ranged>();
     gs.ecs.register::<Renderable>();
+    gs.ecs.register::<SerializationHelper>();
+    gs.ecs.register::<SimpleMarker<SerializeMe>>();
     gs.ecs.register::<SufferDamage>();
     gs.ecs.register::<Viewshed>();
     gs.ecs.register::<WantsToDropItem>();
@@ -218,8 +223,8 @@ fn main() {
     gs.ecs.register::<WantsToPickupItem>();
     gs.ecs.register::<WantsToUseItem>();
 
+    gs.ecs.insert(SimpleMarkerAllocator::<SerializeMe>::new());
     gs.ecs.insert(rltk::RandomNumberGenerator::new());
-    gs.ecs.insert(RunState::PreRun);
     gs.ecs.insert(gamelog::GameLog {
         entries: vec!["Welcome to Rouge".to_string()],
     });

@@ -9,6 +9,7 @@ use crate::{gui, PlayerEntity, RunState};
 use rltk::*;
 use specs::prelude::*;
 
+#[derive(Debug)]
 pub struct GameScene {}
 
 impl Scene<World> for GameScene {
@@ -46,6 +47,9 @@ impl Scene<World> for GameScene {
         };
 
         match newrunstate {
+            RunState::SaveGame => {
+                return SceneResult::Replace(Box::new(crate::scenes::SaveScene::new()));
+            }
             RunState::PreRun => {
                 self.run_systems(ecs);
                 newrunstate = RunState::AwaitingInput;
@@ -140,6 +144,11 @@ impl Scene<World> for GameScene {
 }
 
 impl GameScene {
+    pub fn new(ecs: &mut World) -> Self {
+        ecs.insert(RunState::PreRun);
+        Self {}
+    }
+
     fn run_systems(&mut self, ecs: &mut World) {
         let mut vis = VisibilitySystem {};
         vis.run_now(ecs);

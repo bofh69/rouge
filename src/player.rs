@@ -166,13 +166,19 @@ pub fn player_input(ecs: &mut World, ctx: &mut Rltk) -> RunState {
         init_auto_walk(ecs, pos);
         auto_walk(ecs)
     } else if ctx.shift {
-        clear_auto_walk(ecs);
-        if let Some(key) = ctx.key {
-            if let Some(dir) = crate::gui::key_to_dir(key) {
-                try_auto_walk_player(dir, ecs)
+        match ctx.key {
+            Some(VirtualKeyCode::Q) => {
+                return RunState::SaveGame;
             }
+            Some(key) => {
+                clear_auto_walk(ecs);
+                if let Some(dir) = crate::gui::key_to_dir(key) {
+                    try_auto_walk_player(dir, ecs)
+                }
+            }
+            _ => (),
         }
-        RunState::AwaitingInput
+        auto_walk(ecs)
     } else {
         match ctx.key {
             Some(key) => {

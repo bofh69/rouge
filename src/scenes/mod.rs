@@ -1,7 +1,9 @@
 mod game;
 mod main_menu;
+mod save_game;
 
 pub use main_menu::*;
+pub use save_game::*;
 
 use rltk::console::Console;
 use rltk::Rltk;
@@ -13,7 +15,7 @@ pub enum SceneResult<T> {
     Replace(Box<dyn Scene<T>>),
 }
 
-pub trait Scene<T> {
+pub trait Scene<T>: std::fmt::Debug {
     fn tick(&mut self, state: &mut T, ctx: &mut Rltk) -> SceneResult<T>;
 }
 
