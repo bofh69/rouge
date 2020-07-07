@@ -48,7 +48,8 @@ impl Scene<World> for GameScene {
 
         match newrunstate {
             RunState::SaveGame => {
-                return SceneResult::Replace(Box::new(crate::scenes::SaveScene::new()));
+                // return SceneResult::Replace(Box::new(crate::scenes::SaveScene::new()));
+                newrunstate = RunState::AwaitingInput;
             }
             RunState::PreRun => {
                 self.run_systems(ecs);
