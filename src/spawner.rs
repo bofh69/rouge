@@ -4,7 +4,6 @@ use crate::rect::Rect;
 use crate::MapPosition;
 use bracket_lib::prelude::*;
 use specs::prelude::*;
-use specs::saveload::{MarkedBuilder, SimpleMarker};
 
 pub const MAX_MONSTERS: i32 = 5;
 pub const MAX_ITEMS: i32 = 3;
@@ -36,7 +35,6 @@ pub fn player(ecs: &mut World, player_x: i32, player_y: i32) -> Entity {
             power: 5,
             defense: 2,
         })
-        .marked::<SimpleMarker<SerializeMe>>()
         .build()
 }
 
@@ -85,7 +83,6 @@ fn monster<S: ToString>(ecs: &mut World, x: i32, y: i32, glyph: u16, name: S) {
             defense: 1,
             power: 4,
         })
-        .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }
 
@@ -118,7 +115,6 @@ fn health_potion(ecs: &mut World, x: i32, y: i32) {
         .with(Item {})
         .with(Consumable {})
         .with(HealthProvider { heal_amount: 8 })
-        .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }
 
@@ -135,7 +131,6 @@ fn ball(ecs: &mut World, x: i32, y: i32) {
             name: "Ball".to_string(),
         })
         .with(Item {})
-        .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }
 
@@ -155,7 +150,6 @@ fn magic_missile_scroll(ecs: &mut World, x: i32, y: i32) {
         .with(Consumable {})
         .with(Ranged { range: 6 })
         .with(InflictsDamage { damage: 8 })
-        .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }
 
@@ -176,7 +170,6 @@ fn fireball_scroll(ecs: &mut World, x: i32, y: i32) {
         .with(Ranged { range: 6 })
         .with(InflictsDamage { damage: 20 })
         .with(AreaOfEffect { radius: 3 })
-        .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }
 

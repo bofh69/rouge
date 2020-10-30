@@ -24,9 +24,7 @@ use camera::Camera;
 use components::*;
 use map::Map;
 use bracket_lib::prelude::*;
-use serde::{Deserialize, Serialize};
 use specs::prelude::*;
-use specs::saveload::{SimpleMarker, SimpleMarkerAllocator};
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum InventoryType {
@@ -46,7 +44,7 @@ pub enum RunState {
     SaveGame,
 }
 
-#[derive(PartialEq, Serialize, Deserialize, Debug, Copy, Clone)]
+#[derive(PartialEq, Debug, Copy, Clone)]
 pub struct MapPosition {
     pub x: i32,
     pub y: i32,
@@ -212,8 +210,6 @@ fn main() -> Result::<(), Box<dyn std::error::Error + 'static + Send + Sync>> {
     gs.ecs.register::<ReceiveHealth>();
     gs.ecs.register::<Ranged>();
     gs.ecs.register::<Renderable>();
-    gs.ecs.register::<SerializationHelper>();
-    gs.ecs.register::<SimpleMarker<SerializeMe>>();
     gs.ecs.register::<SufferDamage>();
     gs.ecs.register::<Viewshed>();
     gs.ecs.register::<WantsToDropItem>();
@@ -221,7 +217,6 @@ fn main() -> Result::<(), Box<dyn std::error::Error + 'static + Send + Sync>> {
     gs.ecs.register::<WantsToPickupItem>();
     gs.ecs.register::<WantsToUseItem>();
 
-    gs.ecs.insert(SimpleMarkerAllocator::<SerializeMe>::new());
     gs.ecs.insert(RandomNumberGenerator::new());
     gs.ecs.insert(gamelog::GameLog {
         entries: vec!["Welcome to Rouge".to_string()],
@@ -231,9 +226,6 @@ fn main() -> Result::<(), Box<dyn std::error::Error + 'static + Send + Sync>> {
         spawner::spawn_room(&mut gs.ecs, room);
     }
     let player_entity = spawner::player(&mut gs.ecs, player_x, player_y);
-
-    // let data = serde_json::to_string(&map).unwrap();
-    // println!("{}", data);
 
     let player_pos = PlayerPosition(MapPosition {
         x: player_x,

@@ -123,7 +123,6 @@ dependencies = [
  "byteorder",
  "lazy_static",
  "parking_lot 0.10.2",
- "serde",
 ]
 
 [[package]]
@@ -132,7 +131,6 @@ version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ec613acfe65a809f03d57e2cc8ab97f9c396ddb9929e784bc19b87dd5ccf358"
 dependencies = [
- "serde",
  "ultraviolet",
 ]
 
@@ -181,7 +179,6 @@ dependencies = [
  "rand",
  "rand_xorshift",
  "regex",
- "serde",
 ]
 
 [[package]]
@@ -824,12 +821,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "itoa"
-version = "0.4.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc6f3ad7b9d11a0c00842ff8de1b60ee58661048eb8049ed33c73594f359d7e6"
-
-[[package]]
 name = "jni-sys"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1458,8 +1449,6 @@ name = "rouge"
 version = "0.1.0"
 dependencies = [
  "bracket-lib",
- "serde",
- "serde_json",
  "specs",
  "specs-derive",
 ]
@@ -1492,12 +1481,6 @@ dependencies = [
  "ordered-float",
  "stb_truetype",
 ]
-
-[[package]]
-name = "ryu"
-version = "1.0.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "71d301d4193d031abdd79ff7e3dd721168a9572ef3fe51a1517aba235bd8f86e"
 
 [[package]]
 name = "same-file"
@@ -1540,31 +1523,6 @@ name = "serde"
 version = "1.0.117"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b88fa983de7720629c9387e9f517353ed404164b1e482c970a90c1a4aaf7dc1a"
-dependencies = [
- "serde_derive",
-]
-
-[[package]]
-name = "serde_derive"
-version = "1.0.117"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cbd1ae72adb44aab48f325a02444a5fc079349a8d804c1fc922aed3f7454c74e"
-dependencies = [
- "proc-macro2 1.0.24",
- "quote 1.0.7",
- "syn 1.0.48",
-]
-
-[[package]]
-name = "serde_json"
-version = "1.0.59"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dcac07dbffa1c65e7f816ab9eba78eb142c6d44410f4eeba1e26e4f5dfa56b95"
-dependencies = [
- "itoa",
- "ryu",
- "serde",
-]
 
 [[package]]
 name = "shared_library"
@@ -1650,7 +1608,6 @@ dependencies = [
  "hibitset",
  "log",
  "rayon",
- "serde",
  "shred",
  "shrev",
  "tuple_utils",

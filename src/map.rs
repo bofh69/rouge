@@ -4,14 +4,13 @@ use crate::rect::Rect;
 use crate::MapPosition;
 use crate::ScreenPosition;
 use bracket_lib::prelude::*;
-use serde::{Deserialize, Serialize};
 use specs::prelude::*;
 use std::cmp::{max, min};
 
 pub const MAP_WIDTH: i32 = 120;
 pub const MAP_HEIGHT: i32 = 60;
 
-#[derive(Serialize, Deserialize, PartialEq, Copy, Clone, Debug)]
+#[derive(PartialEq, Copy, Clone, Debug)]
 pub enum WallType {
     Vertical,          /* - */
     Horizontal,        /* | */
@@ -27,14 +26,14 @@ pub enum WallType {
     Pilar,             /* ● */
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Copy, Clone, Debug)]
+#[derive(PartialEq, Copy, Clone, Debug)]
 pub enum TileType {
     Stone,
     Wall(WallType),
     Floor,
 }
 
-#[derive(Default, Serialize, Deserialize, Clone)]
+#[derive(Default, Clone)]
 pub struct Map {
     pub tiles: Vec<TileType>,
     pub rooms: Vec<Rect>,
@@ -43,8 +42,6 @@ pub struct Map {
     pub revealed_tiles: Vec<bool>,
     pub visible_tiles: Vec<bool>,
     pub blocked: Vec<bool>,
-    #[serde(skip_serializing)]
-    #[serde(skip_deserializing)]
     pub tile_content: Vec<Vec<Entity>>,
     only_revealed: bool,
 }
