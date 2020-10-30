@@ -1,4 +1,4 @@
-rltk::add_wasm_support!();
+bracket_lib::prelude::add_wasm_support!();
 
 mod camera;
 mod components;
@@ -23,7 +23,7 @@ extern crate specs_derive;
 use camera::Camera;
 use components::*;
 use map::Map;
-use rltk::{GameState, Point, Rltk};
+use bracket_lib::prelude::*;
 use serde::{Deserialize, Serialize};
 use specs::prelude::*;
 use specs::saveload::{SimpleMarker, SimpleMarkerAllocator};
@@ -101,6 +101,22 @@ impl Into<(i32, i32)> for ScreenPosition {
     }
 }
 
+impl Into<(usize, usize)> for ScreenPosition {
+    fn into(self) -> (usize, usize) {
+        let x = if self.x > 0 {
+            self.x as usize
+        } else {
+            0
+        };
+        let y = if self.y > 0 {
+            self.y as usize
+        } else {
+            0
+        };
+        (x, y)
+    }
+}
+
 pub struct PlayerEntity(Entity);
 
 #[derive(PartialEq, Debug, Copy, Clone)]
@@ -152,45 +168,27 @@ pub struct State {
 }
 
 impl GameState for State {
-    fn tick(&mut self, ctx: &mut Rltk) {
+    fn tick(&mut self, ctx: &mut BTerm) {
         self.scene_manager.tick(&mut self.ecs, ctx);
     }
 }
 
-// struct PlayerInputSystem {}
-
-// impl<'a> System<'a> for PlayerInputSystem {
-//     type SystemData = (ReadStorage<'a Player>,
-//                        WriteStorage<'a Position>,
-//                        World);
-
-//     fn run(&mut self, (player, mut pos, ecs) : Self.SystemData) {
-//         player
-//     }
-// }
-
 impl State {}
 
-fn main() {
-    const SCREEN_WIDTH: u32 = 80;
-    const SCREEN_HEIGHT: u32 = 50;
+fn main() -> Result::<(), Box<dyn std::error::Error + 'static + Send + Sync>> {
+    const SCREEN_WIDTH: i32 = 80;
+    const SCREEN_HEIGHT: i32 = 50;
     let map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
 
-    let mut context = Rltk::init_simple8x8(SCREEN_WIDTH, SCREEN_HEIGHT, "Rouge World", "resources");
-    /*
-    let cw = context.backend.platform.context_wrapper.as_ref();
-    let mh = cw
-        .expect("Unref context wrapper")
-        .el
-        .available_monitors()
-        .nth(0)
-        .expect("Getting first monitor");
-    cw.unwrap()
-        .wc
-        .window()
-        .set_fullscreen(Some(glutin::window::Fullscreen::Borderless(mh)));
-    */
+    let mut context = 
+    BTermBuilder::simple(SCREEN_WIDTH, SCREEN_HEIGHT)?
+        .with_title("Rouge World")
+        .with_advanced_input(true)
+        .with_resource_path("resources")
+        .build()?;
+
+    // let mut context = BTerm::init_simple8x8(SCREEN_WIDTH, SCREEN_HEIGHT, "Rouge World", "resources");
 
     context.with_post_scanlines(true);
     let mut gs = State {
@@ -224,7 +222,7 @@ fn main() {
     gs.ecs.register::<WantsToUseItem>();
 
     gs.ecs.insert(SimpleMarkerAllocator::<SerializeMe>::new());
-    gs.ecs.insert(rltk::RandomNumberGenerator::new());
+    gs.ecs.insert(RandomNumberGenerator::new());
     gs.ecs.insert(gamelog::GameLog {
         entries: vec!["Welcome to Rouge".to_string()],
     });
@@ -254,5 +252,6 @@ fn main() {
     gs.scene_manager
         .push(Box::new(scenes::MainMenuScene::new()));
 
-    rltk::main_loop(context, gs);
+    main_loop(context, gs)?;
+    Ok(())
 }

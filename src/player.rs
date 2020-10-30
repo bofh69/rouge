@@ -4,7 +4,7 @@ use crate::gamelog::GameLog;
 use crate::map::Map;
 use crate::{Direction, PlayerTarget, ScreenPosition};
 use crate::{InventoryType, PlayerEntity, PlayerPosition, RunState};
-use rltk::{Algorithm2D, Rltk, VirtualKeyCode};
+use bracket_lib::prelude::*;
 use specs::prelude::*;
 use std::cmp::{max, min};
 
@@ -118,7 +118,7 @@ fn get_auto_walk_dest(ecs: &mut World) -> Option<(i32, i32)> {
 
             let old_idx = map.map_pos_to_idx(player_pos) as i32;
             map.search_only_revealed();
-            let path = rltk::a_star_search(old_idx, map.map_pos_to_idx(map_pos) as i32, &mut *map);
+            let path = a_star_search(old_idx, map.map_pos_to_idx(map_pos) as i32, &mut *map);
             map.search_also_revealed();
 
             if path.success && path.steps.len() > 1 {
@@ -159,7 +159,7 @@ fn clear_auto_walk(ecs: &mut World) {
     *player_target = PlayerTarget::None;
 }
 
-pub fn player_input(ecs: &mut World, ctx: &mut Rltk) -> RunState {
+pub fn player_input(ecs: &mut World, ctx: &mut BTerm) -> RunState {
     if ctx.left_click {
         let pos = ctx.mouse_pos();
         let pos = ScreenPosition { x: pos.0, y: pos.1 };

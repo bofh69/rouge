@@ -79,7 +79,7 @@ impl<'a> System<'a> for UseItemSystem {
                                 // AoE
                                 let screen_point = camera.transform_map_pos(target).into();
                                 for tile_point in
-                                    rltk::field_of_view(screen_point, area_effect.radius, &*map)
+                                    bracket_lib::prelude::field_of_view(screen_point, area_effect.radius, &*map)
                                         .iter()
                                         .filter(|p| {
                                             p.x >= 0

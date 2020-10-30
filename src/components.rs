@@ -1,5 +1,5 @@
 use crate::MapPosition;
-use rltk::RGB;
+use bracket_lib::prelude::RGB;
 use serde::{Deserialize, Serialize};
 use specs::prelude::*;
 use specs::{
@@ -82,7 +82,7 @@ pub struct ReceiveHealth {
 
 #[derive(Component, ConvertSaveload, Clone)]
 pub struct Renderable {
-    pub glyph: u8,
+    pub glyph: u16,
     pub fg: RGB,
     pub bg: RGB,
     pub render_order: i32,

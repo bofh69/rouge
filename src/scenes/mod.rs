@@ -5,18 +5,18 @@ mod save_game;
 pub use main_menu::*;
 pub use save_game::*;
 
-use rltk::console::Console;
-use rltk::Rltk;
+use bracket_lib::prelude::*;
 
 pub enum SceneResult<T> {
     Continue,
     Pop,
+    #[allow(dead_code)]
     Push(Box<dyn Scene<T>>),
     Replace(Box<dyn Scene<T>>),
 }
 
 pub trait Scene<T>: std::fmt::Debug {
-    fn tick(&mut self, state: &mut T, ctx: &mut Rltk) -> SceneResult<T>;
+    fn tick(&mut self, state: &mut T, ctx: &mut BTerm) -> SceneResult<T>;
 }
 
 pub struct SceneManager<T> {
@@ -32,7 +32,7 @@ impl<T> SceneManager<T> {
         self.scenes.push(scene)
     }
 
-    pub fn tick(&mut self, state: &mut T, ctx: &mut Rltk) {
+    pub fn tick(&mut self, state: &mut T, ctx: &mut BTerm) {
         if self.scenes.is_empty() {
             ctx.quit();
             return;

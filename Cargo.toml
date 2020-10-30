@@ -9,8 +9,7 @@ edition = "2018"
 
 
 [dependencies]
-rltk = { version = "0.5.*", features = ["serialization"] }
-# rltk = { path = "../rltk_rs", features = ["serialization"] }
+bracket-lib = { version = "0.8.*", features = ["serde"] }
 specs = { version = "0.15.*", features = ["serde"] }
 specs-derive = "0.4.*"
 serde= { version = "1.0.*", features = ["derive"] }

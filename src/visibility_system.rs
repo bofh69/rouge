@@ -2,7 +2,7 @@ use super::map::Map;
 use crate::components::Monster;
 use crate::components::Player;
 use crate::{MapPosition, PlayerTarget, Position, Viewshed};
-use rltk::field_of_view;
+use bracket_lib::prelude::field_of_view;
 use specs::prelude::*;
 
 pub struct VisibilitySystem {}

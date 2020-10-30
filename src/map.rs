@@ -3,7 +3,7 @@ use crate::components::Position;
 use crate::rect::Rect;
 use crate::MapPosition;
 use crate::ScreenPosition;
-use rltk::{Algorithm2D, BaseMap, Console, Point, Rltk, RGB};
+use bracket_lib::prelude::*;
 use serde::{Deserialize, Serialize};
 use specs::prelude::*;
 use std::cmp::{max, min};
@@ -50,18 +50,18 @@ pub struct Map {
 }
 
 impl BaseMap for Map {
-    fn is_opaque(&self, idx: i32) -> bool {
-        match self.tiles[idx as usize] {
+    fn is_opaque(&self, idx: usize) -> bool {
+        match self.tiles[idx] {
             TileType::Wall(_) => true,
             TileType::Stone => true,
             _ => false,
         }
     }
 
-    fn get_available_exits(&self, idx: i32) -> Vec<(i32, f32)> {
-        let mut exits: Vec<(i32, f32)> = Vec::new();
-        let x = idx % self.width;
-        let y = idx / self.width;
+    fn get_available_exits(&self, idx: usize) -> SmallVec<[(usize, f32); 10]> {
+        let mut exits: SmallVec<[(usize, f32); 10]> = SmallVec::new();
+        let x = idx as i32 % self.width;
+        let y = idx as i32 / self.width;
 
         if self.is_exit_valid(x - 1, y) {
             exits.push((idx - 1, 1.0))
@@ -70,31 +70,31 @@ impl BaseMap for Map {
             exits.push((idx + 1, 1.0))
         }
         if self.is_exit_valid(x, y - 1) {
-            exits.push((idx - self.width, 1.0))
+            exits.push((idx - self.width as usize, 1.0))
         }
         if self.is_exit_valid(x, y + 1) {
-            exits.push((idx + self.width, 1.0))
+            exits.push((idx + self.width as usize, 1.0))
         }
         if self.is_exit_valid(x - 1, y - 1) {
-            exits.push(((idx - self.width) - 1, 1.45));
+            exits.push((idx - (self.width - 1) as usize, 1.45));
         }
         if self.is_exit_valid(x + 1, y - 1) {
-            exits.push(((idx - self.width) + 1, 1.45));
+            exits.push((idx - (self.width + 1) as usize, 1.45));
         }
         if self.is_exit_valid(x - 1, y + 1) {
-            exits.push(((idx + self.width) - 1, 1.45));
+            exits.push((idx + (self.width - 1) as usize, 1.45));
         }
         if self.is_exit_valid(x + 1, y + 1) {
-            exits.push(((idx + self.width) + 1, 1.45));
+            exits.push((idx + (self.width + 1) as usize, 1.45));
         }
 
         exits
     }
 
-    fn get_pathing_distance(&self, idx1: i32, idx2: i32) -> f32 {
-        let p1 = Point::new(idx1 % self.width, idx1 / self.width);
-        let p2 = Point::new(idx2 % self.width, idx2 / self.width);
-        rltk::DistanceAlg::Pythagoras.distance2d(p1, p2)
+    fn get_pathing_distance(&self, idx1: usize, idx2: usize) -> f32 {
+        let p1 = Point::new(idx1 as i32 % self.width, idx1 as i32 / self.width);
+        let p2 = Point::new(idx2 as i32 % self.width, idx2 as i32 / self.width);
+        DistanceAlg::Pythagoras.distance2d(p1, p2)
     }
 }
 
@@ -103,14 +103,14 @@ impl Algorithm2D for Map {
         pos.x >= 0 && pos.x < self.width && pos.y >= 0 && pos.y < self.height
     }
 
-    fn point2d_to_index(&self, pt: Point) -> i32 {
-        (pt.y * self.width) + pt.x
+    fn point2d_to_index(&self, pt: Point) -> usize {
+        ((pt.y * self.width) + pt.x) as usize
     }
 
-    fn index_to_point2d(&self, idx: i32) -> Point {
+    fn index_to_point2d(&self, idx: usize) -> Point {
         Point {
-            x: idx % self.width,
-            y: idx / self.width,
+            x: idx as i32 % self.width,
+            y: idx as i32 / self.width,
         }
     }
 }
@@ -329,7 +329,7 @@ impl Map {
 
         let mut map = Map::new(MAP_WIDTH, MAP_HEIGHT);
 
-        let mut rng = rltk::RandomNumberGenerator::new();
+        let mut rng = RandomNumberGenerator::new();
 
         for _i in 0..MAX_ROOMS {
             let w = rng.range(MIN_SIZE, MAX_SIZE);
@@ -368,7 +368,7 @@ impl Map {
     }
 }
 
-fn get_glyph_for_wall(map: &Map, idx: usize, x: i32, y: i32, walltype: WallType) -> u8 {
+fn get_glyph_for_wall(map: &Map, idx: usize, x: i32, y: i32, walltype: WallType) -> u16 {
     let mut walls = 0;
 
     if x > 0 && map.revealed_tiles[idx - 1 as usize] {
@@ -385,56 +385,56 @@ fn get_glyph_for_wall(map: &Map, idx: usize, x: i32, y: i32, walltype: WallType)
     }
 
     match walltype {
-        WallType::Vertical => rltk::to_cp437('│'),
-        WallType::Horizontal => rltk::to_cp437('─'),
-        WallType::TopLeftCorner => rltk::to_cp437('┌'),
-        WallType::TopRightCorner => rltk::to_cp437('┐'),
-        WallType::BottomLeftCorner => rltk::to_cp437('└'),
-        WallType::BottomRightCorner => rltk::to_cp437('┘'),
+        WallType::Vertical => to_cp437('│'),
+        WallType::Horizontal => to_cp437('─'),
+        WallType::TopLeftCorner => to_cp437('┌'),
+        WallType::TopRightCorner => to_cp437('┐'),
+        WallType::BottomLeftCorner => to_cp437('└'),
+        WallType::BottomRightCorner => to_cp437('┘'),
         WallType::TeeDown => match walls & (1 + 2 + 8) {
-            9 => rltk::to_cp437('┐'),
-            10 => rltk::to_cp437('┌'),
-            11 => rltk::to_cp437('┬'),
-            _ => rltk::to_cp437('─'),
+            9 => to_cp437('┐'),
+            10 => to_cp437('┌'),
+            11 => to_cp437('┬'),
+            _ => to_cp437('─'),
         },
         WallType::TeeUp => match walls & (1 + 2 + 4) {
-            5 => rltk::to_cp437('┘'),
-            6 => rltk::to_cp437('└'),
-            7 => rltk::to_cp437('┴'),
-            _ => rltk::to_cp437('─'),
+            5 => to_cp437('┘'),
+            6 => to_cp437('└'),
+            7 => to_cp437('┴'),
+            _ => to_cp437('─'),
         },
         WallType::TeeRight => match walls & (2 + 4 + 8) {
-            6 => rltk::to_cp437('└'),
-            10 => rltk::to_cp437('┌'),
-            14 => rltk::to_cp437('├'),
-            _ => rltk::to_cp437('│'),
+            6 => to_cp437('└'),
+            10 => to_cp437('┌'),
+            14 => to_cp437('├'),
+            _ => to_cp437('│'),
         },
         WallType::TeeLeft => match walls & (1 + 4 + 8) {
-            5 => rltk::to_cp437('┘'),
-            9 => rltk::to_cp437('┐'),
-            13 => rltk::to_cp437('┤'),
-            _ => rltk::to_cp437('│'),
+            5 => to_cp437('┘'),
+            9 => to_cp437('┐'),
+            13 => to_cp437('┤'),
+            _ => to_cp437('│'),
         },
         WallType::Cross => match walls & (1 + 2 + 4 + 8) {
-            4 => rltk::to_cp437('┴'),
-            5 => rltk::to_cp437('┘'),
-            6 => rltk::to_cp437('└'),
-            7 => rltk::to_cp437('┴'),
-            8 => rltk::to_cp437('┬'),
-            9 => rltk::to_cp437('┐'),
-            10 => rltk::to_cp437('┌'),
-            11 => rltk::to_cp437('┬'),
-            12 => rltk::to_cp437('│'),
-            13 => rltk::to_cp437('┤'),
-            14 => rltk::to_cp437('├'),
-            15 => rltk::to_cp437('┼'),
-            _ => rltk::to_cp437('─'),
+            4 => to_cp437('┴'),
+            5 => to_cp437('┘'),
+            6 => to_cp437('└'),
+            7 => to_cp437('┴'),
+            8 => to_cp437('┬'),
+            9 => to_cp437('┐'),
+            10 => to_cp437('┌'),
+            11 => to_cp437('┬'),
+            12 => to_cp437('│'),
+            13 => to_cp437('┤'),
+            14 => to_cp437('├'),
+            15 => to_cp437('┼'),
+            _ => to_cp437('─'),
         },
         WallType::Pilar => 9, /* o */
     }
 }
 
-pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
+pub fn draw_map(ecs: &World, ctx: &mut BTerm) {
     let map = ecs.fetch::<Map>();
     let camera = ecs.fetch::<Camera>();
 
@@ -446,9 +446,9 @@ pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
                 ctx.set(
                     x,
                     y,
-                    RGB::from_f32(0., 0., 0.),
-                    RGB::from_f32(0., 0., 0.),
-                    rltk::to_cp437('¿'),
+                    RGBA::from_f32(0., 0., 0., 1.),
+                    RGBA::from_f32(0., 0., 0., 1.),
+                    to_cp437('¿'),
                 );
             } else {
                 let idx = map.map_pos_to_idx(pos);
@@ -459,22 +459,22 @@ pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
                     let mut fg;
                     match tile {
                         TileType::Floor => {
-                            fg = RGB::from_f32(0.5, 0.5, 0.5);
-                            glyph = rltk::to_cp437('.');
+                            fg = RGBA::from_f32(0.5, 0.5, 0.5, 1.);
+                            glyph = to_cp437('.');
                         }
                         TileType::Wall(walltype) => {
-                            fg = RGB::from_f32(0.7, 0.9, 0.7);
+                            fg = RGBA::from_f32(0.7, 0.9, 0.7, 1.);
                             glyph = get_glyph_for_wall(&*map, idx, pos.x, pos.y, walltype)
                         }
                         TileType::Stone => {
-                            fg = RGB::from_f32(0.0, 1.0, 0.0);
-                            glyph = rltk::to_cp437('#');
+                            fg = RGBA::from_f32(0.0, 1.0, 0.0, 1.);
+                            glyph = to_cp437('#');
                         }
                     }
                     if !map.visible_tiles[idx] {
                         fg = fg.to_greyscale();
                     }
-                    ctx.set(x, y, fg, RGB::from_f32(0., 0., 0.), glyph);
+                    ctx.set(x, y, fg, RGBA::from_f32(0., 0., 0., 1.), glyph);
                 }
             }
         }

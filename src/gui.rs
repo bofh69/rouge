@@ -4,7 +4,7 @@ use crate::gamelog::GameLog;
 use crate::map::Map;
 use crate::{Direction, MapPosition, PlayerPosition, ScreenPosition};
 use crate::{InventoryType, PlayerEntity};
-use rltk::{Console, Point, Rltk, VirtualKeyCode, RGB};
+use bracket_lib::prelude::*;
 use specs::prelude::*;
 
 const BOTTOM_HEIGHT: i32 = 7;
@@ -87,7 +87,7 @@ pub struct TargetingInfo {
 }
 
 impl TargetingInfo {
-    pub fn new(range: i32, start_pos: ScreenPosition, ctx: &mut Rltk) -> Self {
+    pub fn new(range: i32, start_pos: ScreenPosition, ctx: &mut BTerm) -> Self {
         Self {
             range,
             last_mouse_pos: ctx.mouse_pos(),
@@ -98,7 +98,7 @@ impl TargetingInfo {
     pub fn show_targeting(
         &mut self,
         ecs: &mut World,
-        ctx: &mut Rltk,
+        ctx: &mut BTerm,
     ) -> (ItemMenuResult, Option<MapPosition>) {
         if Some(VirtualKeyCode::Escape) == ctx.key {
             return (ItemMenuResult::Cancel, None);
@@ -133,8 +133,8 @@ impl TargetingInfo {
         ctx.print_color(
             5,
             0,
-            RGB::named(rltk::YELLOW),
-            RGB::named(rltk::BLACK),
+            RGB::named(YELLOW),
+            RGB::named(BLACK),
             "Select Target:",
         );
 
@@ -145,10 +145,10 @@ impl TargetingInfo {
             // We have a viewshed
             for pos in visible.visible_tiles.iter() {
                 let point = camera.transform_map_pos(*pos);
-                let distance = rltk::DistanceAlg::Pythagoras
+                let distance = DistanceAlg::Pythagoras
                     .distance2d(camera.transform_map_pos(player_pos.0).into(), point.into());
                 if distance <= self.range as f32 {
-                    ctx.set_bg(point.x, point.y, RGB::named(rltk::BLUE));
+                    ctx.set_bg(point.x, point.y, RGB::named(BLUE));
                     available_cells.push(point);
                 }
             }
@@ -167,7 +167,7 @@ impl TargetingInfo {
             ctx.set_bg(
                 self.current_pos.0,
                 self.current_pos.1,
-                RGB::named(rltk::CYAN),
+                RGB::named(CYAN),
             );
 
             match (ctx.key, ctx.left_click) {
@@ -188,7 +188,7 @@ impl TargetingInfo {
             ctx.set_bg(
                 self.current_pos.0,
                 self.current_pos.1,
-                RGB::named(rltk::RED),
+                RGB::named(RED),
             );
             match (ctx.key, ctx.left_click) {
                 (Some(VirtualKeyCode::Return), _) | (_, true) => {
@@ -202,7 +202,7 @@ impl TargetingInfo {
     }
 }
 
-pub fn show_main_menu(ctx: &mut Rltk, current_state: MainMenuState) -> MainMenuResult {
+pub fn show_main_menu(ctx: &mut BTerm, current_state: MainMenuState) -> MainMenuResult {
     let (screen_width, screen_height) = ctx.get_char_size();
     let text_width = 7;
     let x = (screen_width / 2 - text_width / 2) as i32;
@@ -211,8 +211,8 @@ pub fn show_main_menu(ctx: &mut Rltk, current_state: MainMenuState) -> MainMenuR
     ctx.print_color(
         (80 - 14) / 2,
         11,
-        RGB::named(rltk::YELLOW),
-        RGB::named(rltk::BLACK),
+        RGBA::named(YELLOW),
+        RGBA::named(BLACK),
         "Welcome to ...",
     );
 
@@ -231,8 +231,8 @@ pub fn show_main_menu(ctx: &mut Rltk, current_state: MainMenuState) -> MainMenuR
         ctx.print_color(
             15,
             14 + y as i32,
-            RGB::named(rltk::ORANGERED2),
-            RGB::named(rltk::BLACK),
+            RGB::named(ORANGERED2),
+            RGB::named(BLACK),
             line,
         );
     }
@@ -242,14 +242,14 @@ pub fn show_main_menu(ctx: &mut Rltk, current_state: MainMenuState) -> MainMenuR
         y,
         text_width as i32,
         5,
-        RGB::named(rltk::DEEPSKYBLUE),
-        RGB::named(rltk::BLACK),
+        RGB::named(DEEPSKYBLUE),
+        RGB::named(BLACK),
     );
 
     let x = x + 1;
 
-    let black = RGB::named(rltk::BLACK);
-    let white = RGB::named(rltk::WHITE);
+    let black = RGB::named(BLACK);
+    let white = RGB::named(WHITE);
 
     let (fg, bg) = if current_state == MainMenuState::New {
         (black, white)
@@ -271,7 +271,7 @@ pub fn show_main_menu(ctx: &mut Rltk, current_state: MainMenuState) -> MainMenuR
     ctx.print_color(x, y + 4, fg, bg, " Quit ");
 
     match ctx.key {
-        Some(rltk::VirtualKeyCode::Down) | Some(rltk::VirtualKeyCode::J) => {
+        Some(VirtualKeyCode::Down) | Some(VirtualKeyCode::J) => {
             use MainMenuState::*;
             let current_state = match current_state {
                 New => Load,
@@ -280,7 +280,7 @@ pub fn show_main_menu(ctx: &mut Rltk, current_state: MainMenuState) -> MainMenuR
             };
             MainMenuResult::NoSelection(current_state)
         }
-        Some(rltk::VirtualKeyCode::Up) | Some(rltk::VirtualKeyCode::K) => {
+        Some(VirtualKeyCode::Up) | Some(VirtualKeyCode::K) => {
             use MainMenuState::*;
             let current_state = match current_state {
                 New => Quit,
@@ -296,7 +296,7 @@ pub fn show_main_menu(ctx: &mut Rltk, current_state: MainMenuState) -> MainMenuR
     }
 }
 
-pub fn ask_bool(ctx: &mut Rltk, question: &str) -> (ItemMenuResult, bool) {
+pub fn ask_bool(ctx: &mut BTerm, question: &str) -> (ItemMenuResult, bool) {
     let width = question.len() as i32;
 
     let (screen_width, screen_height) = ctx.get_char_size();
@@ -306,15 +306,15 @@ pub fn ask_bool(ctx: &mut Rltk, question: &str) -> (ItemMenuResult, bool) {
         screen_height as i32 / 2 - 2,
         width + 3,
         2,
-        RGB::named(rltk::YELLOW),
-        RGB::named(rltk::BLACK),
+        RGB::named(YELLOW),
+        RGB::named(BLACK),
     );
 
     ctx.print_color(
         screen_width as i32 / 2 - width + 1,
         screen_height as i32 / 2 - 1,
-        RGB::named(rltk::YELLOW),
-        RGB::named(rltk::BLACK),
+        RGB::named(YELLOW),
+        RGB::named(BLACK),
         question,
     );
 
@@ -328,7 +328,7 @@ pub fn ask_bool(ctx: &mut Rltk, question: &str) -> (ItemMenuResult, bool) {
 
 pub fn show_inventory(
     ecs: &mut World,
-    ctx: &mut Rltk,
+    ctx: &mut BTerm,
     inv_type: InventoryType,
 ) -> (ItemMenuResult, Option<Entity>) {
     let player_entity = ecs.fetch::<PlayerEntity>();
@@ -357,8 +357,8 @@ pub fn show_inventory(
         y - 2,
         31,
         count + 3,
-        RGB::named(rltk::WHITE),
-        RGB::named(rltk::BLACK),
+        RGB::named(WHITE),
+        RGB::named(BLACK),
     );
     let title = match inv_type {
         InventoryType::Apply => "Use",
@@ -367,15 +367,15 @@ pub fn show_inventory(
     ctx.print_color(
         18,
         y - 2,
-        RGB::named(rltk::YELLOW),
-        RGB::named(rltk::BLACK),
+        RGB::named(YELLOW),
+        RGB::named(BLACK),
         title,
     );
     ctx.print_color(
         18,
         y + count as i32 + 1,
-        RGB::named(rltk::YELLOW),
-        RGB::named(rltk::BLACK),
+        RGB::named(YELLOW),
+        RGB::named(BLACK),
         "ESCAPE to cancel",
     );
 
@@ -385,23 +385,23 @@ pub fn show_inventory(
         ctx.set(
             17,
             y,
-            RGB::named(rltk::WHITE),
-            RGB::named(rltk::BLACK),
-            rltk::to_cp437('('),
+            RGB::named(WHITE),
+            RGB::named(BLACK),
+            to_cp437('('),
         );
         ctx.set(
             18,
             y,
-            RGB::named(rltk::YELLOW),
-            RGB::named(rltk::BLACK),
-            rltk::to_cp437(index_to_letter(index)),
+            RGB::named(YELLOW),
+            RGB::named(BLACK),
+            to_cp437(index_to_letter(index)),
         );
         ctx.set(
             19,
             y,
-            RGB::named(rltk::WHITE),
-            RGB::named(rltk::BLACK),
-            rltk::to_cp437(')'),
+            RGB::named(WHITE),
+            RGB::named(BLACK),
+            to_cp437(')'),
         );
 
         ctx.print(21, y, &name.name.to_string());
@@ -413,7 +413,7 @@ pub fn show_inventory(
         Some(key) => match key {
             VirtualKeyCode::Escape => (ItemMenuResult::Cancel, None),
             _ => {
-                let selected = rltk::letter_to_option(key);
+                let selected = letter_to_option(key);
                 if selected < 0 {
                     (ItemMenuResult::NoResponse, None)
                 } else {
@@ -435,7 +435,7 @@ pub fn show_inventory(
     }
 }
 
-pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
+pub fn draw_ui(ecs: &World, ctx: &mut BTerm) {
     let (screen_width, screen_height) = ctx.get_char_size();
     let (screen_width, screen_height) = (screen_width as i32, screen_height as i32);
     let bottom_start = screen_height - BOTTOM_HEIGHT;
@@ -444,8 +444,8 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
         bottom_start,
         screen_width - 1,
         6,
-        RGB::named(rltk::WHITE),
-        RGB::named(rltk::BLACK),
+        RGB::named(WHITE),
+        RGB::named(BLACK),
     );
 
     let combat_stats = ecs.read_storage::<CombatStats>();
@@ -455,17 +455,17 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
         ctx.print_color(
             12,
             bottom_start,
-            RGB::named(rltk::YELLOW),
-            RGB::named(rltk::BLACK),
+            RGB::named(YELLOW),
+            RGB::named(BLACK),
             &health,
         );
 
         let bar_color = if stats.hp < stats.max_hp / 3 {
-            RGB::named(rltk::RED)
+            RGB::named(RED)
         } else if stats.hp < 3 * stats.max_hp / 4 {
-            RGB::named(rltk::YELLOW)
+            RGB::named(YELLOW)
         } else {
-            RGB::named(rltk::GREEN)
+            RGB::named(GREEN)
         };
 
         ctx.draw_bar_horizontal(
@@ -475,7 +475,7 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
             stats.hp,
             stats.max_hp,
             bar_color,
-            RGB::named(rltk::BLACK),
+            RGB::named(BLACK),
         );
     }
     let gamelog = ecs.fetch::<GameLog>();
@@ -489,7 +489,7 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
     draw_tooltips(ecs, ctx);
 }
 
-fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
+fn draw_tooltips(ecs: &World, ctx: &mut BTerm) {
     let camera = *(ecs.fetch::<Camera>());
     let map = ecs.fetch::<Map>();
     let names = ecs.read_storage::<Name>();
@@ -524,8 +524,8 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
                 ctx.print_color(
                     left_x,
                     y,
-                    RGB::named(rltk::WHITE),
-                    RGB::named(rltk::GREY),
+                    RGB::named(WHITE),
+                    RGB::named(GREY),
                     &s.to_string(),
                 );
                 let padding = (width - s.len() as i32) - 1;
@@ -533,8 +533,8 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
                     ctx.print_color(
                         arrow_pos.x - i,
                         y,
-                        RGB::named(rltk::WHITE),
-                        RGB::named(rltk::GREY),
+                        RGB::named(WHITE),
+                        RGB::named(GREY),
                         &" ".to_string(),
                     );
                 }
@@ -543,8 +543,8 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
             ctx.print_color(
                 arrow_pos.x,
                 arrow_pos.y,
-                RGB::named(rltk::WHITE),
-                RGB::named(rltk::GREY),
+                RGB::named(WHITE),
+                RGB::named(GREY),
                 &"->".to_string(),
             );
         } else {
@@ -555,8 +555,8 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
                 ctx.print_color(
                     left_x + 1,
                     y,
-                    RGB::named(rltk::WHITE),
-                    RGB::named(rltk::GREY),
+                    RGB::named(WHITE),
+                    RGB::named(GREY),
                     &s.to_string(),
                 );
                 let padding = (width - s.len() as i32) - 1;
@@ -564,8 +564,8 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
                     ctx.print_color(
                         arrow_pos.x + 1 + i,
                         y,
-                        RGB::named(rltk::WHITE),
-                        RGB::named(rltk::GREY),
+                        RGB::named(WHITE),
+                        RGB::named(GREY),
                         &" ".to_string(),
                     );
                 }
@@ -574,8 +574,8 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
             ctx.print_color(
                 arrow_pos.x,
                 arrow_pos.y,
-                RGB::named(rltk::WHITE),
-                RGB::named(rltk::GREY),
+                RGB::named(WHITE),
+                RGB::named(GREY),
                 &"<-".to_string(),
             );
         }

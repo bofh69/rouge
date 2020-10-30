@@ -6,14 +6,14 @@ use crate::player::player_input;
 use crate::visibility_system::VisibilitySystem;
 use crate::PlayerPosition;
 use crate::{gui, PlayerEntity, RunState};
-use rltk::*;
+use bracket_lib::prelude::*;
 use specs::prelude::*;
 
 #[derive(Debug)]
 pub struct GameScene {}
 
 impl Scene<World> for GameScene {
-    fn tick(&mut self, ecs: &mut World, ctx: &mut Rltk) -> SceneResult<World> {
+    fn tick(&mut self, ecs: &mut World, ctx: &mut BTerm) -> SceneResult<World> {
         ctx.cls();
         {
             let mut camera_sys = CameraSystem {};
