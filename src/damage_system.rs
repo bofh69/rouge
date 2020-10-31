@@ -1,58 +1,49 @@
-use crate::components::*;
 use crate::gamelog::GameLog;
-use specs::prelude::*;
+use crate::{components::*, PlayerEntity};
+use legion::{systems::CommandBuffer, *};
 
-pub struct DamageSystem {}
-
-impl<'a> System<'a> for DamageSystem {
-    type SystemData = (
-        WriteStorage<'a, CombatStats>,
-        WriteStorage<'a, SufferDamage>,
-        WriteStorage<'a, ReceiveHealth>,
-    );
-
-    fn run(&mut self, data: Self::SystemData) {
-        let (mut stats, mut damage, mut health) = data;
-
-        for (mut stats, damage) in (&mut stats, &damage).join() {
-            stats.hp -= damage.amount;
-        }
-
-        // Lets be kind...
-        for (mut stats, health) in (&mut stats, &health).join() {
-            if stats.max_hp == stats.hp {
-                stats.max_hp += 1 + health.amount / 8;
-                stats.hp = stats.max_hp;
-            } else {
-                stats.hp = i32::min(stats.max_hp, stats.hp + health.amount);
-            }
-        }
-
-        damage.clear();
-        health.clear();
-    }
+#[system(for_each)]
+pub(crate) fn damage(
+    entity: &Entity,
+    stats: &mut CombatStats,
+    damage: &SufferDamage,
+    cb: &mut CommandBuffer,
+) {
+    stats.hp -= damage.amount;
+    cb.remove_component::<SufferDamage>(*entity);
 }
 
-pub fn delete_the_dead(ecs: &mut World) {
-    let mut dead: Vec<Entity> = Vec::new();
-
-    {
-        let combat_stats = ecs.read_storage::<CombatStats>();
-        let players = ecs.read_storage::<Player>();
-        let entities = ecs.entities();
-        let mut gamelog = ecs.write_resource::<GameLog>();
-        for (entity, stats) in (&entities, &combat_stats).join() {
-            if stats.hp < 1 {
-                let player = players.get(entity);
-                match player {
-                    None => dead.push(entity),
-                    Some(_) => gamelog.log("You are dead"),
-                }
-            }
-        }
+#[system(for_each)]
+pub(crate) fn health(
+    entity: &Entity,
+    stats: &mut CombatStats,
+    health: &ReceiveHealth,
+    cb: &mut CommandBuffer,
+) {
+    if stats.max_hp == stats.hp {
+        stats.max_hp += 1 + health.amount / 8;
+        stats.hp = stats.max_hp;
+    } else {
+        stats.hp = i32::min(stats.max_hp, stats.hp + health.amount);
     }
+    cb.remove_component::<ReceiveHealth>(*entity);
+}
 
-    for victim in dead {
-        ecs.delete_entity(victim).expect("Unable to delete");
+#[system(for_each)]
+pub(crate) fn delete_the_dead(
+    entity: &Entity,
+    stats: &mut CombatStats,
+    name: &Name,
+    cb: &mut CommandBuffer,
+    #[resource] gamelog: &mut GameLog,
+    #[resource] player_entity: &PlayerEntity,
+) {
+    if stats.hp < 1 {
+        if player_entity.0 == *entity {
+            gamelog.log("You are dead");
+        } else {
+            gamelog.log(format!("{} dies.", &name.name));
+            cb.remove(*entity);
+        }
     }
 }

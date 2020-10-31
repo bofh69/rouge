@@ -1,10 +1,10 @@
-use crate::camera::Camera;
 use crate::components::Position;
 use crate::rect::Rect;
 use crate::MapPosition;
 use crate::ScreenPosition;
+use crate::{camera::Camera, Ecs};
 use bracket_lib::prelude::*;
-use specs::prelude::*;
+use legion::*;
 use std::cmp::{max, min};
 
 pub const MAP_WIDTH: i32 = 120;
@@ -431,9 +431,9 @@ fn get_glyph_for_wall(map: &Map, idx: usize, x: i32, y: i32, walltype: WallType)
     }
 }
 
-pub fn draw_map(ecs: &World, ctx: &mut BTerm) {
-    let map = ecs.fetch::<Map>();
-    let camera = ecs.fetch::<Camera>();
+pub fn draw_map(ecs: &Ecs, ctx: &mut BTerm) {
+    let map = ecs.resources.get::<Map>().unwrap();
+    let camera = ecs.resources.get::<Camera>().unwrap();
 
     for y in 0..camera.height() {
         for x in 0..camera.width() {

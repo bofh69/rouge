@@ -8,7 +8,7 @@ mod gamelog;
 mod gui;
 mod inventory_system;
 mod map;
-mod map_indexing_sysem;
+mod map_indexing_system;
 mod melee_combat_system;
 mod monster_ai_systems;
 mod player;
@@ -17,14 +17,11 @@ mod scenes;
 mod spawner;
 mod visibility_system;
 
-#[macro_use]
-extern crate specs_derive;
-
+use bracket_lib::prelude::*;
 use camera::Camera;
 use components::*;
+use legion::*;
 use map::Map;
-use bracket_lib::prelude::*;
-use specs::prelude::*;
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum InventoryType {
@@ -101,16 +98,8 @@ impl Into<(i32, i32)> for ScreenPosition {
 
 impl Into<(usize, usize)> for ScreenPosition {
     fn into(self) -> (usize, usize) {
-        let x = if self.x > 0 {
-            self.x as usize
-        } else {
-            0
-        };
-        let y = if self.y > 0 {
-            self.y as usize
-        } else {
-            0
-        };
+        let x = if self.x > 0 { self.x as usize } else { 0 };
+        let y = if self.y > 0 { self.y as usize } else { 0 };
         (x, y)
     }
 }
@@ -160,9 +149,14 @@ impl Into<Position> for PlayerPosition {
     }
 }
 
-pub struct State {
+pub struct Ecs {
     ecs: World,
-    scene_manager: scenes::SceneManager<World>,
+    resources: Resources,
+}
+
+pub struct State {
+    ecs: Ecs,
+    scene_manager: scenes::SceneManager<Ecs>,
 }
 
 impl GameState for State {
@@ -173,14 +167,13 @@ impl GameState for State {
 
 impl State {}
 
-fn main() -> Result::<(), Box<dyn std::error::Error + 'static + Send + Sync>> {
+fn main() -> Result<(), Box<dyn std::error::Error + 'static + Send + Sync>> {
     const SCREEN_WIDTH: i32 = 80;
     const SCREEN_HEIGHT: i32 = 50;
     let map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
 
-    let mut context = 
-    BTermBuilder::simple(SCREEN_WIDTH, SCREEN_HEIGHT)?
+    let mut context = BTermBuilder::simple(SCREEN_WIDTH, SCREEN_HEIGHT)?
         .with_title("Rouge World")
         .with_advanced_input(true)
         .with_resource_path("resources")
@@ -190,35 +183,15 @@ fn main() -> Result::<(), Box<dyn std::error::Error + 'static + Send + Sync>> {
 
     context.with_post_scanlines(true);
     let mut gs = State {
-        ecs: World::new(),
+        ecs: Ecs {
+            ecs: World::default(),
+            resources: Resources::default(),
+        },
         scene_manager: scenes::SceneManager::new(),
     };
 
-    gs.ecs.register::<AreaOfEffect>();
-    gs.ecs.register::<BlocksTile>();
-    gs.ecs.register::<CombatStats>();
-    gs.ecs.register::<Consumable>();
-    gs.ecs.register::<HealthProvider>();
-    gs.ecs.register::<InBackpack>();
-    gs.ecs.register::<InflictsDamage>();
-    gs.ecs.register::<Item>();
-    gs.ecs.register::<ItemIndex>();
-    gs.ecs.register::<Monster>();
-    gs.ecs.register::<Name>();
-    gs.ecs.register::<Player>();
-    gs.ecs.register::<Position>();
-    gs.ecs.register::<ReceiveHealth>();
-    gs.ecs.register::<Ranged>();
-    gs.ecs.register::<Renderable>();
-    gs.ecs.register::<SufferDamage>();
-    gs.ecs.register::<Viewshed>();
-    gs.ecs.register::<WantsToDropItem>();
-    gs.ecs.register::<WantsToMelee>();
-    gs.ecs.register::<WantsToPickupItem>();
-    gs.ecs.register::<WantsToUseItem>();
-
-    gs.ecs.insert(RandomNumberGenerator::new());
-    gs.ecs.insert(gamelog::GameLog {
+    gs.ecs.resources.insert(RandomNumberGenerator::new());
+    gs.ecs.resources.insert(gamelog::GameLog {
         entries: vec!["Welcome to Rouge".to_string()],
     });
 
@@ -231,15 +204,15 @@ fn main() -> Result::<(), Box<dyn std::error::Error + 'static + Send + Sync>> {
         x: player_x,
         y: player_y,
     });
-    gs.ecs.insert(Camera::new(
+    gs.ecs.resources.insert(Camera::new(
         player_pos,
         SCREEN_WIDTH as i32,
         SCREEN_HEIGHT as i32 - 7,
     ));
-    gs.ecs.insert(map);
-    gs.ecs.insert(player_pos);
-    gs.ecs.insert(PlayerEntity(player_entity));
-    gs.ecs.insert(PlayerTarget::None);
+    gs.ecs.resources.insert(map);
+    gs.ecs.resources.insert(player_pos);
+    gs.ecs.resources.insert(PlayerEntity(player_entity));
+    gs.ecs.resources.insert(PlayerTarget::None);
 
     gs.scene_manager
         .push(Box::new(scenes::MainMenuScene::new()));

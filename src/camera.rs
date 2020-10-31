@@ -1,6 +1,6 @@
 use crate::map::{MAP_HEIGHT, MAP_WIDTH};
 use crate::{MapPosition, PlayerPosition, ScreenPosition};
-use specs::prelude::*;
+use legion::*;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Camera {
@@ -22,28 +22,24 @@ fn diff_to_interval(v: i32, min: i32, max: i32) -> i32 {
     }
 }
 
-pub struct CameraSystem {}
+#[system]
+pub fn camera_update(
+    #[resource] camera: &mut Camera,
+    #[resource] player_position: &PlayerPosition,
+) {
+    let pos: MapPosition = player_position.0;
 
-impl<'a> System<'a> for CameraSystem {
-    type SystemData = (ReadExpect<'a, PlayerPosition>, WriteExpect<'a, Camera>);
+    if !camera.is_in_view(pos) {
+        camera.center(*player_position);
+    } else if camera.old_player_pos != pos {
+        let screen_pos = pos - camera.offset;
+        let (dx, dy);
+        dx = diff_to_interval(screen_pos.x, camera.w / 3, 2 * camera.w / 3);
+        dy = diff_to_interval(screen_pos.y, camera.h / 3, 2 * camera.h / 3);
 
-    fn run(&mut self, data: Self::SystemData) {
-        let (player_position, mut camera) = data;
+        camera.move_view(-dx, -dy);
 
-        let pos: MapPosition = player_position.0;
-
-        if !camera.is_in_view(pos) {
-            camera.center(*player_position);
-        } else if camera.old_player_pos != pos {
-            let screen_pos = pos - camera.offset;
-            let (dx, dy);
-            dx = diff_to_interval(screen_pos.x, camera.w / 3, 2 * camera.w / 3);
-            dy = diff_to_interval(screen_pos.y, camera.h / 3, 2 * camera.h / 3);
-
-            camera.move_view(-dx, -dy);
-
-            camera.old_player_pos = pos;
-        }
+        camera.old_player_pos = pos;
     }
 }
 

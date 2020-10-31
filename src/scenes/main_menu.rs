@@ -1,13 +1,13 @@
 use super::*;
-use specs::prelude::World;
+use crate::Ecs;
 
 #[derive(Debug)]
 pub struct MainMenuScene {
     state: crate::gui::MainMenuState,
 }
 
-impl Scene<World> for MainMenuScene {
-    fn tick(&mut self, ecs: &mut World, ctx: &mut BTerm) -> SceneResult<World> {
+impl Scene<Ecs> for MainMenuScene {
+    fn tick(&mut self, ecs: &mut Ecs, ctx: &mut BTerm) -> SceneResult<Ecs> {
         use crate::gui::MainMenuResult::*;
         use crate::gui::MainMenuState::*;
         ctx.cls();
@@ -15,7 +15,7 @@ impl Scene<World> for MainMenuScene {
             Selected(New) => SceneResult::Replace(Box::new(super::game::GameScene::new(ecs))),
             Selected(Quit) => SceneResult::Pop,
             Selected(Load) => {
-                // TODO
+                // TODO Implent call to load
                 SceneResult::Pop
             }
             NoSelection(state) => {

@@ -1,48 +1,49 @@
 use crate::components::*;
 use crate::map::MAP_WIDTH;
 use crate::rect::Rect;
+use crate::Ecs;
 use crate::MapPosition;
 use bracket_lib::prelude::*;
-use specs::prelude::*;
+use legion::*;
 
 pub const MAX_MONSTERS: i32 = 5;
 pub const MAX_ITEMS: i32 = 3;
 
-pub fn player(ecs: &mut World, player_x: i32, player_y: i32) -> Entity {
-    ecs.create_entity()
-        .with(Position(MapPosition {
+pub fn player(ecs: &mut Ecs, player_x: i32, player_y: i32) -> Entity {
+    ecs.ecs.push((
+        Position(MapPosition {
             x: player_x,
             y: player_y,
-        }))
-        .with(Renderable {
+        }),
+        Renderable {
             glyph: to_cp437('@'),
             fg: RGB::named(YELLOW),
             bg: RGB::named(BLACK),
             render_order: 0,
-        })
-        .with(Player {})
-        .with(Viewshed {
+        },
+        Player {},
+        Viewshed {
             visible_tiles: Vec::new(),
             range: 8,
             dirty: true,
-        })
-        .with(Name {
+        },
+        Name {
             name: "Player".to_string(),
-        })
-        .with(CombatStats {
+        },
+        CombatStats {
             hp: 30,
             max_hp: 30,
             power: 5,
             defense: 2,
-        })
-        .build()
+        },
+    ))
 }
 
 /// Spawns a random monster at a given location
-pub fn random_monster(ecs: &mut World, x: i32, y: i32) {
+pub fn random_monster(ecs: &mut Ecs, x: i32, y: i32) {
     let roll: i32;
     {
-        let mut rng = ecs.write_resource::<RandomNumberGenerator>();
+        let mut rng = ecs.resources.get_mut::<RandomNumberGenerator>().unwrap();
         roll = rng.roll_dice(1, 2);
     }
     match roll {
@@ -51,45 +52,45 @@ pub fn random_monster(ecs: &mut World, x: i32, y: i32) {
     }
 }
 
-fn lamotte(ecs: &mut World, x: i32, y: i32) {
+fn lamotte(ecs: &mut Ecs, x: i32, y: i32) {
     monster(ecs, x, y, to_cp437('l'), "Lamotte");
 }
-fn janouch(ecs: &mut World, x: i32, y: i32) {
+fn janouch(ecs: &mut Ecs, x: i32, y: i32) {
     monster(ecs, x, y, to_cp437('j'), "Janouch");
 }
 
-fn monster<S: ToString>(ecs: &mut World, x: i32, y: i32, glyph: u16, name: S) {
-    ecs.create_entity()
-        .with(Position(MapPosition { x, y }))
-        .with(Renderable {
+fn monster<S: ToString>(ecs: &mut Ecs, x: i32, y: i32, glyph: u16, name: S) {
+    ecs.ecs.push((
+        Position(MapPosition { x, y }),
+        Renderable {
             glyph,
             fg: RGB::named(RED),
             bg: RGB::named(BLACK),
             render_order: 1,
-        })
-        .with(Viewshed {
+        },
+        Viewshed {
             visible_tiles: Vec::new(),
             range: 8,
             dirty: true,
-        })
-        .with(Monster {})
-        .with(Name {
+        },
+        Monster {},
+        Name {
             name: name.to_string(),
-        })
-        .with(BlocksTile {})
-        .with(CombatStats {
+        },
+        BlocksTile {},
+        CombatStats {
             max_hp: 16,
             hp: 16,
             defense: 1,
             power: 4,
-        })
-        .build();
+        },
+    ));
 }
 
 /// Spawns a random monster at a given location
-pub fn random_item(ecs: &mut World, x: i32, y: i32) {
+pub fn random_item(ecs: &mut Ecs, x: i32, y: i32) {
     let roll = {
-        let mut rng = ecs.write_resource::<RandomNumberGenerator>();
+        let mut rng = ecs.resources.get_mut::<RandomNumberGenerator>().unwrap();
         rng.roll_dice(1, 4)
     };
     match roll {
@@ -100,87 +101,87 @@ pub fn random_item(ecs: &mut World, x: i32, y: i32) {
     }
 }
 
-fn health_potion(ecs: &mut World, x: i32, y: i32) {
-    ecs.create_entity()
-        .with(Position(MapPosition { x, y }))
-        .with(Renderable {
+fn health_potion(ecs: &mut Ecs, x: i32, y: i32) {
+    ecs.ecs.push((
+        Position(MapPosition { x, y }),
+        Renderable {
             glyph: to_cp437('¡'),
             fg: RGB::named(MAGENTA),
             bg: RGB::named(BLACK),
             render_order: 2,
-        })
-        .with(Name {
+        },
+        Name {
             name: "Health Potion".to_string(),
-        })
-        .with(Item {})
-        .with(Consumable {})
-        .with(HealthProvider { heal_amount: 8 })
-        .build();
+        },
+        Item {},
+        Consumable {},
+        HealthProvider { heal_amount: 8 },
+    ));
 }
 
-fn ball(ecs: &mut World, x: i32, y: i32) {
-    ecs.create_entity()
-        .with(Position(MapPosition { x, y }))
-        .with(Renderable {
+fn ball(ecs: &mut Ecs, x: i32, y: i32) {
+    ecs.ecs.push((
+        Position(MapPosition { x, y }),
+        Renderable {
             glyph: to_cp437('*'),
             fg: RGB::named(PURPLE),
             bg: RGB::named(BLACK),
             render_order: 2,
-        })
-        .with(Name {
+        },
+        Name {
             name: "Ball".to_string(),
-        })
-        .with(Item {})
-        .build();
+        },
+        Item {},
+    ));
 }
 
-fn magic_missile_scroll(ecs: &mut World, x: i32, y: i32) {
-    ecs.create_entity()
-        .with(Position(MapPosition { x, y }))
-        .with(Renderable {
+fn magic_missile_scroll(ecs: &mut Ecs, x: i32, y: i32) {
+    ecs.ecs.push((
+        Position(MapPosition { x, y }),
+        Renderable {
             glyph: to_cp437('?'),
             fg: RGB::named(CYAN),
             bg: RGB::named(BLACK),
             render_order: 2,
-        })
-        .with(Name {
+        },
+        Name {
             name: "Magic Missile Scroll".to_string(),
-        })
-        .with(Item {})
-        .with(Consumable {})
-        .with(Ranged { range: 6 })
-        .with(InflictsDamage { damage: 8 })
-        .build();
+        },
+        Item {},
+        Consumable {},
+        Ranged { range: 6 },
+        InflictsDamage { damage: 8 },
+    ));
 }
 
-fn fireball_scroll(ecs: &mut World, x: i32, y: i32) {
-    ecs.create_entity()
-        .with(Position(MapPosition { x, y }))
-        .with(Renderable {
+fn fireball_scroll(ecs: &mut Ecs, x: i32, y: i32) {
+    ecs.ecs.push((
+        Position(MapPosition { x, y }),
+        Renderable {
             glyph: to_cp437('?'),
             fg: RGB::named(ORANGE),
             bg: RGB::named(BLACK),
             render_order: 2,
-        })
-        .with(Name {
+        },
+        Name {
             name: "Fireball Scroll".to_string(),
-        })
-        .with(Item {})
-        .with(Consumable {})
-        .with(Ranged { range: 6 })
-        .with(InflictsDamage { damage: 20 })
-        .with(AreaOfEffect { radius: 3 })
-        .build();
+        },
+        Item {},
+        Consumable {},
+        Ranged { range: 6 },
+        InflictsDamage { damage: 20 },
+        AreaOfEffect { radius: 3 },
+    ));
 }
 
 /// Fills a room with stuff!
-pub fn spawn_room(ecs: &mut World, room: &Rect) {
+pub fn spawn_room(ecs: &mut Ecs, room: &Rect) {
     let mut monster_spawn_points: Vec<usize> = Vec::new();
     let mut item_spawn_points: Vec<usize> = Vec::new();
 
     // Scope to keep the borrow checker happy
     {
-        let mut rng = ecs.write_resource::<RandomNumberGenerator>();
+        let mut rng = ecs.resources.get_mut::<RandomNumberGenerator>().unwrap();
         let num_monsters = rng.roll_dice(1, MAX_MONSTERS + 2) - 3;
         let num_items = rng.roll_dice(1, MAX_ITEMS + 2) - 3;
 

@@ -2,10 +2,11 @@ use crate::camera::Camera;
 use crate::components::*;
 use crate::gamelog::GameLog;
 use crate::map::Map;
+use crate::Ecs;
 use crate::{Direction, MapPosition, PlayerPosition, ScreenPosition};
 use crate::{InventoryType, PlayerEntity};
 use bracket_lib::prelude::*;
-use specs::prelude::*;
+use legion::*;
 
 const BOTTOM_HEIGHT: i32 = 7;
 
@@ -97,7 +98,7 @@ impl TargetingInfo {
 
     pub fn show_targeting(
         &mut self,
-        ecs: &mut World,
+        ecs: &mut Ecs,
         ctx: &mut BTerm,
     ) -> (ItemMenuResult, Option<MapPosition>) {
         if Some(VirtualKeyCode::Escape) == ctx.key {
@@ -125,11 +126,6 @@ impl TargetingInfo {
             }
         }
 
-        let camera = ecs.fetch::<Camera>();
-        let player_pos = ecs.fetch::<PlayerPosition>();
-        let player_entity = ecs.fetch::<PlayerEntity>().0;
-        let viewsheds = ecs.read_storage::<Viewshed>();
-
         ctx.print_color(
             5,
             0,
@@ -138,10 +134,14 @@ impl TargetingInfo {
             "Select Target:",
         );
 
+        let camera = *ecs.resources.get::<Camera>().unwrap();
+        let player_entity = ecs.resources.get::<PlayerEntity>().unwrap().0;
+        let player_entry = ecs.ecs.entry(player_entity).unwrap();
+
         // Highlight available target cells
         let mut available_cells = Vec::new();
-        let visible = viewsheds.get(player_entity);
-        if let Some(visible) = visible {
+        if let Ok(visible) = player_entry.into_component::<Viewshed>() {
+            let player_pos = *ecs.resources.get::<PlayerPosition>().unwrap();
             // We have a viewshed
             for pos in visible.visible_tiles.iter() {
                 let point = camera.transform_map_pos(*pos);
@@ -164,11 +164,7 @@ impl TargetingInfo {
             }
         }
         if valid_target {
-            ctx.set_bg(
-                self.current_pos.0,
-                self.current_pos.1,
-                RGB::named(CYAN),
-            );
+            ctx.set_bg(self.current_pos.0, self.current_pos.1, RGB::named(CYAN));
 
             match (ctx.key, ctx.left_click) {
                 (_, true)
@@ -185,11 +181,7 @@ impl TargetingInfo {
                 _ => (),
             }
         } else {
-            ctx.set_bg(
-                self.current_pos.0,
-                self.current_pos.1,
-                RGB::named(RED),
-            );
+            ctx.set_bg(self.current_pos.0, self.current_pos.1, RGB::named(RED));
             match (ctx.key, ctx.left_click) {
                 (Some(VirtualKeyCode::Return), _) | (_, true) => {
                     return (ItemMenuResult::Cancel, None)
@@ -327,26 +319,25 @@ pub fn ask_bool(ctx: &mut BTerm, question: &str) -> (ItemMenuResult, bool) {
 }
 
 pub fn show_inventory(
-    ecs: &mut World,
+    ecs: &mut Ecs,
     ctx: &mut BTerm,
     inv_type: InventoryType,
 ) -> (ItemMenuResult, Option<Entity>) {
-    let player_entity = ecs.fetch::<PlayerEntity>();
-    let names = ecs.read_storage::<Name>();
-    let backpack = ecs.read_storage::<InBackpack>();
-    let item_index = ecs.read_storage::<ItemIndex>();
-    let entities = ecs.entities();
+    let player_entity = ecs.resources.get::<PlayerEntity>().unwrap();
 
-    let mut inventory: Vec<_> = (&entities, &backpack, &item_index, &names)
-        .join()
-        .filter(|item| item.1.owner == player_entity.0)
-        .map(|(entity, _item, idx, name)| (entity, idx.index, name))
+    let mut query = <(Entity, &Name, &InBackpack, &ItemIndex)>::query();
+
+    let mut inventory: Vec<_> = query
+        .iter(&ecs.ecs)
+        .filter(|item| item.2.owner == player_entity.0)
+        .map(|(entity, name, _inbackpack, idx)| (*entity, idx.index, name))
         .collect();
+
     let count = inventory.len() as i32;
     inventory.sort_by(|a, b| a.1.cmp(&b.1));
 
     if count == 0 {
-        let mut gamelog = ecs.fetch_mut::<GameLog>();
+        let mut gamelog = ecs.resources.get_mut::<GameLog>().unwrap();
         gamelog.log("Your backpack is empty");
         return (ItemMenuResult::Cancel, None);
     }
@@ -364,13 +355,7 @@ pub fn show_inventory(
         InventoryType::Apply => "Use",
         InventoryType::Drop => "Drop",
     };
-    ctx.print_color(
-        18,
-        y - 2,
-        RGB::named(YELLOW),
-        RGB::named(BLACK),
-        title,
-    );
+    ctx.print_color(18, y - 2, RGB::named(YELLOW), RGB::named(BLACK), title);
     ctx.print_color(
         18,
         y + count as i32 + 1,
@@ -382,13 +367,7 @@ pub fn show_inventory(
     let mut items = std::collections::HashMap::new();
     for (entities, index, name) in inventory {
         items.insert(index, entities);
-        ctx.set(
-            17,
-            y,
-            RGB::named(WHITE),
-            RGB::named(BLACK),
-            to_cp437('('),
-        );
+        ctx.set(17, y, RGB::named(WHITE), RGB::named(BLACK), to_cp437('('));
         ctx.set(
             18,
             y,
@@ -396,13 +375,7 @@ pub fn show_inventory(
             RGB::named(BLACK),
             to_cp437(index_to_letter(index)),
         );
-        ctx.set(
-            19,
-            y,
-            RGB::named(WHITE),
-            RGB::named(BLACK),
-            to_cp437(')'),
-        );
+        ctx.set(19, y, RGB::named(WHITE), RGB::named(BLACK), to_cp437(')'));
 
         ctx.print(21, y, &name.name.to_string());
         y += 1;
@@ -435,7 +408,7 @@ pub fn show_inventory(
     }
 }
 
-pub fn draw_ui(ecs: &World, ctx: &mut BTerm) {
+pub fn draw_ui(ecs: &Ecs, ctx: &mut BTerm) {
     let (screen_width, screen_height) = ctx.get_char_size();
     let (screen_width, screen_height) = (screen_width as i32, screen_height as i32);
     let bottom_start = screen_height - BOTTOM_HEIGHT;
@@ -448,9 +421,8 @@ pub fn draw_ui(ecs: &World, ctx: &mut BTerm) {
         RGB::named(BLACK),
     );
 
-    let combat_stats = ecs.read_storage::<CombatStats>();
-    let players = ecs.read_storage::<Player>();
-    for (_player, stats) in (&players, &combat_stats).join() {
+    let mut query = <(&CombatStats, &Player)>::query();
+    for (stats, _player) in query.iter(&ecs.ecs) {
         let health = format!(" HP: {} / {} ", stats.hp, stats.max_hp);
         ctx.print_color(
             12,
@@ -478,7 +450,8 @@ pub fn draw_ui(ecs: &World, ctx: &mut BTerm) {
             RGB::named(BLACK),
         );
     }
-    let gamelog = ecs.fetch::<GameLog>();
+
+    let gamelog = ecs.resources.get::<GameLog>().unwrap();
     for (i, entry) in gamelog.entries.iter().rev().enumerate() {
         if i > 4 {
             break;
@@ -489,18 +462,17 @@ pub fn draw_ui(ecs: &World, ctx: &mut BTerm) {
     draw_tooltips(ecs, ctx);
 }
 
-fn draw_tooltips(ecs: &World, ctx: &mut BTerm) {
-    let camera = *(ecs.fetch::<Camera>());
-    let map = ecs.fetch::<Map>();
-    let names = ecs.read_storage::<Name>();
-    let positions = ecs.read_storage::<Position>();
+fn draw_tooltips(ecs: &Ecs, ctx: &mut BTerm) {
+    let camera = *ecs.resources.get::<Camera>().unwrap();
+    let map = ecs.resources.get::<Map>().unwrap();
 
     let mouse_pos = ctx.mouse_pos();
     if mouse_pos.0 >= map.width || mouse_pos.1 >= map.height {
         return;
     }
     let mut tooltip: Vec<String> = Vec::new();
-    for (name, position) in (&names, &positions).join() {
+    let mut query = <(&Name, &Position)>::query();
+    for (name, position) in query.iter(&ecs.ecs) {
         let pos = camera.transform_map_pos(position.0);
         if pos.x == mouse_pos.0 && pos.y == mouse_pos.1 {
             tooltip.push(name.name.to_string());

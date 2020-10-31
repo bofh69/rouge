@@ -1,38 +1,36 @@
-use super::*;
-use crate::camera::{Camera, CameraSystem};
-use crate::components::*;
-use crate::map::Map;
-use crate::player::player_input;
-use crate::visibility_system::VisibilitySystem;
-use crate::PlayerPosition;
+use crate::Ecs;
+use crate::{camera::Camera, components::*, map::Map};
 use crate::{gui, PlayerEntity, RunState};
+use crate::{player::player_input, PlayerPosition};
 use bracket_lib::prelude::*;
-use specs::prelude::*;
+use legion::*;
 
-#[derive(Debug)]
-pub struct GameScene {}
+use super::{Scene, SceneResult};
 
-impl Scene<World> for GameScene {
-    fn tick(&mut self, ecs: &mut World, ctx: &mut BTerm) -> SceneResult<World> {
+pub(crate) struct GameScene {
+    schedule: Schedule,
+}
+
+impl Scene<Ecs> for GameScene {
+    fn tick(&mut self, ecs: &mut Ecs, ctx: &mut BTerm) -> SceneResult<Ecs> {
         ctx.cls();
         {
-            let mut camera_sys = CameraSystem {};
-            camera_sys.run_now(ecs);
+            let mut schedule = Schedule::builder()
+                .add_system(crate::camera::camera_update_system())
+                .build();
+            schedule.execute(&mut ecs.ecs, &mut ecs.resources);
 
             crate::map::draw_map(ecs, ctx);
 
-            let map = ecs.fetch::<Map>();
+            let camera = ecs.resources.get::<Camera>().unwrap();
 
-            let camera = ecs.fetch::<Camera>();
-            let positions = ecs.read_storage::<Position>();
-            let renderables = ecs.read_storage::<Renderable>();
-
-            let mut data = (&positions, &renderables)
-                .join()
+            let mut data = <(&Position, &Renderable)>::query()
+                .iter(&ecs.ecs)
                 .filter(|(p, _)| camera.is_in_view(p.0))
                 .collect::<Vec<_>>();
             data.sort_by(|&a, &b| b.1.render_order.cmp(&a.1.render_order));
 
+            let map = ecs.resources.get::<Map>().unwrap();
             for (pos, render) in data.iter() {
                 if map.visible_tiles[map.pos_to_idx(**pos)] {
                     let point = camera.transform_map_pos(pos.0);
@@ -41,10 +39,7 @@ impl Scene<World> for GameScene {
             }
         }
 
-        let mut newrunstate = {
-            let runstate = ecs.fetch::<RunState>();
-            *runstate
-        };
+        let mut newrunstate = { *ecs.resources.get::<RunState>().unwrap() };
 
         match newrunstate {
             RunState::SaveGame => {
@@ -76,35 +71,38 @@ impl Scene<World> for GameScene {
             RunState::ShowInventory(inv_type) => match gui::show_inventory(ecs, ctx, inv_type) {
                 (gui::ItemMenuResult::Cancel, _) => newrunstate = RunState::AwaitingInput,
                 (gui::ItemMenuResult::Selected, Some(item_entity)) => {
-                    let player_entity = ecs.fetch::<PlayerEntity>();
+                    let player_entity = ecs.resources.get::<PlayerEntity>().unwrap().0;
                     match inv_type {
                         crate::InventoryType::Apply => {
-                            if let Some(range) = ecs.read_storage::<Ranged>().get(item_entity) {
-                                let player_position = ecs.fetch::<PlayerPosition>().0;
-                                let camera = ecs.fetch::<Camera>();
-                                let start_pos = camera.transform_map_pos(player_position);
-                                let targeting_info =
-                                    gui::TargetingInfo::new(range.range, start_pos, ctx);
-                                newrunstate = RunState::ShowTargeting(targeting_info, item_entity);
-                            } else {
-                                let mut wants_to_drink = ecs.write_storage::<WantsToUseItem>();
-                                wants_to_drink
-                                    .insert(
-                                        player_entity.0,
-                                        WantsToUseItem {
-                                            item: item_entity,
-                                            target: None,
-                                        },
-                                    )
-                                    .expect("Could not insert");
+                            if {
+                                let entry = ecs.ecs.entry(item_entity).unwrap();
+                                if let Ok(range) = entry.get_component::<Ranged>() {
+                                    let player_position =
+                                        ecs.resources.get::<PlayerPosition>().unwrap().0;
+                                    let camera = ecs.resources.get::<Camera>().unwrap();
+                                    let start_pos = camera.transform_map_pos(player_position);
+                                    let targeting_info =
+                                        gui::TargetingInfo::new(range.range, start_pos, ctx);
+                                    newrunstate =
+                                        RunState::ShowTargeting(targeting_info, item_entity);
+                                    false
+                                } else {
+                                    true
+                                }
+                            } {
+                                let mut entry = ecs.ecs.entry(player_entity).unwrap();
+                                entry.add_component(WantsToUseItem {
+                                    item: item_entity,
+                                    target: None,
+                                });
                                 newrunstate = RunState::PlayerTurn;
                             }
                         }
                         crate::InventoryType::Drop => {
-                            let mut wants_to_drop = ecs.write_storage::<WantsToDropItem>();
-                            wants_to_drop
-                                .insert(player_entity.0, WantsToDropItem { item: item_entity })
-                                .expect("Could not insert");
+                            ecs.ecs
+                                .entry(player_entity)
+                                .unwrap()
+                                .add_component(WantsToDropItem { item: item_entity });
                             newrunstate = RunState::PlayerTurn;
                         }
                     }
@@ -115,18 +113,15 @@ impl Scene<World> for GameScene {
                 match targeting_info.show_targeting(ecs, ctx) {
                     (gui::ItemMenuResult::Cancel, _) => newrunstate = RunState::AwaitingInput,
                     (gui::ItemMenuResult::Selected, Some(target_position)) => {
-                        let player_entity = ecs.fetch::<PlayerEntity>();
+                        let player_entity = ecs.resources.get::<PlayerEntity>().unwrap().0;
 
-                        let mut wants_to_use = ecs.write_storage::<WantsToUseItem>();
-                        wants_to_use
-                            .insert(
-                                player_entity.0,
-                                WantsToUseItem {
-                                    item: item_entity,
-                                    target: Some(target_position),
-                                },
-                            )
-                            .expect("Could not insert");
+                        ecs.ecs
+                            .entry(player_entity)
+                            .unwrap()
+                            .add_component(WantsToUseItem {
+                                item: item_entity,
+                                target: Some(target_position),
+                            });
                         newrunstate = RunState::PlayerTurn;
                     }
                     _ => (),
@@ -137,46 +132,39 @@ impl Scene<World> for GameScene {
         gui::draw_ui(ecs, ctx);
 
         {
-            let mut runwriter = ecs.write_resource::<RunState>();
-            *runwriter = newrunstate;
+            ecs.resources.insert(newrunstate);
         }
         SceneResult::Continue
     }
 }
 
 impl GameScene {
-    pub fn new(ecs: &mut World) -> Self {
-        ecs.insert(RunState::PreRun);
-        Self {}
+    pub fn new(ecs: &mut Ecs) -> Self {
+        ecs.resources.insert(RunState::PreRun);
+        let mut builder = Schedule::builder();
+        builder.add_system(crate::camera::camera_update_system());
+        crate::visibility_system::add_viewshed_system(ecs, &mut builder);
+        Self {
+            schedule: builder.build(),
+        }
     }
 
-    fn run_systems(&mut self, ecs: &mut World) {
-        let mut vis = VisibilitySystem {};
-        vis.run_now(ecs);
+    fn run_systems(&mut self, ecs: &mut Ecs) {
+        self.schedule.execute(&mut ecs.ecs, &mut ecs.resources);
 
-        let mut monai = crate::monster_ai_systems::MonsterAiSystem {};
-        monai.run_now(ecs);
+        crate::monster_ai_systems::system(ecs);
+        crate::melee_combat_system::melee_combat_system(ecs);
+        crate::inventory_system::drop_system(ecs);
+        crate::inventory_system::pickup_system(ecs);
+        crate::consume_system::consume_system(ecs);
 
-        let mut mcs = crate::melee_combat_system::MeleeCombatSystem {};
-        mcs.run_now(ecs);
-
-        let mut drop = crate::inventory_system::ItemDroppingSystem {};
-        drop.run_now(ecs);
-
-        let mut pickup = crate::inventory_system::ItemCollectionSystem {};
-        pickup.run_now(ecs);
-
-        let mut drink = crate::consume_system::UseItemSystem {};
-        drink.run_now(ecs);
-
-        let mut ds = crate::damage_system::DamageSystem {};
-        ds.run_now(ecs);
-
-        crate::damage_system::delete_the_dead(ecs);
-
-        let mut mis = crate::map_indexing_sysem::MapIndexingSystem {};
-        mis.run_now(ecs);
-
-        ecs.maintain();
+        let mut schedule = Schedule::builder()
+            .add_system(crate::damage_system::damage_system())
+            .add_system(crate::damage_system::health_system())
+            .add_system(crate::damage_system::delete_the_dead_system())
+            .add_system(crate::map_indexing_system::map_indexing_prepare_system())
+            .add_system(crate::map_indexing_system::map_indexing_system())
+            .build();
+        schedule.execute(&mut ecs.ecs, &mut ecs.resources);
     }
 }

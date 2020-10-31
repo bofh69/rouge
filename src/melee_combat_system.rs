@@ -1,52 +1,54 @@
 use super::{CombatStats, Name, SufferDamage, WantsToMelee};
 use crate::gamelog::GameLog;
-use specs::prelude::*;
+use crate::Ecs;
+use legion::*;
 
-pub struct MeleeCombatSystem {}
+pub fn melee_combat_system(ecs: &mut Ecs) {
+    let combatees: Vec<_> = <(Entity, &WantsToMelee, &Name, &CombatStats)>::query()
+        .iter(&ecs.ecs)
+        .filter(|(_entity, _wants_to_melee, _name, stats)| stats.hp > 0)
+        .map(|(entity, wants_to_melee, name, stats)| {
+            (
+                *entity,
+                wants_to_melee.target,
+                name.name.clone(),
+                stats.power,
+            )
+        })
+        .collect();
 
-impl<'a> System<'a> for MeleeCombatSystem {
-    #![allow(clippy::type_complexity)]
-    type SystemData = (
-        Entities<'a>,
-        WriteExpect<'a, GameLog>,
-        WriteStorage<'a, WantsToMelee>,
-        ReadStorage<'a, Name>,
-        ReadStorage<'a, CombatStats>,
-        WriteStorage<'a, SufferDamage>,
-    );
+    for (attacker_entity, melee_target_entity, attacker_name, attacker_power) in combatees {
+        let mut target = ecs.ecs.entry(melee_target_entity);
+        if !target.is_some() {
+            dbg!(&melee_target_entity);
+            dbg!(&attacker_name);
+        }
+        let mut target = target.unwrap();
+        let target_stats = target.get_component::<CombatStats>().unwrap();
 
-    fn run(&mut self, data: Self::SystemData) {
-        let (entities, mut gamelog, mut wants_melee, names, combat_stats, mut inflict_damage) =
-            data;
+        if target_stats.hp > 0 {
+            let target_name = target.get_component::<Name>().unwrap().name.clone();
 
-        for (_entity, wants_melee, name, stats) in
-            (&entities, &wants_melee, &names, &combat_stats).join()
-        {
-            if stats.hp > 0 {
-                let target_stats = combat_stats.get(wants_melee.target).unwrap();
-                if target_stats.hp > 0 {
-                    let target_name = names.get(wants_melee.target).unwrap();
+            let damage = i32::max(0, attacker_power - target_stats.defense);
 
-                    let damage = i32::max(0, stats.power - target_stats.defense);
-
-                    if damage == 0 {
-                        gamelog.log(&format!(
-                            "{} is unable to hurt {}",
-                            &name.name, &target_name.name
-                        ));
-                    } else {
-                        gamelog.log(&format!(
-                            "{} hits {}, for {} hp.",
-                            &name.name, &target_name.name, damage
-                        ));
-                        inflict_damage
-                            .insert(wants_melee.target, SufferDamage { amount: damage })
-                            .expect("Unable to do damage");
-                    }
-                }
+            if damage == 0 {
+                let mut gamelog = ecs.resources.get_mut::<GameLog>().unwrap();
+                gamelog.log(&format!(
+                    "{} is unable to hurt {}",
+                    &attacker_name, &target_name
+                ));
+            } else {
+                let mut gamelog = ecs.resources.get_mut::<GameLog>().unwrap();
+                gamelog.log(&format!(
+                    "{} hits {}, for {} hp.",
+                    &attacker_name, &target_name, damage
+                ));
+                target.add_component(SufferDamage { amount: damage });
             }
         }
-
-        wants_melee.clear();
+        ecs.ecs
+            .entry(attacker_entity)
+            .unwrap()
+            .remove_component::<WantsToMelee>();
     }
 }

@@ -10,5 +10,4 @@ edition = "2018"
 
 [dependencies]
 bracket-lib = { version = "0.8.*" }
-specs = { version = "0.15.*" }
-specs-derive = "0.4.*"
+legion = { version = "0.3.*" }

@@ -2,75 +2,52 @@ use crate::components::*;
 use crate::map::Map;
 use crate::{PlayerEntity, PlayerPosition, RunState};
 use bracket_lib::prelude::*;
-use specs::prelude::*;
+use legion::*;
 
-pub struct MonsterAiSystem {}
+// TODO: Change to proper system
+pub(crate) fn system(ecs: &mut crate::Ecs) {
+    if RunState::MonsterTurn != *ecs.resources.get::<RunState>().unwrap() {
+        return;
+    }
+    let mut map = ecs.resources.get_mut::<Map>().unwrap();
+    let player_pos = ecs.resources.get::<PlayerPosition>().unwrap().0;
+    let player_entity = ecs.resources.get::<PlayerEntity>().unwrap().0;
 
-impl<'a> System<'a> for MonsterAiSystem {
-    #[allow(clippy::type_complexity)]
-    type SystemData = (
-        WriteExpect<'a, Map>,
-        ReadExpect<'a, PlayerEntity>,
-        ReadExpect<'a, RunState>,
-        ReadExpect<'a, PlayerPosition>,
-        ReadStorage<'a, Monster>,
-        WriteStorage<'a, Position>,
-        WriteStorage<'a, Viewshed>,
-        WriteStorage<'a, WantsToMelee>,
-        Entities<'a>,
-    );
+    let mut cb = legion::systems::CommandBuffer::new(&ecs.ecs);
 
-    fn run(&mut self, data: Self::SystemData) {
-        let (
-            mut map,
-            player_entity,
-            run_state,
-            player_pos,
-            monster,
-            mut position,
-            mut viewshed,
-            mut wants_to_melee,
-            entities,
-        ) = data;
-
-        if *run_state != RunState::MonsterTurn {
-            return;
-        }
-
-        for (entity, mut viewshed, _monster, mut pos) in
-            (&entities, &mut viewshed, &monster, &mut position).join()
-        {
-            let distance = DistanceAlg::Pythagoras
-                .distance2d(Point::new(pos.0.x, pos.0.y), player_pos.0.into());
-            if distance < 1.5 {
-                // Attack goes here
-                wants_to_melee
-                    .insert(
-                        entity,
-                        WantsToMelee {
-                            target: player_entity.0,
-                        },
-                    )
-                    .expect("Unable to insert attack");
-            } else if viewshed.visible_tiles.contains(&player_pos.0) {
-                let path = a_star_search(
-                    map.pos_to_idx(*pos) as i32,
-                    map.map_pos_to_idx(player_pos.0) as i32,
-                    &mut *map,
-                );
-                if path.success && path.steps.len() > 1 {
-                    let old_idx = map.pos_to_idx(*pos);
-                    let new_idx = path.steps[1] as usize;
-                    let new_pos = map.index_to_point2d(new_idx);
-                    if !map.blocked[new_idx] {
-                        pos.0.x = new_pos.x;
-                        pos.0.y = new_pos.y;
-                        map.blocked[old_idx] = false;
-                        map.blocked[new_idx] = true;
-                        viewshed.dirty = true;
-                    }
+    for (entity, mut viewshed, mut pos) in <(Entity, &mut Viewshed, &mut Position)>::query()
+        .filter(legion::query::component::<Monster>())
+        .iter_mut(&mut ecs.ecs)
+    {
+        let distance =
+            DistanceAlg::Pythagoras.distance2d(Point::new(pos.0.x, pos.0.y), player_pos.into());
+        if distance < 1.5 {
+            // Attack goes here
+            cb.add_component(
+                *entity,
+                WantsToMelee {
+                    target: player_entity,
+                },
+            );
+        } else if viewshed.visible_tiles.contains(&player_pos) {
+            let path = a_star_search(
+                map.pos_to_idx(*pos) as i32,
+                map.map_pos_to_idx(player_pos) as i32,
+                &*map,
+            );
+            if path.success && path.steps.len() > 1 {
+                let old_idx = map.pos_to_idx(*pos);
+                let new_idx = path.steps[1] as usize;
+                let new_pos = map.index_to_point2d(new_idx);
+                if !map.blocked[new_idx] {
+                    pos.0.x = new_pos.x;
+                    pos.0.y = new_pos.y;
+                    map.blocked[old_idx] = false;
+                    map.blocked[new_idx] = true;
+                    viewshed.dirty = true;
                 }
             }
         }
     }
+    cb.flush(&mut ecs.ecs);
 }

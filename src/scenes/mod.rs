@@ -15,7 +15,7 @@ pub enum SceneResult<T> {
     Replace(Box<dyn Scene<T>>),
 }
 
-pub trait Scene<T>: std::fmt::Debug {
+pub trait Scene<T> {
     fn tick(&mut self, state: &mut T, ctx: &mut BTerm) -> SceneResult<T>;
 }
 
