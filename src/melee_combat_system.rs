@@ -18,7 +18,7 @@ pub fn melee_combat_system(ecs: &mut Ecs) {
         .collect();
 
     for (attacker_entity, melee_target_entity, attacker_name, attacker_power) in combatees {
-        let mut target = ecs.ecs.entry(melee_target_entity);
+        let target = ecs.ecs.entry(melee_target_entity);
         if !target.is_some() {
             dbg!(&melee_target_entity);
             dbg!(&attacker_name);

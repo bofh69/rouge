@@ -157,10 +157,27 @@ pub struct Ecs {
 pub struct State {
     ecs: Ecs,
     scene_manager: scenes::SceneManager<Ecs>,
+    old_shift: bool,
 }
 
 impl GameState for State {
     fn tick(&mut self, ctx: &mut BTerm) {
+        {
+            let mut input = INPUT.lock();
+
+            ctx.shift = input.key_pressed_set().contains(&VirtualKeyCode::LShift)
+                || input.key_pressed_set().contains(&VirtualKeyCode::RShift);
+            if !ctx.shift && self.old_shift != ctx.shift && ctx.key.is_none() {
+                ctx.key = Some(VirtualKeyCode::LShift);
+            }
+            self.old_shift = ctx.shift;
+
+            input.for_each_message(|event| match event {
+                BEvent::CloseRequested => ctx.quitting = true,
+                _ => (),
+            });
+        }
+
         self.scene_manager.tick(&mut self.ecs, ctx);
     }
 }
@@ -188,6 +205,7 @@ fn main() -> Result<(), Box<dyn std::error::Error + 'static + Send + Sync>> {
             resources: Resources::default(),
         },
         scene_manager: scenes::SceneManager::new(),
+        old_shift: false,
     };
 
     gs.ecs.resources.insert(RandomNumberGenerator::new());
