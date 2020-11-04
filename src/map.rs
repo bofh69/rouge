@@ -42,6 +42,8 @@ pub struct Map {
     pub revealed_tiles: Vec<bool>,
     pub visible_tiles: Vec<bool>,
     pub blocked: Vec<bool>,
+    /// Does the tile contain anything that seems dangerous?
+    pub dangerous: Vec<bool>,
     pub tile_content: Vec<Vec<Entity>>,
     only_revealed: bool,
 }
@@ -314,6 +316,7 @@ impl Map {
             revealed_tiles: vec![false; size],
             visible_tiles: vec![false; size],
             blocked: vec![false; size],
+            dangerous: vec![false; size],
             tile_content: vec![vec![]; size],
             only_revealed: false,
         }
@@ -453,7 +456,10 @@ pub fn draw_map(ecs: &Ecs, ctx: &mut BTerm) {
                 // Render a tile depending upon the tile type
                 if map.revealed_tiles[idx] {
                     let glyph;
+
+                    let bg = RGBA::from_f32(0., 0., 0., 1.);
                     let mut fg;
+
                     match tile {
                         TileType::Floor => {
                             fg = RGBA::from_f32(0.5, 0.5, 0.5, 1.);
@@ -471,7 +477,7 @@ pub fn draw_map(ecs: &Ecs, ctx: &mut BTerm) {
                     if !map.visible_tiles[idx] {
                         fg = fg.to_greyscale();
                     }
-                    ctx.set(x, y, fg, RGBA::from_f32(0., 0., 0., 1.), glyph);
+                    ctx.set(x, y, fg, bg, glyph);
                 }
             }
         }

@@ -44,6 +44,8 @@ pub(crate) fn system(ecs: &mut crate::Ecs) {
                     pos.0.y = new_pos.y;
                     map.blocked[old_idx] = false;
                     map.blocked[new_idx] = true;
+                    map.dangerous[old_idx] = false;
+                    map.dangerous[new_idx] = true;
                     viewshed.dirty = true;
                 }
             }

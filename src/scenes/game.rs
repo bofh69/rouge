@@ -9,6 +9,7 @@ use super::{Scene, SceneResult};
 
 pub(crate) struct GameScene {
     schedule: Schedule,
+    schedule2: Schedule,
 }
 
 impl Scene<Ecs> for GameScene {
@@ -144,8 +145,18 @@ impl GameScene {
         let mut builder = Schedule::builder();
         builder.add_system(crate::camera::camera_update_system());
         crate::visibility_system::add_viewshed_system(ecs, &mut builder);
+
+        let mut builder2 = Schedule::builder();
+        builder2
+            .add_system(crate::damage_system::damage_system())
+            .add_system(crate::damage_system::health_system())
+            .add_system(crate::damage_system::delete_the_dead_system())
+            .flush()
+            .add_system(crate::map_indexing_system::map_indexing_clear_system())
+            .add_system(crate::map_indexing_system::map_indexing_system());
         Self {
             schedule: builder.build(),
+            schedule2: builder2.build(),
         }
     }
 
@@ -158,13 +169,6 @@ impl GameScene {
         crate::inventory_system::pickup_system(ecs);
         crate::consume_system::consume_system(ecs);
 
-        let mut schedule = Schedule::builder()
-            .add_system(crate::damage_system::damage_system())
-            .add_system(crate::damage_system::health_system())
-            .add_system(crate::damage_system::delete_the_dead_system())
-            .add_system(crate::map_indexing_system::map_indexing_prepare_system())
-            .add_system(crate::map_indexing_system::map_indexing_system())
-            .build();
-        schedule.execute(&mut ecs.ecs, &mut ecs.resources);
+        self.schedule2.execute(&mut ecs.ecs, &mut ecs.resources);
     }
 }
