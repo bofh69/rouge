@@ -31,6 +31,7 @@ pub(crate) fn health(
 }
 
 #[system(for_each)]
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn delete_the_dead(
     entity: &Entity,
     stats: &mut CombatStats,
@@ -48,9 +49,6 @@ pub(crate) fn delete_the_dead(
             gamelog.log(format!("{} dies.", &name.name));
             let idx = map.pos_to_idx(pos.0.into());
             // TODO: Handle via Events instead
-            dbg!(&name);
-            dbg!(&idx);
-            dbg!(&pos);
             map.blocked[idx] = false;
             map.dangerous[idx] = false;
             cb.remove(*entity);

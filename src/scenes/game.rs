@@ -75,7 +75,7 @@ impl Scene<Ecs> for GameScene {
                     let player_entity = ecs.resources.get::<PlayerEntity>().unwrap().0;
                     match inv_type {
                         crate::InventoryType::Apply => {
-                            if {
+                            let should_add_wants_to_use = {
                                 let entry = ecs.ecs.entry(item_entity).unwrap();
                                 if let Ok(range) = entry.get_component::<Ranged>() {
                                     let player_position =
@@ -90,7 +90,8 @@ impl Scene<Ecs> for GameScene {
                                 } else {
                                     true
                                 }
-                            } {
+                            };
+                            if should_add_wants_to_use {
                                 let mut entry = ecs.ecs.entry(player_entity).unwrap();
                                 entry.add_component(WantsToUseItem {
                                     item: item_entity,

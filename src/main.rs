@@ -172,6 +172,7 @@ impl GameState for State {
             }
             self.old_shift = ctx.shift;
 
+            #[allow(clippy::single_match)]
             input.for_each_message(|event| match event {
                 BEvent::CloseRequested => ctx.quitting = true,
                 _ => (),
