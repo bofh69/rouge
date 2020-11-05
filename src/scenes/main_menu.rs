@@ -2,7 +2,7 @@ use super::*;
 use crate::Ecs;
 
 #[derive(Debug)]
-pub struct MainMenuScene {
+pub(crate) struct MainMenuScene {
     state: crate::gui::MainMenuState,
 }
 

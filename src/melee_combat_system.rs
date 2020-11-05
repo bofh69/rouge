@@ -3,7 +3,7 @@ use crate::gamelog::GameLog;
 use crate::Ecs;
 use legion::*;
 
-pub fn melee_combat_system(ecs: &mut Ecs) {
+pub(crate) fn melee_combat_system(ecs: &mut Ecs) {
     let combatees: Vec<_> = <(Entity, &WantsToMelee, &Name, &CombatStats)>::query()
         .iter(&ecs.ecs)
         .filter(|(_entity, _wants_to_melee, _name, stats)| stats.hp > 0)

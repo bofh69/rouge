@@ -3,15 +3,15 @@ use bracket_lib::prelude::RGB;
 use legion::Entity;
 
 #[derive(Clone, Debug)]
-pub struct AreaOfEffect {
+pub(crate) struct AreaOfEffect {
     pub radius: i32,
 }
 
 #[derive(Clone, Debug)]
-pub struct BlocksTile {}
+pub(crate) struct BlocksTile {}
 
 #[derive(Clone, Debug)]
-pub struct CombatStats {
+pub(crate) struct CombatStats {
     pub max_hp: i32,
     pub hp: i32,
     pub defense: i32,
@@ -19,44 +19,44 @@ pub struct CombatStats {
 }
 
 #[derive(Clone, Debug)]
-pub struct Consumable {}
+pub(crate) struct Consumable {}
 
 #[derive(Clone, Debug)]
-pub struct HealthProvider {
+pub(crate) struct HealthProvider {
     pub heal_amount: i32,
 }
 
 #[derive(Debug, Clone)]
-pub struct InBackpack {
+pub(crate) struct InBackpack {
     pub owner: Entity,
 }
 
 #[derive(Clone, Debug)]
-pub struct InflictsDamage {
+pub(crate) struct InflictsDamage {
     pub damage: i32,
 }
 
 #[derive(Clone, Debug)]
-pub struct Item {}
+pub(crate) struct Item {}
 
 #[derive(Debug, Clone)]
-pub struct ItemIndex {
+pub(crate) struct ItemIndex {
     pub index: u8,
 }
 
 #[derive(Clone, Debug)]
-pub struct Monster {}
+pub(crate) struct Monster {}
 
 #[derive(Clone, Debug)]
-pub struct Name {
+pub(crate) struct Name {
     pub name: String,
 }
 
 #[derive(Clone, Debug)]
-pub struct Player {}
+pub(crate) struct Player {}
 
 #[derive(PartialEq, Copy, Clone, Debug)]
-pub struct Position(pub MapPosition);
+pub(crate) struct Position(pub MapPosition);
 
 impl From<MapPosition> for Position {
     fn from(pos: MapPosition) -> Self {
@@ -65,17 +65,17 @@ impl From<MapPosition> for Position {
 }
 
 #[derive(Clone, Debug)]
-pub struct Ranged {
+pub(crate) struct Ranged {
     pub range: i32,
 }
 
 #[derive(Clone, Debug)]
-pub struct ReceiveHealth {
+pub(crate) struct ReceiveHealth {
     pub amount: i32,
 }
 
 #[derive(Clone)]
-pub struct Renderable {
+pub(crate) struct Renderable {
     pub glyph: u16,
     pub fg: RGB,
     pub bg: RGB,
@@ -83,12 +83,12 @@ pub struct Renderable {
 }
 
 #[derive(Debug, Clone)]
-pub struct SufferDamage {
+pub(crate) struct SufferDamage {
     pub amount: i32,
 }
 
 #[derive(Clone)]
-pub struct Viewshed {
+pub(crate) struct Viewshed {
     pub visible_tiles: Vec<MapPosition>,
     pub range: i32,
     pub dirty: bool,
@@ -97,25 +97,25 @@ pub struct Viewshed {
 // TODO should be changed to a message
 // TODO how to handle "drop all"?
 #[derive(Clone, Debug)]
-pub struct WantsToDropItem {
+pub(crate) struct WantsToDropItem {
     pub item: Entity,
 }
 
 #[derive(Debug, Clone)]
-pub struct WantsToMelee {
+pub(crate) struct WantsToMelee {
     pub target: Entity,
 }
 
 // TODO should be changed to a message
 // TODO how to handle "get all"?
 #[derive(Debug, Clone)]
-pub struct WantsToPickupItem {
+pub(crate) struct WantsToPickupItem {
     pub collected_by: Entity,
     pub item: Entity,
 }
 
 #[derive(Clone, Debug)]
-pub struct WantsToUseItem {
+pub(crate) struct WantsToUseItem {
     pub item: Entity,
     pub target: Option<MapPosition>,
 }

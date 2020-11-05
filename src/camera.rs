@@ -3,7 +3,7 @@ use crate::{MapPosition, PlayerPosition, ScreenPosition};
 use legion::*;
 
 #[derive(Debug, Copy, Clone)]
-pub struct Camera {
+pub(crate) struct Camera {
     w: i32,
     h: i32,
 
@@ -23,7 +23,7 @@ fn diff_to_interval(v: i32, min: i32, max: i32) -> i32 {
 }
 
 #[system]
-pub fn camera_update(
+pub(crate) fn camera_update(
     #[resource] camera: &mut Camera,
     #[resource] player_position: &PlayerPosition,
 ) {

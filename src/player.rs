@@ -16,7 +16,7 @@ use bracket_lib::prelude::*;
 use legion::*;
 use std::cmp::{max, min};
 
-pub fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut Ecs) -> RunState {
+pub(crate) fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut Ecs) -> RunState {
     let player_entity = ecs.resources.get::<PlayerEntity>().unwrap().0;
 
     let mut ret = RunState::AwaitingInput;
@@ -75,7 +75,7 @@ pub fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut Ecs) -> RunState {
     ret
 }
 
-pub fn get_item(ecs: &mut Ecs) -> RunState {
+pub(crate) fn get_item(ecs: &mut Ecs) -> RunState {
     let player_pos = ecs.resources.get::<PlayerPosition>().unwrap().0;
     let player_entity = ecs.resources.get::<PlayerEntity>().unwrap().0;
     let mut gamelog = ecs.resources.get_mut::<GameLog>().unwrap();
@@ -121,7 +121,7 @@ fn init_auto_walk(ecs: &Ecs, pos: ScreenPosition) {
     }
 }
 
-pub fn try_auto_walk_player(dir: Direction, ecs: &mut Ecs) {
+pub(crate) fn try_auto_walk_player(dir: Direction, ecs: &mut Ecs) {
     let mut player_target = ecs.resources.get_mut::<PlayerTarget>().unwrap();
 
     *player_target = PlayerTarget::Dir(dir);
@@ -177,7 +177,7 @@ fn clear_auto_walk(ecs: &mut Ecs) {
     *player_target = PlayerTarget::None;
 }
 
-pub fn player_input(ecs: &mut Ecs, ctx: &mut BTerm) -> RunState {
+pub(crate) fn player_input(ecs: &mut Ecs, ctx: &mut BTerm) -> RunState {
     if ctx.left_click {
         let pos = ctx.mouse_pos();
         let pos = ScreenPosition { x: pos.0, y: pos.1 };

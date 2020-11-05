@@ -2,12 +2,12 @@ mod game;
 mod main_menu;
 mod save_game;
 
-pub use main_menu::*;
-pub use save_game::*;
+pub(crate) use main_menu::*;
+pub(crate) use save_game::*;
 
 use bracket_lib::prelude::*;
 
-pub enum SceneResult<T> {
+pub(crate) enum SceneResult<T> {
     Continue,
     Pop,
     #[allow(dead_code)]
@@ -15,11 +15,11 @@ pub enum SceneResult<T> {
     Replace(Box<dyn Scene<T>>),
 }
 
-pub trait Scene<T> {
+pub(crate) trait Scene<T> {
     fn tick(&mut self, state: &mut T, ctx: &mut BTerm) -> SceneResult<T>;
 }
 
-pub struct SceneManager<T> {
+pub(crate) struct SceneManager<T> {
     scenes: Vec<Box<dyn Scene<T>>>,
 }
 

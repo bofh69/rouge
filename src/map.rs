@@ -1,5 +1,4 @@
 use crate::components::Position;
-use crate::rect::Rect;
 use crate::MapPosition;
 use crate::ScreenPosition;
 use crate::{camera::Camera, Ecs};
@@ -7,11 +6,11 @@ use bracket_lib::prelude::*;
 use legion::*;
 use std::cmp::{max, min};
 
-pub const MAP_WIDTH: i32 = 120;
-pub const MAP_HEIGHT: i32 = 60;
+pub(crate) const MAP_WIDTH: i32 = 120;
+pub(crate) const MAP_HEIGHT: i32 = 60;
 
 #[derive(PartialEq, Copy, Clone, Debug)]
-pub enum WallType {
+pub(crate) enum WallType {
     Vertical,          /* - */
     Horizontal,        /* | */
     TopLeftCorner,     /* ┌ */
@@ -27,14 +26,14 @@ pub enum WallType {
 }
 
 #[derive(PartialEq, Copy, Clone, Debug)]
-pub enum TileType {
+pub(crate) enum TileType {
     Stone,
     Wall(WallType),
     Floor,
 }
 
 #[derive(Default, Clone)]
-pub struct Map {
+pub(crate) struct Map {
     pub tiles: Vec<TileType>,
     pub rooms: Vec<Rect>,
     pub width: i32,
@@ -336,7 +335,7 @@ impl Map {
             let h = rng.range(MIN_SIZE, MAX_SIZE);
             let x = rng.roll_dice(1, map.width - w - 1) - 1;
             let y = rng.roll_dice(1, map.height - h - 1) - 1;
-            let new_room = Rect::new(x, y, w, h);
+            let new_room = Rect::with_size(x, y, w, h);
             let mut ok = true;
             for other_room in map.rooms.iter() {
                 if new_room.intersect(other_room) {
@@ -346,14 +345,14 @@ impl Map {
             if ok {
                 map.apply_room_to_map(&new_room);
                 if !map.rooms.is_empty() {
-                    let (new_x, new_y) = new_room.center();
-                    let (prev_x, prev_y) = map.rooms[map.rooms.len() - 1].center();
+                    let new_pos = new_room.center();
+                    let prev_pos = map.rooms[map.rooms.len() - 1].center();
                     if rng.range(0, 2) == 1 {
-                        map.apply_horizontal_tunnel(prev_x, new_x, prev_y);
-                        map.apply_vertical_tunnel(prev_y, new_y, new_x);
+                        map.apply_horizontal_tunnel(prev_pos.x, new_pos.x, prev_pos.y);
+                        map.apply_vertical_tunnel(prev_pos.y, new_pos.y, new_pos.x);
                     } else {
-                        map.apply_vertical_tunnel(prev_y, new_y, prev_x);
-                        map.apply_horizontal_tunnel(prev_x, new_x, new_y);
+                        map.apply_vertical_tunnel(prev_pos.y, new_pos.y, prev_pos.x);
+                        map.apply_horizontal_tunnel(prev_pos.x, new_pos.x, new_pos.y);
                     }
                 }
                 map.rooms.push(new_room);
@@ -434,7 +433,7 @@ fn get_glyph_for_wall(map: &Map, idx: usize, x: i32, y: i32, walltype: WallType)
     }
 }
 
-pub fn draw_map(ecs: &Ecs, ctx: &mut BTerm) {
+pub(crate) fn draw_map(ecs: &Ecs, ctx: &mut BTerm) {
     let map = ecs.resources.get::<Map>().unwrap();
     let camera = ecs.resources.get::<Camera>().unwrap();
 

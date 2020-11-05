@@ -12,7 +12,6 @@ mod map_indexing_system;
 mod melee_combat_system;
 mod monster_ai_systems;
 mod player;
-mod rect;
 mod scenes;
 mod spawner;
 mod visibility_system;
@@ -24,13 +23,13 @@ use legion::*;
 use map::Map;
 
 #[derive(PartialEq, Copy, Clone)]
-pub enum InventoryType {
+pub(crate) enum InventoryType {
     Apply,
     Drop,
 }
 
 #[derive(PartialEq, Copy, Clone)]
-pub enum RunState {
+pub(crate) enum RunState {
     AwaitingInput,
     ReallyQuit,
     PreRun,
@@ -42,7 +41,7 @@ pub enum RunState {
 }
 
 #[derive(PartialEq, Debug, Copy, Clone)]
-pub struct MapPosition {
+pub(crate) struct MapPosition {
     pub x: i32,
     pub y: i32,
 }
@@ -79,7 +78,7 @@ impl std::ops::Sub<MapPosition> for MapPosition {
 }
 
 #[derive(PartialEq, Debug, Copy, Clone)]
-pub struct ScreenPosition {
+pub(crate) struct ScreenPosition {
     pub x: i32,
     pub y: i32,
 }
@@ -104,10 +103,10 @@ impl Into<(usize, usize)> for ScreenPosition {
     }
 }
 
-pub struct PlayerEntity(Entity);
+pub(crate) struct PlayerEntity(Entity);
 
 #[derive(PartialEq, Debug, Copy, Clone)]
-pub enum Direction {
+pub(crate) enum Direction {
     West = 1,
     East = 2,
     South = 4,
@@ -134,14 +133,14 @@ impl From<Direction> for (i32, i32) {
 }
 
 #[derive(PartialEq, Debug, Copy, Clone)]
-pub enum PlayerTarget {
+pub(crate) enum PlayerTarget {
     None,
     Position(MapPosition),
     Dir(Direction),
 }
 
 #[derive(Debug, Copy, Clone)]
-pub struct PlayerPosition(pub MapPosition);
+pub(crate) struct PlayerPosition(pub MapPosition);
 
 impl Into<Position> for PlayerPosition {
     fn into(self) -> Position {
@@ -149,12 +148,12 @@ impl Into<Position> for PlayerPosition {
     }
 }
 
-pub struct Ecs {
+pub(crate) struct Ecs {
     ecs: World,
     resources: Resources,
 }
 
-pub struct State {
+pub(crate) struct State {
     ecs: Ecs,
     scene_manager: scenes::SceneManager<Ecs>,
     old_shift: bool,
@@ -189,7 +188,7 @@ fn main() -> Result<(), Box<dyn std::error::Error + 'static + Send + Sync>> {
     const SCREEN_WIDTH: i32 = 80;
     const SCREEN_HEIGHT: i32 = 50;
     let map = Map::new_map_rooms_and_corridors();
-    let (player_x, player_y) = map.rooms[0].center();
+    let player_pos = map.rooms[0].center();
 
     let mut context = BTermBuilder::simple(SCREEN_WIDTH, SCREEN_HEIGHT)?
         .with_title("Rouge World")
@@ -217,11 +216,11 @@ fn main() -> Result<(), Box<dyn std::error::Error + 'static + Send + Sync>> {
     for room in map.rooms.iter().skip(1) {
         spawner::spawn_room(&mut gs.ecs, room);
     }
-    let player_entity = spawner::player(&mut gs.ecs, player_x, player_y);
+    let player_entity = spawner::player(&mut gs.ecs, player_pos.x, player_pos.y);
 
     let player_pos = PlayerPosition(MapPosition {
-        x: player_x,
-        y: player_y,
+        x: player_pos.x,
+        y: player_pos.y,
     });
     gs.ecs.resources.insert(Camera::new(
         player_pos,

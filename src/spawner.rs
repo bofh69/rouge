@@ -1,15 +1,14 @@
 use crate::components::*;
 use crate::map::MAP_WIDTH;
-use crate::rect::Rect;
 use crate::Ecs;
 use crate::MapPosition;
 use bracket_lib::prelude::*;
 use legion::*;
 
-pub const MAX_MONSTERS: i32 = 5;
-pub const MAX_ITEMS: i32 = 3;
+pub(crate) const MAX_MONSTERS: i32 = 5;
+pub(crate) const MAX_ITEMS: i32 = 3;
 
-pub fn player(ecs: &mut Ecs, player_x: i32, player_y: i32) -> Entity {
+pub(crate) fn player(ecs: &mut Ecs, player_x: i32, player_y: i32) -> Entity {
     ecs.ecs.push((
         Position(MapPosition {
             x: player_x,
@@ -40,7 +39,7 @@ pub fn player(ecs: &mut Ecs, player_x: i32, player_y: i32) -> Entity {
 }
 
 /// Spawns a random monster at a given location
-pub fn random_monster(ecs: &mut Ecs, x: i32, y: i32) {
+pub(crate) fn random_monster(ecs: &mut Ecs, x: i32, y: i32) {
     let roll: i32;
     {
         let mut rng = ecs.resources.get_mut::<RandomNumberGenerator>().unwrap();
@@ -88,7 +87,7 @@ fn monster<S: ToString>(ecs: &mut Ecs, x: i32, y: i32, glyph: u16, name: S) {
 }
 
 /// Spawns a random monster at a given location
-pub fn random_item(ecs: &mut Ecs, x: i32, y: i32) {
+pub(crate) fn random_item(ecs: &mut Ecs, x: i32, y: i32) {
     let roll = {
         let mut rng = ecs.resources.get_mut::<RandomNumberGenerator>().unwrap();
         rng.roll_dice(1, 4)
@@ -175,7 +174,7 @@ fn fireball_scroll(ecs: &mut Ecs, x: i32, y: i32) {
 }
 
 /// Fills a room with stuff!
-pub fn spawn_room(ecs: &mut Ecs, room: &Rect) {
+pub(crate) fn spawn_room(ecs: &mut Ecs, room: &Rect) {
     let mut monster_spawn_points: Vec<usize> = Vec::new();
     let mut item_spawn_points: Vec<usize> = Vec::new();
 

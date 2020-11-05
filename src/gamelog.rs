@@ -1,4 +1,4 @@
-pub struct GameLog {
+pub(crate) struct GameLog {
     pub entries: Vec<String>,
 }
 

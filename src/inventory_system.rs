@@ -6,7 +6,7 @@ use crate::{
 use crate::{PlayerEntity, PlayerPosition};
 use legion::*;
 
-pub fn drop_system(ecs: &mut Ecs) {
+pub(crate) fn drop_system(ecs: &mut Ecs) {
     let player_position = ecs.resources.get::<PlayerPosition>().unwrap().0;
     let player_entity = ecs.resources.get::<PlayerEntity>().unwrap().0;
 
@@ -35,7 +35,7 @@ pub fn drop_system(ecs: &mut Ecs) {
     }
 }
 
-pub fn pickup_system(ecs: &mut Ecs) {
+pub(crate) fn pickup_system(ecs: &mut Ecs) {
     let player_entity = ecs.resources.get::<PlayerEntity>().unwrap().0;
     let mut gamelog = ecs.resources.get_mut::<GameLog>().unwrap();
 

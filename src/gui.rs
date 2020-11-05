@@ -11,26 +11,26 @@ use legion::*;
 const BOTTOM_HEIGHT: i32 = 7;
 
 #[derive(PartialEq, Copy, Clone)]
-pub enum ItemMenuResult {
+pub(crate) enum ItemMenuResult {
     Cancel,
     NoResponse,
     Selected,
 }
 
 #[derive(PartialEq, Copy, Clone, Debug)]
-pub enum MainMenuState {
+pub(crate) enum MainMenuState {
     New,
     Load,
     Quit,
 }
 
 #[derive(PartialEq, Copy, Clone)]
-pub enum MainMenuResult {
+pub(crate) enum MainMenuResult {
     Selected(MainMenuState),
     NoSelection(MainMenuState),
 }
 
-pub fn key_to_dir(key: VirtualKeyCode) -> Option<Direction> {
+pub(crate) fn key_to_dir(key: VirtualKeyCode) -> Option<Direction> {
     match key {
         VirtualKeyCode::H | VirtualKeyCode::Left => Some(Direction::West),
         VirtualKeyCode::L | VirtualKeyCode::Right => Some(Direction::East),
@@ -44,7 +44,7 @@ pub fn key_to_dir(key: VirtualKeyCode) -> Option<Direction> {
     }
 }
 
-pub fn index_to_letter(idx: u8) -> char {
+pub(crate) fn index_to_letter(idx: u8) -> char {
     if idx > 25 {
         index_to_letter(idx - 26).to_ascii_uppercase()
     } else {
@@ -81,7 +81,7 @@ pub fn index_to_letter(idx: u8) -> char {
 }
 
 #[derive(PartialEq, Copy, Clone)]
-pub struct TargetingInfo {
+pub(crate) struct TargetingInfo {
     range: i32,
     last_mouse_pos: (i32, i32),
     current_pos: (i32, i32),
@@ -194,7 +194,7 @@ impl TargetingInfo {
     }
 }
 
-pub fn show_main_menu(ctx: &mut BTerm, current_state: MainMenuState) -> MainMenuResult {
+pub(crate) fn show_main_menu(ctx: &mut BTerm, current_state: MainMenuState) -> MainMenuResult {
     let (screen_width, screen_height) = ctx.get_char_size();
     let text_width = 7;
     let x = (screen_width / 2 - text_width / 2) as i32;
@@ -288,7 +288,7 @@ pub fn show_main_menu(ctx: &mut BTerm, current_state: MainMenuState) -> MainMenu
     }
 }
 
-pub fn ask_bool(ctx: &mut BTerm, question: &str) -> (ItemMenuResult, bool) {
+pub(crate) fn ask_bool(ctx: &mut BTerm, question: &str) -> (ItemMenuResult, bool) {
     let width = question.len() as i32;
 
     let (screen_width, screen_height) = ctx.get_char_size();
@@ -318,7 +318,7 @@ pub fn ask_bool(ctx: &mut BTerm, question: &str) -> (ItemMenuResult, bool) {
     }
 }
 
-pub fn show_inventory(
+pub(crate) fn show_inventory(
     ecs: &mut Ecs,
     ctx: &mut BTerm,
     inv_type: InventoryType,
@@ -408,7 +408,7 @@ pub fn show_inventory(
     }
 }
 
-pub fn draw_ui(ecs: &Ecs, ctx: &mut BTerm) {
+pub(crate) fn draw_ui(ecs: &Ecs, ctx: &mut BTerm) {
     let (screen_width, screen_height) = ctx.get_char_size();
     let (screen_width, screen_height) = (screen_width as i32, screen_height as i32);
     let bottom_start = screen_height - BOTTOM_HEIGHT;
