@@ -78,8 +78,7 @@ impl Scene<Ecs> for GameScene {
                             let should_add_wants_to_use = {
                                 let entry = ecs.world.entry(item_entity).unwrap();
                                 if let Ok(range) = entry.get_component::<Ranged>() {
-                                    let player_position =
-                                        resource_get!(ecs, PlayerPosition).0;
+                                    let player_position = resource_get!(ecs, PlayerPosition).0;
                                     let camera = resource_get!(ecs, Camera);
                                     let start_pos = camera.transform_map_pos(player_position);
                                     let targeting_info =

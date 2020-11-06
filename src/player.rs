@@ -7,9 +7,9 @@ use crate::{
     CombatStats,
 };
 // use crate::components::*;
+use crate::ecs::Ecs;
 use crate::gamelog::GameLog;
 use crate::map::Map;
-use crate::ecs::Ecs;
 use crate::{Direction, PlayerTarget, ScreenPosition};
 use crate::{InventoryType, PlayerEntity, PlayerPosition, RunState};
 use bracket_lib::prelude::*;

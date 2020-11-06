@@ -1,10 +1,10 @@
-use crate::gamelog::GameLog;
-use crate::{
-    components::{InBackpack, ItemIndex, Name, Position, WantsToDropItem, WantsToPickupItem},
+use crate::components::{
+    InBackpack, ItemIndex, Name, Position, WantsToDropItem, WantsToPickupItem,
 };
+use crate::ecs::*;
+use crate::gamelog::GameLog;
 use crate::{PlayerEntity, PlayerPosition};
 use legion::*;
-use crate::ecs::*;
 
 pub(crate) fn drop_system(ecs: &mut Ecs) {
     let player_position = resource_get!(ecs, PlayerPosition).0;

@@ -14,14 +14,18 @@ impl Ecs {
     }
 }
 
-#[macro_export] macro_rules! resource_get_mut {
+#[macro_export]
+macro_rules! resource_get_mut {
     ($ecs:ident, $T:ty) => {
-       $ecs.resources.get_mut::<$T>().expect("Resource is expected")
-    }
+        $ecs.resources
+            .get_mut::<$T>()
+            .expect("Resource is expected")
+    };
 }
 
-#[macro_export] macro_rules! resource_get{
+#[macro_export]
+macro_rules! resource_get {
     ($ecs:ident, $T:ty) => {
-       $ecs.resources.get::<$T>().expect("Resource is expected")
-    }
+        $ecs.resources.get::<$T>().expect("Resource is expected")
+    };
 }

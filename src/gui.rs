@@ -1,8 +1,8 @@
 use crate::camera::Camera;
 use crate::components::*;
+use crate::ecs::*;
 use crate::gamelog::GameLog;
 use crate::map::Map;
-use crate::ecs::*;
 use crate::{Direction, MapPosition, PlayerPosition, ScreenPosition};
 use crate::{InventoryType, PlayerEntity};
 use bracket_lib::prelude::*;

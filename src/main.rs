@@ -1,6 +1,7 @@
 bracket_lib::prelude::add_wasm_support!();
 
-#[macro_use] mod ecs;
+#[macro_use]
+mod ecs;
 mod camera;
 mod components;
 mod consume_system;

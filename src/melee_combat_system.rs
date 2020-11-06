@@ -1,6 +1,6 @@
 use super::{CombatStats, Name, SufferDamage, WantsToMelee};
-use crate::gamelog::GameLog;
 use crate::ecs::*;
+use crate::gamelog::GameLog;
 use legion::*;
 
 pub(crate) fn melee_combat_system(ecs: &mut Ecs) {

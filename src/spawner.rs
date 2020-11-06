@@ -1,6 +1,6 @@
 use crate::components::*;
-use crate::map::MAP_WIDTH;
 use crate::ecs::Ecs;
+use crate::map::MAP_WIDTH;
 use crate::MapPosition;
 use bracket_lib::prelude::*;
 use legion::*;

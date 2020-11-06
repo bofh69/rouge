@@ -97,18 +97,10 @@ impl BaseMap for Map {
 }
 
 impl Algorithm2D for Map {
-    fn in_bounds(&self, pos: Point) -> bool {
-        pos.x >= 0 && pos.x < self.width && pos.y >= 0 && pos.y < self.height
-    }
-
-    fn point2d_to_index(&self, pt: Point) -> usize {
-        ((pt.y * self.width) + pt.x) as usize
-    }
-
-    fn index_to_point2d(&self, idx: usize) -> Point {
+    fn dimensions(&self) -> Point {
         Point {
-            x: idx as i32 % self.width,
-            y: idx as i32 / self.width,
+            x: self.width,
+            y: self.height,
         }
     }
 }
