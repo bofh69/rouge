@@ -1,7 +1,7 @@
 use crate::gamelog::GameLog;
 use crate::{
     components::{InBackpack, ItemIndex, Name, Position, WantsToDropItem, WantsToPickupItem},
-    Ecs,
+    ecs::Ecs,
 };
 use crate::{PlayerEntity, PlayerPosition};
 use legion::*;
@@ -11,12 +11,12 @@ pub(crate) fn drop_system(ecs: &mut Ecs) {
     let player_entity = ecs.resources.get::<PlayerEntity>().unwrap().0;
 
     let things_to_drop: Vec<_> = <(Entity, &WantsToDropItem)>::query()
-        .iter(&ecs.ecs)
+        .iter(&ecs.world)
         .map(|(entity, drop)| (*entity, drop.item))
         .collect();
 
     for (dropper_entity, item) in things_to_drop {
-        let mut entry = ecs.ecs.entry(item).unwrap();
+        let mut entry = ecs.world.entry(item).unwrap();
         entry.add_component(Position(player_position));
         entry.remove_component::<InBackpack>();
         if dropper_entity == player_entity {
@@ -28,7 +28,7 @@ pub(crate) fn drop_system(ecs: &mut Ecs) {
                     .map_or("unknown item", |n| &n.name)
             ));
         }
-        ecs.ecs
+        ecs.world
             .entry(dropper_entity)
             .unwrap()
             .remove_component::<WantsToDropItem>();
@@ -40,7 +40,7 @@ pub(crate) fn pickup_system(ecs: &mut Ecs) {
     let mut gamelog = ecs.resources.get_mut::<GameLog>().unwrap();
 
     let things_to_pickup: Vec<_> = <&WantsToPickupItem>::query()
-        .iter(&ecs.ecs)
+        .iter(&ecs.world)
         .map(|pickup| (pickup.collected_by, pickup.item))
         .collect();
 
@@ -50,7 +50,7 @@ pub(crate) fn pickup_system(ecs: &mut Ecs) {
             for c in 0..52 {
                 possible_indexes.insert(c);
             }
-            for (item_idx, in_backpack) in <(&ItemIndex, &InBackpack)>::query().iter(&ecs.ecs) {
+            for (item_idx, in_backpack) in <(&ItemIndex, &InBackpack)>::query().iter(&ecs.world) {
                 if in_backpack.owner == player_entity {
                     possible_indexes.remove(&item_idx.index);
                 }
@@ -60,7 +60,7 @@ pub(crate) fn pickup_system(ecs: &mut Ecs) {
 
             let mut idx = 255u8;
             if let Ok(ItemIndex { index }) = ecs
-                .ecs
+                .world
                 .entry(item_entity)
                 .unwrap()
                 .get_component::<ItemIndex>()
@@ -69,7 +69,7 @@ pub(crate) fn pickup_system(ecs: &mut Ecs) {
                     idx = *index;
                 }
             }
-            let mut item_entry = ecs.ecs.entry(item_entity).unwrap();
+            let mut item_entry = ecs.world.entry(item_entity).unwrap();
             if idx == 255u8 {
                 if possible_indexes.is_empty() {
                     gamelog.log("Your backpack is full.");
@@ -85,10 +85,10 @@ pub(crate) fn pickup_system(ecs: &mut Ecs) {
             ));
         }
 
-        let mut item_entry = ecs.ecs.entry(item_entity).unwrap();
+        let mut item_entry = ecs.world.entry(item_entity).unwrap();
         item_entry.remove_component::<Position>();
         item_entry.add_component(InBackpack { owner: who_entity });
-        ecs.ecs
+        ecs.world
             .entry(who_entity)
             .unwrap()
             .remove_component::<WantsToPickupItem>();

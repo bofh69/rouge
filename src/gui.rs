@@ -2,7 +2,7 @@ use crate::camera::Camera;
 use crate::components::*;
 use crate::gamelog::GameLog;
 use crate::map::Map;
-use crate::Ecs;
+use crate::ecs::Ecs;
 use crate::{Direction, MapPosition, PlayerPosition, ScreenPosition};
 use crate::{InventoryType, PlayerEntity};
 use bracket_lib::prelude::*;
@@ -136,7 +136,7 @@ impl TargetingInfo {
 
         let camera = *ecs.resources.get::<Camera>().unwrap();
         let player_entity = ecs.resources.get::<PlayerEntity>().unwrap().0;
-        let player_entry = ecs.ecs.entry(player_entity).unwrap();
+        let player_entry = ecs.world.entry(player_entity).unwrap();
 
         // Highlight available target cells
         let mut available_cells = Vec::new();
@@ -328,7 +328,7 @@ pub(crate) fn show_inventory(
     let mut query = <(Entity, &Name, &InBackpack, &ItemIndex)>::query();
 
     let mut inventory: Vec<_> = query
-        .iter(&ecs.ecs)
+        .iter(&ecs.world)
         .filter(|item| item.2.owner == player_entity.0)
         .map(|(entity, name, _inbackpack, idx)| (*entity, idx.index, name))
         .collect();
@@ -422,7 +422,7 @@ pub(crate) fn draw_ui(ecs: &Ecs, ctx: &mut BTerm) {
     );
 
     let mut query = <(&CombatStats, &Player)>::query();
-    for (stats, _player) in query.iter(&ecs.ecs) {
+    for (stats, _player) in query.iter(&ecs.world) {
         let health = format!(" HP: {} / {} ", stats.hp, stats.max_hp);
         ctx.print_color(
             12,
@@ -472,7 +472,7 @@ fn draw_tooltips(ecs: &Ecs, ctx: &mut BTerm) {
     }
     let mut tooltip: Vec<String> = Vec::new();
     let mut query = <(&Name, &Position)>::query();
-    for (name, position) in query.iter(&ecs.ecs) {
+    for (name, position) in query.iter(&ecs.world) {
         let pos = camera.transform_map_pos(position.0);
         if pos.x == mouse_pos.0 && pos.y == mouse_pos.1 {
             tooltip.push(name.name.to_string());

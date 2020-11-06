@@ -1,6 +1,6 @@
 use crate::components::*;
 use crate::map::MAP_WIDTH;
-use crate::Ecs;
+use crate::ecs::Ecs;
 use crate::MapPosition;
 use bracket_lib::prelude::*;
 use legion::*;
@@ -9,7 +9,7 @@ pub(crate) const MAX_MONSTERS: i32 = 5;
 pub(crate) const MAX_ITEMS: i32 = 3;
 
 pub(crate) fn player(ecs: &mut Ecs, player_x: i32, player_y: i32) -> Entity {
-    ecs.ecs.push((
+    ecs.world.push((
         Position(MapPosition {
             x: player_x,
             y: player_y,
@@ -59,7 +59,7 @@ fn janouch(ecs: &mut Ecs, x: i32, y: i32) {
 }
 
 fn monster<S: ToString>(ecs: &mut Ecs, x: i32, y: i32, glyph: u16, name: S) {
-    ecs.ecs.push((
+    ecs.world.push((
         Position(MapPosition { x, y }),
         Renderable {
             glyph,
@@ -101,7 +101,7 @@ pub(crate) fn random_item(ecs: &mut Ecs, x: i32, y: i32) {
 }
 
 fn health_potion(ecs: &mut Ecs, x: i32, y: i32) {
-    ecs.ecs.push((
+    ecs.world.push((
         Position(MapPosition { x, y }),
         Renderable {
             glyph: to_cp437('¡'),
@@ -119,7 +119,7 @@ fn health_potion(ecs: &mut Ecs, x: i32, y: i32) {
 }
 
 fn ball(ecs: &mut Ecs, x: i32, y: i32) {
-    ecs.ecs.push((
+    ecs.world.push((
         Position(MapPosition { x, y }),
         Renderable {
             glyph: to_cp437('*'),
@@ -135,7 +135,7 @@ fn ball(ecs: &mut Ecs, x: i32, y: i32) {
 }
 
 fn magic_missile_scroll(ecs: &mut Ecs, x: i32, y: i32) {
-    ecs.ecs.push((
+    ecs.world.push((
         Position(MapPosition { x, y }),
         Renderable {
             glyph: to_cp437('?'),
@@ -154,7 +154,7 @@ fn magic_missile_scroll(ecs: &mut Ecs, x: i32, y: i32) {
 }
 
 fn fireball_scroll(ecs: &mut Ecs, x: i32, y: i32) {
-    ecs.ecs.push((
+    ecs.world.push((
         Position(MapPosition { x, y }),
         Renderable {
             glyph: to_cp437('?'),

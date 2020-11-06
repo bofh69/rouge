@@ -9,7 +9,7 @@ use crate::{
 // use crate::components::*;
 use crate::gamelog::GameLog;
 use crate::map::Map;
-use crate::Ecs;
+use crate::ecs::Ecs;
 use crate::{Direction, PlayerTarget, ScreenPosition};
 use crate::{InventoryType, PlayerEntity, PlayerPosition, RunState};
 use bracket_lib::prelude::*;
@@ -25,7 +25,7 @@ pub(crate) fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut Ecs) -> RunS
         let map = ecs.resources.get::<Map>().unwrap();
 
         let (x, y, idx) = {
-            let player_entry = ecs.ecs.entry(player_entity).unwrap();
+            let player_entry = ecs.world.entry(player_entity).unwrap();
             let pos = player_entry.into_component::<Position>().unwrap();
 
             let (x, y) = (pos.0.x + delta_x, pos.0.y + delta_y);
@@ -34,7 +34,7 @@ pub(crate) fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut Ecs) -> RunS
 
         for potential_target in map.tile_content[idx].iter() {
             if ecs
-                .ecs
+                .world
                 .entry(*potential_target)
                 .unwrap()
                 .get_component::<CombatStats>()
@@ -44,7 +44,7 @@ pub(crate) fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut Ecs) -> RunS
                 let mut gamelog = ecs.resources.get_mut::<GameLog>().unwrap();
 
                 gamelog.log("From Hell's Heart, I stab thee!");
-                let mut entry = ecs.ecs.entry(player_entity).unwrap();
+                let mut entry = ecs.world.entry(player_entity).unwrap();
                 entry.add_component(WantsToMelee {
                     target: *potential_target,
                 });
@@ -53,7 +53,7 @@ pub(crate) fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut Ecs) -> RunS
         }
 
         if !map.blocked[idx] {
-            let mut player_entry = ecs.ecs.entry(player_entity).unwrap();
+            let mut player_entry = ecs.world.entry(player_entity).unwrap();
             let pos = {
                 let pos = player_entry.get_component_mut::<Position>().unwrap();
                 pos.0.x = min(map.width - 1, max(0, x));
@@ -84,14 +84,14 @@ pub(crate) fn get_item(ecs: &mut Ecs) -> RunState {
 
     let mut found_entity: Option<Entity> = None;
 
-    for (item_entity, pos, _item) in query.iter(&ecs.ecs) {
+    for (item_entity, pos, _item) in query.iter(&ecs.world) {
         if pos.0 == player_pos {
             found_entity = Some(*item_entity);
             break;
         }
     }
     if let Some(found_entity) = found_entity {
-        ecs.ecs
+        ecs.world
             .entry(player_entity)
             .unwrap()
             .add_component(WantsToPickupItem {

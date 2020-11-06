@@ -3,12 +3,12 @@ use crate::gamelog::GameLog;
 use crate::map::Map;
 use crate::PlayerEntity;
 use crate::ScreenPosition;
-use crate::{camera::Camera, Ecs};
+use crate::{camera::Camera, ecs::Ecs};
 use legion::*;
 
 pub(crate) fn consume_system(ecs: &mut Ecs) {
     let data: Vec<_> = <(Entity, &WantsToUseItem, &Name)>::query()
-        .iter(&ecs.ecs)
+        .iter(&ecs.world)
         .map(|(entity, wants_to_use, drinker_name)| {
             (
                 *entity,
@@ -20,7 +20,7 @@ pub(crate) fn consume_system(ecs: &mut Ecs) {
         .collect();
 
     for (user_entity, wants_to_use_item, wants_to_use_target, drinker_name) in data {
-        let item_entry = ecs.ecs.entry(wants_to_use_item);
+        let item_entry = ecs.world.entry(wants_to_use_item);
         let player_entity = ecs.resources.get::<PlayerEntity>().unwrap().0;
 
         if item_entry.is_some() {
@@ -47,7 +47,7 @@ pub(crate) fn consume_system(ecs: &mut Ecs) {
                     targets.push(player_entity);
                 }
                 Some(target) => {
-                    let entry = ecs.ecs.entry(wants_to_use_item).unwrap();
+                    let entry = ecs.world.entry(wants_to_use_item).unwrap();
                     let area_effect = entry.get_component::<AreaOfEffect>();
                     let map = ecs.resources.get::<Map>().unwrap();
                     if let Ok(area_effect) = area_effect {
@@ -81,7 +81,7 @@ pub(crate) fn consume_system(ecs: &mut Ecs) {
             }
             let heal_amount: Option<_> = {
                 if let Ok(health) = ecs
-                    .ecs
+                    .world
                     .entry(wants_to_use_item)
                     .unwrap()
                     .get_component::<HealthProvider>()
@@ -93,7 +93,7 @@ pub(crate) fn consume_system(ecs: &mut Ecs) {
             };
             if let Some(heal_amount) = heal_amount {
                 for target in targets {
-                    let mut target_entry = ecs.ecs.entry(target).unwrap();
+                    let mut target_entry = ecs.world.entry(target).unwrap();
                     if target == player_entity {
                         gamelog.log("You feel better.");
                     } else {
@@ -110,7 +110,7 @@ pub(crate) fn consume_system(ecs: &mut Ecs) {
             } else {
                 let item_damage: Option<_> = {
                     if let Ok(damage) = ecs
-                        .ecs
+                        .world
                         .entry(wants_to_use_item)
                         .unwrap()
                         .get_component::<InflictsDamage>()
@@ -122,7 +122,7 @@ pub(crate) fn consume_system(ecs: &mut Ecs) {
                 };
                 if let Some(item_damage) = item_damage {
                     for target in targets {
-                        let mut target_entry = ecs.ecs.entry(target).unwrap();
+                        let mut target_entry = ecs.world.entry(target).unwrap();
                         if target == player_entity {
                             gamelog.log(format!("You lose {} hp.", item_damage));
                         } else {
@@ -138,7 +138,7 @@ pub(crate) fn consume_system(ecs: &mut Ecs) {
                     }
                 }
             }
-            ecs.ecs.remove(wants_to_use_item);
+            ecs.world.remove(wants_to_use_item);
         } else if user_entity == player_entity {
             let mut gamelog = ecs.resources.get_mut::<GameLog>().unwrap();
             gamelog.log(format!(
@@ -146,7 +146,7 @@ pub(crate) fn consume_system(ecs: &mut Ecs) {
                 &item_entry.unwrap().get_component::<Name>().unwrap().name
             ));
         }
-        ecs.ecs
+        ecs.world
             .entry(user_entity)
             .unwrap()
             .remove_component::<WantsToUseItem>();

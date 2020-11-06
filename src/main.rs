@@ -4,6 +4,7 @@ mod camera;
 mod components;
 mod consume_system;
 mod damage_system;
+mod ecs;
 mod gamelog;
 mod gui;
 mod inventory_system;
@@ -148,14 +149,9 @@ impl Into<Position> for PlayerPosition {
     }
 }
 
-pub(crate) struct Ecs {
-    ecs: World,
-    resources: Resources,
-}
-
 pub(crate) struct State {
-    ecs: Ecs,
-    scene_manager: scenes::SceneManager<Ecs>,
+    ecs: ecs::Ecs,
+    scene_manager: scenes::SceneManager<ecs::Ecs>,
     old_shift: bool,
 }
 
@@ -200,10 +196,7 @@ fn main() -> Result<(), Box<dyn std::error::Error + 'static + Send + Sync>> {
 
     context.with_post_scanlines(true);
     let mut gs = State {
-        ecs: Ecs {
-            ecs: World::default(),
-            resources: Resources::default(),
-        },
+        ecs: ecs::Ecs::new(),
         scene_manager: scenes::SceneManager::new(),
         old_shift: false,
     };

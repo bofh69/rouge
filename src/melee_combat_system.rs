@@ -1,11 +1,11 @@
 use super::{CombatStats, Name, SufferDamage, WantsToMelee};
 use crate::gamelog::GameLog;
-use crate::Ecs;
+use crate::ecs::Ecs;
 use legion::*;
 
 pub(crate) fn melee_combat_system(ecs: &mut Ecs) {
     let combatees: Vec<_> = <(Entity, &WantsToMelee, &Name, &CombatStats)>::query()
-        .iter(&ecs.ecs)
+        .iter(&ecs.world)
         .filter(|(_entity, _wants_to_melee, _name, stats)| stats.hp > 0)
         .map(|(entity, wants_to_melee, name, stats)| {
             (
@@ -18,7 +18,7 @@ pub(crate) fn melee_combat_system(ecs: &mut Ecs) {
         .collect();
 
     for (attacker_entity, melee_target_entity, attacker_name, attacker_power) in combatees {
-        let target = ecs.ecs.entry(melee_target_entity);
+        let target = ecs.world.entry(melee_target_entity);
         let mut target = target.unwrap();
         let target_stats = target.get_component::<CombatStats>().unwrap();
 
@@ -42,7 +42,7 @@ pub(crate) fn melee_combat_system(ecs: &mut Ecs) {
                 target.add_component(SufferDamage { amount: damage });
             }
         }
-        ecs.ecs
+        ecs.world
             .entry(attacker_entity)
             .unwrap()
             .remove_component::<WantsToMelee>();

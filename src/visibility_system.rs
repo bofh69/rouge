@@ -7,7 +7,7 @@ use legion::*;
 
 struct ViewshedPlayerUpdate(bool);
 
-pub(crate) fn add_viewshed_system(ecs: &mut crate::Ecs, schedule_builder: &mut systems::Builder) {
+pub(crate) fn add_viewshed_system(ecs: &mut crate::ecs::Ecs, schedule_builder: &mut systems::Builder) {
     ecs.resources.insert(ViewshedPlayerUpdate(false));
 
     let system = SystemBuilder::new("Viewshed")

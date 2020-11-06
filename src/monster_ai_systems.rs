@@ -5,7 +5,7 @@ use bracket_lib::prelude::*;
 use legion::*;
 
 // TODO: Change to proper system
-pub(crate) fn system(ecs: &mut crate::Ecs) {
+pub(crate) fn system(ecs: &mut crate::ecs::Ecs) {
     if RunState::MonsterTurn != *ecs.resources.get::<RunState>().unwrap() {
         return;
     }
@@ -13,11 +13,11 @@ pub(crate) fn system(ecs: &mut crate::Ecs) {
     let player_pos = ecs.resources.get::<PlayerPosition>().unwrap().0;
     let player_entity = ecs.resources.get::<PlayerEntity>().unwrap().0;
 
-    let mut cb = legion::systems::CommandBuffer::new(&ecs.ecs);
+    let mut cb = legion::systems::CommandBuffer::new(&ecs.world);
 
     for (entity, mut viewshed, mut pos) in <(Entity, &mut Viewshed, &mut Position)>::query()
         .filter(legion::query::component::<Monster>())
-        .iter_mut(&mut ecs.ecs)
+        .iter_mut(&mut ecs.world)
     {
         let distance =
             DistanceAlg::Pythagoras.distance2d(Point::new(pos.0.x, pos.0.y), player_pos.into());
@@ -51,5 +51,5 @@ pub(crate) fn system(ecs: &mut crate::Ecs) {
             }
         }
     }
-    cb.flush(&mut ecs.ecs);
+    cb.flush(&mut ecs.world);
 }

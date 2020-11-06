@@ -1,4 +1,4 @@
-use crate::Ecs;
+use crate::ecs::Ecs;
 use crate::{camera::Camera, components::*, map::Map};
 use crate::{gui, PlayerEntity, RunState};
 use crate::{player::player_input, PlayerPosition};
@@ -19,14 +19,14 @@ impl Scene<Ecs> for GameScene {
             let mut schedule = Schedule::builder()
                 .add_system(crate::camera::camera_update_system())
                 .build();
-            schedule.execute(&mut ecs.ecs, &mut ecs.resources);
+            schedule.execute(&mut ecs.world, &mut ecs.resources);
 
             crate::map::draw_map(ecs, ctx);
 
             let camera = ecs.resources.get::<Camera>().unwrap();
 
             let mut data = <(&Position, &Renderable)>::query()
-                .iter(&ecs.ecs)
+                .iter(&ecs.world)
                 .filter(|(p, _)| camera.is_in_view(p.0))
                 .collect::<Vec<_>>();
             data.sort_by(|&a, &b| b.1.render_order.cmp(&a.1.render_order));
@@ -76,7 +76,7 @@ impl Scene<Ecs> for GameScene {
                     match inv_type {
                         crate::InventoryType::Apply => {
                             let should_add_wants_to_use = {
-                                let entry = ecs.ecs.entry(item_entity).unwrap();
+                                let entry = ecs.world.entry(item_entity).unwrap();
                                 if let Ok(range) = entry.get_component::<Ranged>() {
                                     let player_position =
                                         ecs.resources.get::<PlayerPosition>().unwrap().0;
@@ -92,7 +92,7 @@ impl Scene<Ecs> for GameScene {
                                 }
                             };
                             if should_add_wants_to_use {
-                                let mut entry = ecs.ecs.entry(player_entity).unwrap();
+                                let mut entry = ecs.world.entry(player_entity).unwrap();
                                 entry.add_component(WantsToUseItem {
                                     item: item_entity,
                                     target: None,
@@ -101,7 +101,7 @@ impl Scene<Ecs> for GameScene {
                             }
                         }
                         crate::InventoryType::Drop => {
-                            ecs.ecs
+                            ecs.world
                                 .entry(player_entity)
                                 .unwrap()
                                 .add_component(WantsToDropItem { item: item_entity });
@@ -117,7 +117,7 @@ impl Scene<Ecs> for GameScene {
                     (gui::ItemMenuResult::Selected, Some(target_position)) => {
                         let player_entity = ecs.resources.get::<PlayerEntity>().unwrap().0;
 
-                        ecs.ecs
+                        ecs.world
                             .entry(player_entity)
                             .unwrap()
                             .add_component(WantsToUseItem {
@@ -162,7 +162,7 @@ impl GameScene {
     }
 
     fn run_systems(&mut self, ecs: &mut Ecs) {
-        self.schedule.execute(&mut ecs.ecs, &mut ecs.resources);
+        self.schedule.execute(&mut ecs.world, &mut ecs.resources);
 
         crate::monster_ai_systems::system(ecs);
         crate::melee_combat_system::melee_combat_system(ecs);
@@ -170,6 +170,6 @@ impl GameScene {
         crate::inventory_system::pickup_system(ecs);
         crate::consume_system::consume_system(ecs);
 
-        self.schedule2.execute(&mut ecs.ecs, &mut ecs.resources);
+        self.schedule2.execute(&mut ecs.world, &mut ecs.resources);
     }
 }

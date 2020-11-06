@@ -1,5 +1,5 @@
 use super::*;
-use crate::Ecs;
+use crate::ecs::Ecs;
 
 #[derive(Debug)]
 pub(crate) struct MainMenuScene {
