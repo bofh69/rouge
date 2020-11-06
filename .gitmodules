@@ -1,0 +1,6 @@
+[submodule "vendor/legion"]
+	path = vendor/legion
+	url = git@github.com:bofh69/legion.git
+[submodule "vendor/bracket-lib"]
+	path = vendor/bracket-lib
+	url = git@github.com:bofh69/rltk_rs.git
