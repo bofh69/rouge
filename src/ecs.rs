@@ -6,7 +6,6 @@ pub(crate) struct Ecs {
 }
 
 impl Ecs {
-
     pub fn new() -> Self {
         Self {
             world: World::default(),
@@ -18,5 +17,11 @@ impl Ecs {
 #[macro_export] macro_rules! resource_get_mut {
     ($ecs:ident, $T:ty) => {
        $ecs.resources.get_mut::<$T>().expect("Resource is expected")
+    }
+}
+
+#[macro_export] macro_rules! resource_get{
+    ($ecs:ident, $T:ty) => {
+       $ecs.resources.get::<$T>().expect("Resource is expected")
     }
 }

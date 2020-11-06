@@ -17,12 +17,12 @@ use legion::*;
 use std::cmp::{max, min};
 
 pub(crate) fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut Ecs) -> RunState {
-    let player_entity = ecs.resources.get::<PlayerEntity>().unwrap().0;
+    let player_entity = resource_get!(ecs, PlayerEntity).0;
 
     let mut ret = RunState::AwaitingInput;
 
     let pos = {
-        let map = ecs.resources.get::<Map>().unwrap();
+        let map = resource_get!(ecs, Map);
 
         let (x, y, idx) = {
             let player_entry = ecs.world.entry(player_entity).unwrap();
@@ -76,8 +76,8 @@ pub(crate) fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut Ecs) -> RunS
 }
 
 pub(crate) fn get_item(ecs: &mut Ecs) -> RunState {
-    let player_pos = ecs.resources.get::<PlayerPosition>().unwrap().0;
-    let player_entity = ecs.resources.get::<PlayerEntity>().unwrap().0;
+    let player_pos = resource_get!(ecs, PlayerPosition).0;
+    let player_entity = resource_get!(ecs, PlayerEntity).0;
     let mut gamelog = resource_get_mut!(ecs, GameLog);
 
     let mut query = <(Entity, &Position, &Item)>::query();
@@ -107,8 +107,8 @@ pub(crate) fn get_item(ecs: &mut Ecs) -> RunState {
 }
 
 fn init_auto_walk(ecs: &Ecs, pos: ScreenPosition) {
-    let camera = ecs.resources.get::<Camera>().unwrap();
-    let map = ecs.resources.get::<Map>().unwrap();
+    let camera = resource_get!(ecs, Camera);
+    let map = resource_get!(ecs, Map);
     let map_pos = camera.transform_screen_pos(pos);
     let idx = map.map_pos_to_idx(map_pos);
 
@@ -147,8 +147,8 @@ fn get_auto_walk_dest(ecs: &mut Ecs) -> Option<(i32, i32)> {
             }
         }
         PlayerTarget::Dir(dir) => {
-            let player_pos = ecs.resources.get::<PlayerPosition>().unwrap().0;
-            let map = ecs.resources.get::<Map>().unwrap();
+            let player_pos = resource_get!(ecs, PlayerPosition).0;
+            let map = resource_get!(ecs, Map);
             let (dx, dy) = dir.into();
             let new_pos = player_pos + (dx, dy);
             if map.is_exit_valid(new_pos.x, new_pos.y) {

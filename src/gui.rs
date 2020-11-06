@@ -134,14 +134,14 @@ impl TargetingInfo {
             "Select Target:",
         );
 
-        let camera = *ecs.resources.get::<Camera>().unwrap();
-        let player_entity = ecs.resources.get::<PlayerEntity>().unwrap().0;
+        let camera = *resource_get!(ecs, Camera);
+        let player_entity = resource_get!(ecs, PlayerEntity).0;
         let player_entry = ecs.world.entry(player_entity).unwrap();
 
         // Highlight available target cells
         let mut available_cells = Vec::new();
         if let Ok(visible) = player_entry.into_component::<Viewshed>() {
-            let player_pos = *ecs.resources.get::<PlayerPosition>().unwrap();
+            let player_pos = *resource_get!(ecs, PlayerPosition);
             // We have a viewshed
             for pos in visible.visible_tiles.iter() {
                 let point = camera.transform_map_pos(*pos);
@@ -323,7 +323,7 @@ pub(crate) fn show_inventory(
     ctx: &mut BTerm,
     inv_type: InventoryType,
 ) -> (ItemMenuResult, Option<Entity>) {
-    let player_entity = ecs.resources.get::<PlayerEntity>().unwrap();
+    let player_entity = resource_get!(ecs, PlayerEntity);
 
     let mut query = <(Entity, &Name, &InBackpack, &ItemIndex)>::query();
 
@@ -451,7 +451,7 @@ pub(crate) fn draw_ui(ecs: &Ecs, ctx: &mut BTerm) {
         );
     }
 
-    let gamelog = ecs.resources.get::<GameLog>().unwrap();
+    let gamelog = resource_get!(ecs, GameLog);
     for (i, entry) in gamelog.entries.iter().rev().enumerate() {
         if i > 4 {
             break;
@@ -463,8 +463,8 @@ pub(crate) fn draw_ui(ecs: &Ecs, ctx: &mut BTerm) {
 }
 
 fn draw_tooltips(ecs: &Ecs, ctx: &mut BTerm) {
-    let camera = *ecs.resources.get::<Camera>().unwrap();
-    let map = ecs.resources.get::<Map>().unwrap();
+    let camera = *resource_get!(ecs, Camera);
+    let map = resource_get!(ecs, Map);
 
     let mouse_pos = ctx.mouse_pos();
     if mouse_pos.0 >= map.width || mouse_pos.1 >= map.height {

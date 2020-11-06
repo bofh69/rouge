@@ -23,7 +23,7 @@ impl Scene<Ecs> for GameScene {
 
             crate::map::draw_map(ecs, ctx);
 
-            let camera = ecs.resources.get::<Camera>().unwrap();
+            let camera = resource_get!(ecs, Camera);
 
             let mut data = <(&Position, &Renderable)>::query()
                 .iter(&ecs.world)
@@ -31,7 +31,7 @@ impl Scene<Ecs> for GameScene {
                 .collect::<Vec<_>>();
             data.sort_by(|&a, &b| b.1.render_order.cmp(&a.1.render_order));
 
-            let map = ecs.resources.get::<Map>().unwrap();
+            let map = resource_get!(ecs, Map);
             for (pos, render) in data.iter() {
                 if map.visible_tiles[map.pos_to_idx(**pos)] {
                     let point = camera.transform_map_pos(pos.0);
@@ -40,7 +40,7 @@ impl Scene<Ecs> for GameScene {
             }
         }
 
-        let mut newrunstate = { *ecs.resources.get::<RunState>().unwrap() };
+        let mut newrunstate = { *resource_get!(ecs, RunState) };
 
         match newrunstate {
             RunState::SaveGame => {
@@ -72,15 +72,15 @@ impl Scene<Ecs> for GameScene {
             RunState::ShowInventory(inv_type) => match gui::show_inventory(ecs, ctx, inv_type) {
                 (gui::ItemMenuResult::Cancel, _) => newrunstate = RunState::AwaitingInput,
                 (gui::ItemMenuResult::Selected, Some(item_entity)) => {
-                    let player_entity = ecs.resources.get::<PlayerEntity>().unwrap().0;
+                    let player_entity = resource_get!(ecs, PlayerEntity).0;
                     match inv_type {
                         crate::InventoryType::Apply => {
                             let should_add_wants_to_use = {
                                 let entry = ecs.world.entry(item_entity).unwrap();
                                 if let Ok(range) = entry.get_component::<Ranged>() {
                                     let player_position =
-                                        ecs.resources.get::<PlayerPosition>().unwrap().0;
-                                    let camera = ecs.resources.get::<Camera>().unwrap();
+                                        resource_get!(ecs, PlayerPosition).0;
+                                    let camera = resource_get!(ecs, Camera);
                                     let start_pos = camera.transform_map_pos(player_position);
                                     let targeting_info =
                                         gui::TargetingInfo::new(range.range, start_pos, ctx);
@@ -115,7 +115,7 @@ impl Scene<Ecs> for GameScene {
                 match targeting_info.show_targeting(ecs, ctx) {
                     (gui::ItemMenuResult::Cancel, _) => newrunstate = RunState::AwaitingInput,
                     (gui::ItemMenuResult::Selected, Some(target_position)) => {
-                        let player_entity = ecs.resources.get::<PlayerEntity>().unwrap().0;
+                        let player_entity = resource_get!(ecs, PlayerEntity).0;
 
                         ecs.world
                             .entry(player_entity)

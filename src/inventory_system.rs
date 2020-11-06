@@ -7,8 +7,8 @@ use legion::*;
 use crate::ecs::*;
 
 pub(crate) fn drop_system(ecs: &mut Ecs) {
-    let player_position = ecs.resources.get::<PlayerPosition>().unwrap().0;
-    let player_entity = ecs.resources.get::<PlayerEntity>().unwrap().0;
+    let player_position = resource_get!(ecs, PlayerPosition).0;
+    let player_entity = resource_get!(ecs, PlayerEntity).0;
 
     let things_to_drop: Vec<_> = <(Entity, &WantsToDropItem)>::query()
         .iter(&ecs.world)
@@ -36,7 +36,7 @@ pub(crate) fn drop_system(ecs: &mut Ecs) {
 }
 
 pub(crate) fn pickup_system(ecs: &mut Ecs) {
-    let player_entity = ecs.resources.get::<PlayerEntity>().unwrap().0;
+    let player_entity = resource_get!(ecs, PlayerEntity).0;
     let mut gamelog = resource_get_mut!(ecs, GameLog);
 
     let things_to_pickup: Vec<_> = <&WantsToPickupItem>::query()

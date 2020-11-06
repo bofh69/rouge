@@ -6,12 +6,12 @@ use legion::*;
 
 // TODO: Change to proper system
 pub(crate) fn system(ecs: &mut crate::ecs::Ecs) {
-    if RunState::MonsterTurn != *ecs.resources.get::<RunState>().unwrap() {
+    if RunState::MonsterTurn != *resource_get!(ecs, RunState) {
         return;
     }
     let mut map = resource_get_mut!(ecs, Map);
-    let player_pos = ecs.resources.get::<PlayerPosition>().unwrap().0;
-    let player_entity = ecs.resources.get::<PlayerEntity>().unwrap().0;
+    let player_pos = resource_get!(ecs, PlayerPosition).0;
+    let player_entity = resource_get!(ecs, PlayerEntity).0;
 
     let mut cb = legion::systems::CommandBuffer::new(&ecs.world);
 

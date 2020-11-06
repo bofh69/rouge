@@ -21,7 +21,7 @@ pub(crate) fn consume_system(ecs: &mut Ecs) {
 
     for (user_entity, wants_to_use_item, wants_to_use_target, drinker_name) in data {
         let item_entry = ecs.world.entry(wants_to_use_item);
-        let player_entity = ecs.resources.get::<PlayerEntity>().unwrap().0;
+        let player_entity = resource_get!(ecs, PlayerEntity).0;
 
         if item_entry.is_some() {
             let mut gamelog = ecs.resources.get_mut::<GameLog>().unwrap();
@@ -49,10 +49,10 @@ pub(crate) fn consume_system(ecs: &mut Ecs) {
                 Some(target) => {
                     let entry = ecs.world.entry(wants_to_use_item).unwrap();
                     let area_effect = entry.get_component::<AreaOfEffect>();
-                    let map = ecs.resources.get::<Map>().unwrap();
+                    let map = resource_get!(ecs, Map);
                     if let Ok(area_effect) = area_effect {
                         // AoE
-                        let camera = ecs.resources.get::<Camera>().unwrap();
+                        let camera = resource_get!(ecs, Camera);
                         let screen_point = camera.transform_map_pos(target).into();
                         for tile_point in bracket_lib::prelude::field_of_view(
                             screen_point,

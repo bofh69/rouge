@@ -1,10 +1,10 @@
 bracket_lib::prelude::add_wasm_support!();
 
+#[macro_use] mod ecs;
 mod camera;
 mod components;
 mod consume_system;
 mod damage_system;
-#[macro_use] mod ecs;
 mod gamelog;
 mod gui;
 mod inventory_system;
