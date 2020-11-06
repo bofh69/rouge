@@ -41,7 +41,7 @@ pub(crate) fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut Ecs) -> RunS
                 .is_ok()
             {
                 // Attack it
-                let mut gamelog = ecs.resources.get_mut::<GameLog>().unwrap();
+                let mut gamelog = resource_get_mut!(ecs, GameLog);
 
                 gamelog.log("From Hell's Heart, I stab thee!");
                 let mut entry = ecs.world.entry(player_entity).unwrap();
@@ -78,7 +78,7 @@ pub(crate) fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut Ecs) -> RunS
 pub(crate) fn get_item(ecs: &mut Ecs) -> RunState {
     let player_pos = ecs.resources.get::<PlayerPosition>().unwrap().0;
     let player_entity = ecs.resources.get::<PlayerEntity>().unwrap().0;
-    let mut gamelog = ecs.resources.get_mut::<GameLog>().unwrap();
+    let mut gamelog = resource_get_mut!(ecs, GameLog);
 
     let mut query = <(Entity, &Position, &Item)>::query();
 
@@ -113,26 +113,26 @@ fn init_auto_walk(ecs: &Ecs, pos: ScreenPosition) {
     let idx = map.map_pos_to_idx(map_pos);
 
     if camera.is_in_view(map_pos) && map.revealed_tiles[idx] {
-        let mut target_pos = ecs.resources.get_mut::<PlayerTarget>().unwrap();
+        let mut target_pos = resource_get_mut!(ecs, PlayerTarget);
         *target_pos = PlayerTarget::Position(map_pos);
     } else {
-        let mut target_pos = ecs.resources.get_mut::<PlayerTarget>().unwrap();
+        let mut target_pos = resource_get_mut!(ecs, PlayerTarget);
         *target_pos = PlayerTarget::None;
     }
 }
 
 pub(crate) fn try_auto_walk_player(dir: Direction, ecs: &mut Ecs) {
-    let mut player_target = ecs.resources.get_mut::<PlayerTarget>().unwrap();
+    let mut player_target = resource_get_mut!(ecs, PlayerTarget);
 
     *player_target = PlayerTarget::Dir(dir);
 }
 
 fn get_auto_walk_dest(ecs: &mut Ecs) -> Option<(i32, i32)> {
-    let player_target = ecs.resources.get_mut::<PlayerTarget>().unwrap();
+    let player_target = resource_get_mut!(ecs, PlayerTarget);
     match *player_target {
         PlayerTarget::Position(map_pos) => {
-            let mut map = ecs.resources.get_mut::<Map>().unwrap();
-            let player_pos = ecs.resources.get_mut::<PlayerPosition>().unwrap().0;
+            let mut map = resource_get_mut!(ecs, Map);
+            let player_pos = resource_get_mut!(ecs, PlayerPosition).0;
 
             let old_idx = map.map_pos_to_idx(player_pos) as i32;
             map.search_only_revealed();
@@ -173,7 +173,7 @@ fn auto_walk(ecs: &mut Ecs) -> RunState {
 }
 
 fn clear_auto_walk(ecs: &mut Ecs) {
-    let mut player_target = ecs.resources.get_mut::<PlayerTarget>().unwrap();
+    let mut player_target = resource_get_mut!(ecs, PlayerTarget);
     *player_target = PlayerTarget::None;
 }
 

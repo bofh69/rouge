@@ -14,3 +14,9 @@ impl Ecs {
         }
     }
 }
+
+#[macro_export] macro_rules! resource_get_mut {
+    ($ecs:ident, $T:ty) => {
+       $ecs.resources.get_mut::<$T>().expect("Resource is expected")
+    }
+}

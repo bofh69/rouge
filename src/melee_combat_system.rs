@@ -1,6 +1,6 @@
 use super::{CombatStats, Name, SufferDamage, WantsToMelee};
 use crate::gamelog::GameLog;
-use crate::ecs::Ecs;
+use crate::ecs::*;
 use legion::*;
 
 pub(crate) fn melee_combat_system(ecs: &mut Ecs) {
@@ -28,13 +28,13 @@ pub(crate) fn melee_combat_system(ecs: &mut Ecs) {
             let damage = i32::max(0, attacker_power - target_stats.defense);
 
             if damage == 0 {
-                let mut gamelog = ecs.resources.get_mut::<GameLog>().unwrap();
+                let mut gamelog = resource_get_mut!(ecs, GameLog);
                 gamelog.log(&format!(
                     "{} is unable to hurt {}",
                     &attacker_name, &target_name
                 ));
             } else {
-                let mut gamelog = ecs.resources.get_mut::<GameLog>().unwrap();
+                let mut gamelog = resource_get_mut!(ecs, GameLog);
                 gamelog.log(&format!(
                     "{} hits {}, for {} hp.",
                     &attacker_name, &target_name, damage

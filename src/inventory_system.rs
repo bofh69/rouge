@@ -1,10 +1,10 @@
 use crate::gamelog::GameLog;
 use crate::{
     components::{InBackpack, ItemIndex, Name, Position, WantsToDropItem, WantsToPickupItem},
-    ecs::Ecs,
 };
 use crate::{PlayerEntity, PlayerPosition};
 use legion::*;
+use crate::ecs::*;
 
 pub(crate) fn drop_system(ecs: &mut Ecs) {
     let player_position = ecs.resources.get::<PlayerPosition>().unwrap().0;
@@ -20,7 +20,7 @@ pub(crate) fn drop_system(ecs: &mut Ecs) {
         entry.add_component(Position(player_position));
         entry.remove_component::<InBackpack>();
         if dropper_entity == player_entity {
-            let mut gamelog = ecs.resources.get_mut::<GameLog>().unwrap();
+            let mut gamelog = resource_get_mut!(ecs, GameLog); // xecs::getresource_get_mut!(ecs, GameLog);
             gamelog.log(format!(
                 "You drop the {}.",
                 entry
@@ -37,7 +37,7 @@ pub(crate) fn drop_system(ecs: &mut Ecs) {
 
 pub(crate) fn pickup_system(ecs: &mut Ecs) {
     let player_entity = ecs.resources.get::<PlayerEntity>().unwrap().0;
-    let mut gamelog = ecs.resources.get_mut::<GameLog>().unwrap();
+    let mut gamelog = resource_get_mut!(ecs, GameLog);
 
     let things_to_pickup: Vec<_> = <&WantsToPickupItem>::query()
         .iter(&ecs.world)

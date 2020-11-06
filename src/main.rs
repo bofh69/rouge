@@ -4,7 +4,7 @@ mod camera;
 mod components;
 mod consume_system;
 mod damage_system;
-mod ecs;
+#[macro_use] mod ecs;
 mod gamelog;
 mod gui;
 mod inventory_system;

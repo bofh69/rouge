@@ -9,7 +9,7 @@ pub(crate) fn system(ecs: &mut crate::ecs::Ecs) {
     if RunState::MonsterTurn != *ecs.resources.get::<RunState>().unwrap() {
         return;
     }
-    let mut map = ecs.resources.get_mut::<Map>().unwrap();
+    let mut map = resource_get_mut!(ecs, Map);
     let player_pos = ecs.resources.get::<PlayerPosition>().unwrap().0;
     let player_entity = ecs.resources.get::<PlayerEntity>().unwrap().0;
 

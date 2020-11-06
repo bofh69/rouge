@@ -42,7 +42,7 @@ pub(crate) fn player(ecs: &mut Ecs, player_x: i32, player_y: i32) -> Entity {
 pub(crate) fn random_monster(ecs: &mut Ecs, x: i32, y: i32) {
     let roll: i32;
     {
-        let mut rng = ecs.resources.get_mut::<RandomNumberGenerator>().unwrap();
+        let mut rng = resource_get_mut!(ecs, RandomNumberGenerator);
         roll = rng.roll_dice(1, 2);
     }
     match roll {
@@ -89,7 +89,7 @@ fn monster<S: ToString>(ecs: &mut Ecs, x: i32, y: i32, glyph: u16, name: S) {
 /// Spawns a random monster at a given location
 pub(crate) fn random_item(ecs: &mut Ecs, x: i32, y: i32) {
     let roll = {
-        let mut rng = ecs.resources.get_mut::<RandomNumberGenerator>().unwrap();
+        let mut rng = resource_get_mut!(ecs, RandomNumberGenerator);
         rng.roll_dice(1, 4)
     };
     match roll {
@@ -180,7 +180,7 @@ pub(crate) fn spawn_room(ecs: &mut Ecs, room: &Rect) {
 
     // Scope to keep the borrow checker happy
     {
-        let mut rng = ecs.resources.get_mut::<RandomNumberGenerator>().unwrap();
+        let mut rng = resource_get_mut!(ecs, RandomNumberGenerator);
         let num_monsters = rng.roll_dice(1, MAX_MONSTERS + 2) - 3;
         let num_items = rng.roll_dice(1, MAX_ITEMS + 2) - 3;
 

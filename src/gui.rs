@@ -2,7 +2,7 @@ use crate::camera::Camera;
 use crate::components::*;
 use crate::gamelog::GameLog;
 use crate::map::Map;
-use crate::ecs::Ecs;
+use crate::ecs::*;
 use crate::{Direction, MapPosition, PlayerPosition, ScreenPosition};
 use crate::{InventoryType, PlayerEntity};
 use bracket_lib::prelude::*;
@@ -337,7 +337,7 @@ pub(crate) fn show_inventory(
     inventory.sort_by(|a, b| a.1.cmp(&b.1));
 
     if count == 0 {
-        let mut gamelog = ecs.resources.get_mut::<GameLog>().unwrap();
+        let mut gamelog = resource_get_mut!(ecs, GameLog);
         gamelog.log("Your backpack is empty");
         return (ItemMenuResult::Cancel, None);
     }
