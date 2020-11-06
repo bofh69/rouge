@@ -14,7 +14,12 @@ pub(crate) struct GameScene {
 
 impl Scene<Ecs> for GameScene {
     fn tick(&mut self, ecs: &mut Ecs, ctx: &mut BTerm) -> SceneResult<Ecs> {
-        ctx.cls();
+        for i in 0..=crate::LAYERS {
+            ctx.set_active_console(i);
+            ctx.cls();
+        }
+        ctx.print(35, 22, &format!("{} fps", ctx.fps as u32));
+
         {
             let mut schedule = Schedule::builder()
                 .add_system(crate::camera::camera_update_system())
@@ -24,6 +29,14 @@ impl Scene<Ecs> for GameScene {
             crate::map::draw_map(ecs, ctx);
 
             let camera = resource_get!(ecs, Camera);
+            let player_position = resource_get!(ecs, PlayerPosition);
+            let screen_pos = camera.transform_map_pos(player_position.0);
+
+            for i in 0..crate::LAYERS {
+                ctx.set_active_console(i);
+                ctx.set_scale(1.0 + i as f32 * 0.01, screen_pos.x, screen_pos.y);
+            }
+            ctx.set_active_console(crate::LAYERS);
 
             let mut data = <(&Position, &Renderable)>::query()
                 .iter(&ecs.world)

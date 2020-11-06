@@ -2,6 +2,7 @@ bracket_lib::prelude::add_wasm_support!();
 
 #[macro_use]
 mod ecs;
+
 mod camera;
 mod components;
 mod consume_system;
@@ -181,21 +182,35 @@ impl GameState for State {
 
 impl State {}
 
+// embedded_resource!(TILE_FONT, "../resources/cheepicus8x8.png");
+
+const LAYERS: usize = 7;
+
 fn main() -> Result<(), Box<dyn std::error::Error + 'static + Send + Sync>> {
     const SCREEN_WIDTH: i32 = 80;
     const SCREEN_HEIGHT: i32 = 50;
     let map = Map::new_map_rooms_and_corridors();
     let player_pos = map.rooms[0].center();
 
-    let mut context = BTermBuilder::simple(SCREEN_WIDTH, SCREEN_HEIGHT)?
+    // link_resource!(TILE_FONT, "resources/cheepicus8x8.png");
+
+    let mut builder = BTermBuilder::simple(SCREEN_WIDTH, SCREEN_HEIGHT)?
         .with_title("Rouge World")
+        .with_font("terminal8x8.png", 8, 8)
         .with_advanced_input(true)
         .with_resource_path("resources")
-        .build()?;
-
-    // let mut context = BTerm::init_simple8x8(SCREEN_WIDTH, SCREEN_HEIGHT, "Rouge World", "resources");
+        .with_vsync(true);
+    // Add layers for walls.
+    for _i in 0..LAYERS - 1 {
+        builder = builder.with_sparse_console_no_bg(SCREEN_WIDTH, SCREEN_HEIGHT, "terminal8x8.png");
+    }
+    // Layer for GUI:
+    builder = builder.with_sparse_console(SCREEN_WIDTH, SCREEN_HEIGHT, "terminal8x8.png");
+    let mut context = builder.build()?;
+    context.set_active_console(LAYERS);
 
     context.with_post_scanlines(true);
+
     let mut gs = State {
         ecs: ecs::Ecs::new(),
         scene_manager: scenes::SceneManager::new(),

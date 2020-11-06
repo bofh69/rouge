@@ -448,27 +448,35 @@ pub(crate) fn draw_map(ecs: &Ecs, ctx: &mut BTerm) {
                 if map.revealed_tiles[idx] {
                     let glyph;
 
-                    let bg = RGBA::from_f32(0., 0., 0., 1.);
+                    let bg = RGB::from_f32(0., 0., 0.);
                     let mut fg;
 
                     match tile {
                         TileType::Floor => {
-                            fg = RGBA::from_f32(0.5, 0.5, 0.5, 1.);
+                            fg = RGB::from_f32(0.5, 0.5, 0.5);
                             glyph = to_cp437('.');
                         }
                         TileType::Wall(walltype) => {
-                            fg = RGBA::from_f32(0.7, 0.9, 0.7, 1.);
+                            fg = RGB::from_f32(0.7, 0.9, 0.7);
                             glyph = get_glyph_for_wall(&*map, idx, pos.x, pos.y, walltype)
                         }
                         TileType::Stone => {
-                            fg = RGBA::from_f32(0.0, 1.0, 0.0, 1.);
+                            fg = RGB::from_f32(0.0, 1.0, 0.0);
                             glyph = to_cp437('#');
                         }
                     }
                     if !map.visible_tiles[idx] {
                         fg = fg.to_greyscale();
                     }
-                    ctx.set(x, y, fg, bg, glyph);
+                    for i in 0..crate::LAYERS {
+                        if i == 0 || tile != TileType::Floor {
+                            ctx.set_active_console(i);
+                            let mix = (crate::LAYERS - 1 - i) as f32 / (crate::LAYERS - 1) as f32;
+                            let mix = mix / 4.0;
+                            ctx.set(x, y, fg.lerp(RGB::from_f32(0., 0., 0.), mix), bg, glyph);
+                        }
+                    }
+                    ctx.set_active_console(0);
                 }
             }
         }
