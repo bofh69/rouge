@@ -186,6 +186,11 @@ impl Map {
         }
     }
 
+    pub fn is_visible(&self, pos: MapPosition) -> bool {
+        let idx = self.map_pos_to_idx(pos);
+        self.visible_tiles[idx]
+    }
+
     // Create points surrounding (x, y)
     fn points_around(x: i32, y: i32) -> Vec<Point> {
         vec![

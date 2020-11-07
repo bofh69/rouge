@@ -106,7 +106,6 @@ impl TargetingInfo {
         }
 
         if self.last_mouse_pos != ctx.mouse_pos() {
-            println!("Mouse pos {:?} - {:?}", ctx.mouse_pos, ctx.width_pixels);
             self.last_mouse_pos = ctx.mouse_pos();
             self.current_pos = ctx.mouse_pos();
         } else if ctx.left_click {
@@ -474,7 +473,7 @@ fn draw_tooltips(ecs: &Ecs, ctx: &mut BTerm) {
     let mut query = <(&Name, &Position)>::query();
     for (name, position) in query.iter(&ecs.world) {
         let pos = camera.transform_map_pos(position.0);
-        if pos.x == mouse_pos.0 && pos.y == mouse_pos.1 {
+        if pos.x == mouse_pos.0 && pos.y == mouse_pos.1 && map.is_visible(position.0) {
             tooltip.push(name.name.to_string());
         }
     }
