@@ -1,4 +1,4 @@
-use crate::{MapPosition};
+use crate::MapPosition;
 
 #[derive(Debug, Copy, Clone)]
 pub(crate) struct Camera {
