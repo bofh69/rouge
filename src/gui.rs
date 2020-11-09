@@ -193,11 +193,16 @@ impl TargetingInfo {
     }
 }
 
-pub(crate) fn show_main_menu(ctx: &mut BTerm, current_state: MainMenuState) -> MainMenuResult {
+pub(crate) fn show_main_menu(
+    ctx: &mut BTerm,
+    time: f32,
+    current_state: MainMenuState,
+) -> MainMenuResult {
     let (screen_width, screen_height) = ctx.get_char_size();
+    let (screen_width, screen_height) = (screen_width as i32, screen_height as i32);
     let text_width = 7;
     let x = (screen_width / 2 - text_width / 2) as i32;
-    let y = (screen_height / 2 - 2) as i32;
+    let y = (screen_height / 2) as i32 - 1;
 
     ctx.print_color(
         (80 - 14) / 2,
@@ -208,24 +213,36 @@ pub(crate) fn show_main_menu(ctx: &mut BTerm, current_state: MainMenuState) -> M
     );
 
     for (y, line) in vec![
-        ".########...#######..##.....##..######...########",
-        ".##.....##.##.....##.##.....##.##....##..##......",
-        ".##.....##.##.....##.##.....##.##........##......",
-        ".########..##.....##.##.....##.##...####.######..",
-        ".##...##...##.....##.##.....##.##....##..##......",
-        ".##....##..##.....##.##.....##.##....##..##......",
-        ".##.....##..#######...#######...######...########",
+        "########...#######..##....##..######...########",
+        "##.....##.##.....##.##....##.##....##..##......",
+        "##.....##.##.....##.##....##.##........##......",
+        "########..##.....##.##....##.##...####.######..",
+        "##...##...##.....##.##....##.##....##..##......",
+        "##....##..##.....##.##....##.##....##..##......",
+        "##.....##..#######...######...######...########",
     ]
     .iter()
     .enumerate()
     {
         ctx.print_color(
-            15,
+            17,
             14 + y as i32,
             RGB::named(ORANGERED2),
             RGB::named(BLACK),
             line,
         );
+    }
+
+    fn write_comet(ctx: &mut BTerm, pos: i32, screen_width: i32, y: i32, c: char) {
+        if pos >= 0 && pos < screen_width {
+            ctx.set(pos, y, RGB::named(YELLOW), RGB::named(BLACK), to_cp437(c));
+        }
+    }
+
+    let pos = ((5. - time) * 20. - 10.) as i32;
+    write_comet(ctx, pos, screen_width, y - 2, '*');
+    for i in 1..5 {
+        write_comet(ctx, pos + i, screen_width, y - 2, '-');
     }
 
     ctx.draw_box_double(
