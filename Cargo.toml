@@ -1,5 +1,9 @@
 [package]
 name = "rouge"
+description = "A simple roguelike game"
+repository = "https://github.com/bofh69/rouge/"
+keywords = [ "game", "rougelike" ]
+categories = [ "games" ]
 version = "0.1.0"
 license = "GPL-3.0"
 authors = ["Sebastian Andersson <sebastian@bittr.nu>"]
@@ -11,3 +15,5 @@ edition = "2018"
 [dependencies]
 bracket-lib = { path = "vendor/bracket-lib" }
 legion = { path = "vendor/legion" }
+# bracket-lib = "0.8.*"
+# legion = "0.3.*"
