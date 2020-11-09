@@ -4,8 +4,8 @@ use crate::{PlayerEntity, PlayerPosition, RunState};
 use bracket_lib::prelude::*;
 use legion::*;
 
-// TODO: Change to proper system
-pub(crate) fn system(ecs: &mut crate::ecs::Ecs) {
+// TODO: Change to proper monster_ai_system
+pub(crate) fn monster_ai_system(ecs: &mut crate::ecs::Ecs) {
     if RunState::MonsterTurn != *resource_get!(ecs, RunState) {
         return;
     }

@@ -5,19 +5,13 @@ mod ecs;
 
 mod camera;
 mod components;
-mod consume_system;
-mod damage_system;
 mod gamelog;
 mod gui;
-mod inventory_system;
 mod map;
-mod map_indexing_system;
-mod melee_combat_system;
-mod monster_ai_systems;
 mod player;
 mod scenes;
 mod spawner;
-mod visibility_system;
+mod systems;
 
 use bracket_lib::prelude::*;
 use camera::Camera;

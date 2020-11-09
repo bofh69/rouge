@@ -1,9 +1,9 @@
-use super::map::Map;
 use crate::components::Player;
+use crate::map::Map;
 use crate::PlayerEntity;
 use crate::{MapPosition, PlayerTarget, Position, Viewshed};
-use bracket_lib::prelude::field_of_view;
-use legion::*;
+use ::bracket_lib::prelude::field_of_view;
+use ::legion::*;
 
 struct ViewshedPlayerUpdate(bool);
 

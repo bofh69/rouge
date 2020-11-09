@@ -2,8 +2,8 @@ use crate::ecs::Ecs;
 use crate::{camera::Camera, components::*, map::Map};
 use crate::{gui, PlayerEntity, RunState};
 use crate::{player::player_input, PlayerPosition};
-use bracket_lib::prelude::*;
-use legion::*;
+use ::bracket_lib::prelude::*;
+use ::legion::*;
 
 use super::{Scene, SceneResult};
 
@@ -18,11 +18,11 @@ impl Scene<Ecs> for GameScene {
             ctx.set_active_console(i);
             ctx.cls();
         }
-        ctx.print(35, 22, &format!("{} fps", ctx.fps as u32));
+        // ctx.print(35, 22, &format!("{} fps", ctx.fps as u32));
 
         {
             let mut schedule = Schedule::builder()
-                .add_system(crate::camera::camera_update_system())
+                .add_system(crate::systems::camera_update_system())
                 .build();
             schedule.execute(&mut ecs.world, &mut ecs.resources);
 
@@ -156,17 +156,16 @@ impl GameScene {
     pub fn new(ecs: &mut Ecs) -> Self {
         ecs.resources.insert(RunState::PreRun);
         let mut builder = Schedule::builder();
-        builder.add_system(crate::camera::camera_update_system());
-        crate::visibility_system::add_viewshed_system(ecs, &mut builder);
+        crate::systems::add_viewshed_system(ecs, &mut builder);
 
         let mut builder2 = Schedule::builder();
         builder2
-            .add_system(crate::damage_system::damage_system())
-            .add_system(crate::damage_system::health_system())
-            .add_system(crate::damage_system::delete_the_dead_system())
+            .add_system(crate::systems::damage_system())
+            .add_system(crate::systems::health_system())
+            .add_system(crate::systems::delete_the_dead_system())
             .flush()
-            .add_system(crate::map_indexing_system::map_indexing_clear_system())
-            .add_system(crate::map_indexing_system::map_indexing_system());
+            .add_system(crate::systems::map_indexing_clear_system())
+            .add_system(crate::systems::map_indexing_system());
         Self {
             schedule: builder.build(),
             schedule2: builder2.build(),
@@ -176,11 +175,11 @@ impl GameScene {
     fn run_systems(&mut self, ecs: &mut Ecs) {
         self.schedule.execute(&mut ecs.world, &mut ecs.resources);
 
-        crate::monster_ai_systems::system(ecs);
-        crate::melee_combat_system::melee_combat_system(ecs);
-        crate::inventory_system::drop_system(ecs);
-        crate::inventory_system::pickup_system(ecs);
-        crate::consume_system::consume_system(ecs);
+        crate::systems::monster_ai_system(ecs);
+        crate::systems::melee_combat_system(ecs);
+        crate::systems::drop_system(ecs);
+        crate::systems::pickup_system(ecs);
+        crate::systems::consume_system(ecs);
 
         self.schedule2.execute(&mut ecs.world, &mut ecs.resources);
     }
