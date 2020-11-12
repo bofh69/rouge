@@ -1,3 +1,4 @@
+use crate::output_helper::*;
 use crate::traits::EntityAdapter;
 use crate::traits::QueueAdapter;
 use crate::FragmentEntry;
@@ -5,13 +6,16 @@ use std::marker::PhantomData;
 
 pub struct OutputQueue<'a, Entity, A, QA>
 where
+    Entity: Copy,
     A: EntityAdapter<'a, Entity>,
     QA: QueueAdapter<Entity>,
 {
     queue_adapter: QA,
     supress_dot: bool,
     supress_capitalize: bool,
-    _entity: PhantomData<Entity>,
+    add_space: bool,
+    output_string: String,
+    who: Entity,
     _entity_adapter: PhantomData<&'a A>,
 }
 
@@ -19,14 +23,16 @@ impl<'a, Entity, A, QA> OutputQueue<'a, Entity, A, QA>
 where
     A: EntityAdapter<'a, Entity>,
     QA: QueueAdapter<Entity>,
-    Entity: std::fmt::Debug,
+    Entity: std::fmt::Debug + Copy,
 {
-    pub fn new(queue_adapter: QA) -> Self {
+    pub fn new(queue_adapter: QA, who: Entity) -> Self {
         Self {
             queue_adapter,
             supress_dot: false,
             supress_capitalize: false,
-            _entity: Default::default(),
+            add_space: false,
+            output_string: String::new(),
+            who,
             _entity_adapter: Default::default(),
         }
     }
@@ -123,41 +129,112 @@ where
         self.make_output_builder().color(color)
     }
 
+    pub fn add_s(&mut self, text: &str) {
+        if self.add_space {
+            self.output_string.push(' ');
+        }
+        self.add_space = true;
+        if !self.supress_capitalize {
+            self.supress_capitalize = true;
+            uppercase_first_char(text, &mut self.output_string);
+        } else {
+            self.output_string.push_str(text);
+        }
+    }
+
+    fn add_a_word(&mut self, entity_adapter: &A, obj: Entity, name: &str, is_prop: bool) {
+        if entity_adapter.is_me(obj) {
+            self.add_s("you");
+        } else if entity_adapter.can_see(self.who, obj) {
+            if !is_prop && is_singular(entity_adapter.gender(obj)) {
+                let mut should_be_an = false;
+                if let Some(c) = name.chars().next() {
+                    if is_vowel(c) {
+                        should_be_an = true;
+                    }
+                }
+                if should_be_an {
+                    self.add_s("an");
+                } else {
+                    self.add_s("a");
+                }
+            } else if !is_prop {
+                self.add_s("some");
+            }
+            self.add_s(name);
+        } else if is_prop {
+            self.add_s("someone");
+        } else {
+            self.add_s("something");
+        }
+    }
+
+    fn add_the_word(&mut self, entity_adapter: &A, obj: Entity, name: &str, is_proper: bool) {
+        if entity_adapter.is_me(obj) {
+            self.add_s("you");
+        } else if entity_adapter.can_see(self.who, obj) {
+            if !is_proper {
+                self.add_s("the");
+            }
+            self.add_s(name);
+        } else if is_proper {
+            self.add_s("someone");
+        } else {
+            self.add_s("something");
+        }
+    }
+
     pub fn process_queue(&mut self, entity_adapter: &mut A) {
         while let Some(FragmentEntry(frag)) = self.queue_adapter.pop() {
             use crate::Fragment::*;
             match frag {
-                A(who) => {
+                A(obj) => {
+                    self.add_a_word(
+                        entity_adapter,
+                        obj,
+                        entity_adapter.short_name(obj),
+                        entity_adapter.has_short_proper(obj),
+                    );
+                }
+                A_(obj) => {
+                    self.add_a_word(
+                        entity_adapter,
+                        obj,
+                        entity_adapter.long_name(obj),
+                        entity_adapter.has_long_proper(obj),
+                    );
+                }
+                The(obj) => {
+                    self.add_the_word(
+                        entity_adapter,
+                        obj,
+                        entity_adapter.short_name(obj),
+                        entity_adapter.has_short_proper(obj),
+                    );
+                }
+                The_(obj) => {
+                    self.add_the_word(
+                        entity_adapter,
+                        obj,
+                        entity_adapter.long_name(obj),
+                        entity_adapter.has_long_proper(obj),
+                    );
+                }
+                Thes(obj) => {
                     /* TODO */
-                    entity_adapter.write_text(entity_adapter.short_name(who));
+                    entity_adapter.write_text(entity_adapter.short_name(obj));
                 }
-                A_(who) => {
+                Thes_(obj) => {
                     /* TODO */
-                    entity_adapter.write_text(entity_adapter.long_name(who));
+                    entity_adapter.write_text(entity_adapter.long_name(obj));
                 }
-                The(who) => {
-                    /* todo */
-                    entity_adapter.write_text(entity_adapter.short_name(who));
+                Thess(obj) => {
+                    /* TODO */
+                    entity_adapter.write_text(entity_adapter.short_name(obj));
                 }
-                The_(who) => {
-                    /* todo */
-                    entity_adapter.write_text(entity_adapter.long_name(who));
-                }
-                Thes(who) => {
-                    /* todo */
-                    entity_adapter.write_text(entity_adapter.short_name(who));
-                }
-                Thes_(who) => {
-                    /* todo */
-                    entity_adapter.write_text(entity_adapter.long_name(who));
-                }
-                Thess(who) => {
-                    /* todo */
-                    entity_adapter.write_text(entity_adapter.short_name(who));
-                }
-                Thess_(who) => {
-                    /* todo */
-                    entity_adapter.write_text(entity_adapter.long_name(who));
+                Thess_(obj) => {
+                    /* TODO */
+                    entity_adapter.write_text(entity_adapter.long_name(obj));
                 }
                 My(who, obj) => {
                     /* TODO */
@@ -171,16 +248,16 @@ where
                     entity_adapter.write_text("'s");
                     entity_adapter.write_text(entity_adapter.long_name(obj));
                 }
-                Word(who) => {
+                Word(obj) => {
                     /* TODO */
-                    entity_adapter.write_text(entity_adapter.short_name(who));
+                    entity_adapter.write_text(entity_adapter.short_name(obj));
                 }
-                Word_(who) => {
+                Word_(obj) => {
                     /* TODO */
-                    entity_adapter.write_text(entity_adapter.long_name(who));
+                    entity_adapter.write_text(entity_adapter.long_name(obj));
                 }
-                Is(who) => {
-                    if entity_adapter.is_me(who) {
+                Is(obj) => {
+                    if entity_adapter.is_me(obj) {
                         /* TODO */
                         entity_adapter.write_text("are");
                     } else {
@@ -188,8 +265,8 @@ where
                         entity_adapter.write_text("is");
                     }
                 }
-                Has(who) => {
-                    if entity_adapter.is_me(who) {
+                Has(obj) => {
+                    if entity_adapter.is_me(obj) {
                         /* TODO */
                         entity_adapter.write_text("have");
                     } else {
@@ -198,12 +275,13 @@ where
                     }
                 }
                 TextRef(s) => {
-                    entity_adapter.write_text(s);
+                    self.add_s(s);
                 }
                 Text(s) => {
-                    entity_adapter.write_text(&s);
+                    self.add_s(&s);
                 }
                 VerbRef(who, s) => {
+                    // TODO
                     entity_adapter.write_text(s);
                     if entity_adapter.is_me(who) {
                         /* TODO */
@@ -234,10 +312,17 @@ where
                 }
                 EndOfLine => {
                     if !self.supress_dot {
-                        entity_adapter.write_text(".");
+                        if needs_dot(&self.output_string) {
+                            self.output_string.push('.');
+                        }
                     }
+                    entity_adapter.write_text(&self.output_string);
                     entity_adapter.done();
                     self.supress_dot = false;
+                    self.supress_dot = false;
+                    self.supress_capitalize = false;
+                    self.add_space = false;
+                    self.output_string.clear();
                 }
             }
         }
@@ -268,36 +353,36 @@ where
         self
     }
 
-    pub fn a(self, who: Entity) -> Self {
-        self.push_fragment(crate::Fragment::A(who))
+    pub fn a(self, obj: Entity) -> Self {
+        self.push_fragment(crate::Fragment::A(obj))
     }
 
-    pub fn a_(self, who: Entity) -> Self {
-        self.push_fragment(crate::Fragment::A_(who))
+    pub fn a_(self, obj: Entity) -> Self {
+        self.push_fragment(crate::Fragment::A_(obj))
     }
 
-    pub fn the(self, who: Entity) -> Self {
-        self.push_fragment(crate::Fragment::The(who))
+    pub fn the(self, obj: Entity) -> Self {
+        self.push_fragment(crate::Fragment::The(obj))
     }
 
-    pub fn the_(self, who: Entity) -> Self {
-        self.push_fragment(crate::Fragment::The_(who))
+    pub fn the_(self, obj: Entity) -> Self {
+        self.push_fragment(crate::Fragment::The_(obj))
     }
 
-    pub fn thes(self, who: Entity) -> Self {
-        self.push_fragment(crate::Fragment::Thes(who))
+    pub fn thes(self, obj: Entity) -> Self {
+        self.push_fragment(crate::Fragment::Thes(obj))
     }
 
-    pub fn thes_(self, who: Entity) -> Self {
-        self.push_fragment(crate::Fragment::Thes_(who))
+    pub fn thes_(self, obj: Entity) -> Self {
+        self.push_fragment(crate::Fragment::Thes_(obj))
     }
 
-    pub fn thess(self, who: Entity) -> Self {
-        self.push_fragment(crate::Fragment::Thess(who))
+    pub fn thess(self, obj: Entity) -> Self {
+        self.push_fragment(crate::Fragment::Thess(obj))
     }
 
-    pub fn thess_(self, who: Entity) -> Self {
-        self.push_fragment(crate::Fragment::Thess_(who))
+    pub fn thess_(self, obj: Entity) -> Self {
+        self.push_fragment(crate::Fragment::Thess_(obj))
     }
 
     pub fn my(self, who: Entity, obj: Entity) -> Self {

@@ -1,7 +1,10 @@
 use crate::FragmentEntry;
 use crate::Gender;
 
-pub trait EntityAdapter<'a, Entity> {
+pub trait EntityAdapter<'a, Entity>
+where
+    Entity: Copy,
+{
     fn can_see(&self, who: Entity, obj: Entity) -> bool;
     fn is_me(&self, obj: Entity) -> bool;
 

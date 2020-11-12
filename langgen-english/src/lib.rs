@@ -1,3 +1,4 @@
+mod output_helper;
 mod output_queue;
 mod traits;
 
@@ -42,6 +43,7 @@ enum Fragment<Entity> {
 
 pub struct FragmentEntry<Entity>(Fragment<Entity>);
 
+#[derive(Copy, Clone)]
 pub enum Gender {
     Male,
     Female,
