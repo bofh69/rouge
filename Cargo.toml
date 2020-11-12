@@ -13,7 +13,8 @@ edition = "2018"
 
 
 [dependencies]
-bracket-lib = { path = "vendor/bracket-lib" }
-legion = { path = "vendor/legion" }
+bracket-lib = { version = "0.8", path = "vendor/bracket-lib" }
+legion = { version = "0.3", path = "vendor/legion" }
+langgen_english = { path = "langgen-english" }
 # bracket-lib = "0.8.*"
 # legion = "0.3.*"
