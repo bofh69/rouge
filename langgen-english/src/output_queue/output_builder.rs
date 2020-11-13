@@ -102,6 +102,10 @@ where
         self.push_fragment(crate::Fragment::VerbString(who, verb))
     }
 
+    pub fn supress_space(self) -> Self {
+        self.push_fragment(crate::Fragment::SupressSpace(true))
+    }
+
     pub fn supress_capitalize(self) -> Self {
         self.push_fragment(crate::Fragment::Capitalize(false))
     }

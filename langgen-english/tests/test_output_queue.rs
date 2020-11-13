@@ -32,3 +32,16 @@ fn output_the_apple() {
 
     assert_eq!("The apple.\n", dea.buffer);
 }
+
+#[test]
+fn output_advanced_sentance() {
+    let mut oq = DebOutputQueue::new(Mutex::new(VecDeque::new()), 16);
+    oq.the(8).v(8, "look").s("like a \"").s("GMO").s("\" apple").s("someone said");
+
+    let mut dea = DebugEntityAdapter::new();
+    dea.mock_short_name = "apple";
+    dea.mock_has_short_proper = false;
+    oq.process_queue(&mut dea);
+
+    assert_eq!("The apple looks like a \"GMO\" apple someone said.\n", dea.buffer);
+}

@@ -78,6 +78,7 @@ enum Fragment<Entity> {
     TextRef(&'static str),
     Text(String),
 
+    SupressSpace(bool), // Weather to not automatically add a space or not.
     SupressDot(bool), // Weather to automatically add a dot or not.
     Capitalize(bool), // Capitalize the next word or not.
 

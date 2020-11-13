@@ -8,7 +8,21 @@ pub use output_builder::*;
 use output_helper::*;
 use std::marker::PhantomData;
 
-/// OutputQueue is used to create sentances for a single player.
+/// OutputQueue is used to create sentances that should be sent to a player.
+/// 
+/// It can adapt the sentances based on the involved objects' genders,
+/// plural/uncountability and if the player can see them or not.
+/// 
+/// 
+/// The first word in a sentance will become capitalized, unless supress_capitalize is called before.
+/// 
+/// At the end of a sentance, a dot will be added if the message didn't already end with a punctuation mark.
+/// Use supress_dot to supress it.
+/// 
+/// Between each fragment a space is normally added. The next space can be supressed by called cupress_space.
+/// If the text being added starts with ',' or '"' no space will be added before it.
+/// If the text being added ends with '"' no space will be added after it, use "\" ", if needed.
+/// 
 pub struct OutputQueue<'a, Entity, A, QA>
 where
     Entity: Copy,
@@ -155,6 +169,11 @@ where
         self.make_output_builder().supress_capitalize()
     }
 
+    /// Don't add a space before the next word.
+    pub fn supress_space(&mut self) -> OutputBuilder<'_, QA, Entity> {
+        self.make_output_builder().supress_space()
+    }
+
     /// Capitalize the next word.
     pub fn capitalize(&mut self) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().capitalize()
@@ -166,12 +185,12 @@ where
     }
 
     /// Change the output color.
-    pub fn color(&mut self, color: (i32, i32, i32)) -> OutputBuilder<'_, QA, Entity> {
+   pub fn color(&mut self, color: (i32, i32, i32)) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().color(color)
     }
 
     fn add_string(&mut self, text: &str) {
-        if self.add_space {
+        if self.add_space && !(text.starts_with(",") || text.starts_with("\"")) {
             self.output_string.push(' ');
         }
         if !self.supress_capitalize {
@@ -180,7 +199,7 @@ where
         } else {
             self.output_string.push_str(text);
         }
-        self.add_space = true;
+        self.add_space = !text.ends_with("\"");
     }
 
     fn add_a_word(&mut self, entity_adapter: &A, obj: Entity, name: &str, is_prop: bool) {
@@ -238,7 +257,7 @@ where
         } else if !entity_adapter.can_see(self.who, who) {
             g = crate::Gender::Male;
         }
-        self.s(match g {
+        self.add_string(match g {
             crate::Gender::Plural => plural,
             _ => singular,
         });
@@ -257,7 +276,7 @@ where
         if is_singular(entity_adapter.gender(who)) && !entity_adapter.is_me(who) {
             add_verb_end_s(&mut self.output_string);
         }
-        self.s("");
+        self.add_string("");
     }
 
     /// Process all the queued output with the entity_adapter.
@@ -299,7 +318,7 @@ where
                 }
                 Thes(obj) => {
                     if entity_adapter.is_me(self.who) {
-                        self.s("your");
+                        self.add_string("your");
                     } else if entity_adapter.can_see(self.who, obj) {
                         if let Some(ch) = entity_adapter.short_name(obj).chars().rev().next() {
                             let uc = ch.is_uppercase();
@@ -313,21 +332,26 @@ where
                                     }
                                 }
                             };
-                            self.the(obj);
+                            self.add_the_word(
+                                entity_adapter,
+                                obj,
+                                entity_adapter.short_name(obj),
+                                entity_adapter.has_short_proper(obj),
+                            );
                             self.add_space = false;
-                            self.s(add);
+                            self.add_string(add);
                         } else {
                             // Error, short_name() == ""
                         }
                     } else if entity_adapter.has_short_proper(obj) {
-                        self.s("someone's");
+                        self.add_string("someone's");
                     } else {
-                        self.s("something's");
+                        self.add_string("something's");
                     }
                 }
                 Thes_(obj) => {
                     if entity_adapter.is_me(self.who) {
-                        self.s("your");
+                        self.add_string("your");
                     } else if entity_adapter.can_see(self.who, obj) {
                         if let Some(ch) = entity_adapter.long_name(obj).chars().rev().next() {
                             let uc = ch.is_uppercase();
@@ -341,16 +365,21 @@ where
                                     }
                                 }
                             };
-                            self.the_(obj);
+                            self.add_the_word(
+                                entity_adapter,
+                                obj,
+                                entity_adapter.long_name(obj),
+                                entity_adapter.has_long_proper(obj),
+                            );
                             self.add_space = false;
-                            self.s(add);
+                            self.add_string(add);
                         } else {
                             // Error, long_name() == ""
                         }
                     } else if entity_adapter.has_long_proper(obj) {
-                        self.s("someone's");
+                        self.add_string("someone's");
                     } else {
-                        self.s("something's");
+                        self.add_string("something's");
                     }
                 }
                 Thess(_obj) => {
@@ -400,6 +429,9 @@ where
                 }
                 SupressDot(supress_dot) => {
                     self.supress_dot = supress_dot;
+                }
+                SupressSpace(supress_space) => {
+                    self.add_space = !supress_space;
                 }
                 Color(rgb) => {
                     entity_adapter.set_color(rgb);
