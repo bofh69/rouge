@@ -170,7 +170,7 @@ where
         self.make_output_builder().color(color)
     }
 
-    fn add_s(&mut self, text: &str) {
+    fn add_string(&mut self, text: &str) {
         if self.add_space {
             self.output_string.push(' ');
         }
@@ -185,7 +185,7 @@ where
 
     fn add_a_word(&mut self, entity_adapter: &A, obj: Entity, name: &str, is_prop: bool) {
         if entity_adapter.is_me(obj) {
-            self.add_s("you");
+            self.add_string("you");
         } else if entity_adapter.can_see(self.who, obj) {
             if !is_prop && is_singular(entity_adapter.gender(obj)) {
                 let mut should_be_an = false;
@@ -195,34 +195,69 @@ where
                     }
                 }
                 if should_be_an {
-                    self.add_s("an");
+                    self.add_string("an");
                 } else {
-                    self.add_s("a");
+                    self.add_string("a");
                 }
             } else if !is_prop {
-                self.add_s("some");
+                self.add_string("some");
             }
-            self.add_s(name);
+            self.add_string(name);
         } else if is_prop {
-            self.add_s("someone");
+            self.add_string("someone");
         } else {
-            self.add_s("something");
+            self.add_string("something");
         }
     }
 
     fn add_the_word(&mut self, entity_adapter: &A, obj: Entity, name: &str, is_proper: bool) {
         if entity_adapter.is_me(obj) {
-            self.add_s("you");
+            self.add_string("you");
         } else if entity_adapter.can_see(self.who, obj) {
             if !is_proper {
-                self.add_s("the");
+                self.add_string("the");
             }
-            self.add_s(name);
+            self.add_string(name);
         } else if is_proper {
-            self.add_s("someone");
+            self.add_string("someone");
         } else {
-            self.add_s("something");
+            self.add_string("something");
         }
+    }
+
+    fn sing_plur(
+        &mut self,
+        entity_adapter: &A,
+        who: Entity,
+        singular: &'static str,
+        plural: &'static str,
+    ) {
+        let mut g = entity_adapter.gender(who);
+        if entity_adapter.is_me(who) {
+            g = crate::Gender::Plural;
+        } else if !entity_adapter.can_see(self.who, who) {
+            g = crate::Gender::Male;
+        }
+        self.s(match g {
+            crate::Gender::Plural => plural,
+            _ => singular,
+        });
+    }
+
+    fn add_verb(&mut self, entity_adapter: &A, who: Entity, verb: &str) {
+        if !self.supress_capitalize {
+            unimplemented!();
+        }
+        if self.add_space {
+            self.output_string.push(' ');
+        }
+        self.output_string.push_str(verb);
+        self.supress_capitalize = true;
+        self.add_space = false;
+        if is_singular(entity_adapter.gender(who)) && !entity_adapter.is_me(who) {
+            add_verb_end_s(&mut self.output_string);
+        }
+        self.s("");
     }
 
     /// Process all the queued output with the entity_adapter.
@@ -263,85 +298,102 @@ where
                     );
                 }
                 Thes(obj) => {
-                    /* TODO */
-                    entity_adapter.write_text(entity_adapter.short_name(obj));
+                    if entity_adapter.is_me(self.who) {
+                        self.s("your");
+                    } else if entity_adapter.can_see(self.who, obj) {
+                        if let Some(ch) = entity_adapter.short_name(obj).chars().rev().next() {
+                            let uc = ch.is_uppercase();
+                            let add = match ch {
+                                's' | 'S' => "'",
+                                _ => {
+                                    if uc {
+                                        "'S"
+                                    } else {
+                                        "'s"
+                                    }
+                                }
+                            };
+                            self.the(obj);
+                            self.add_space = false;
+                            self.s(add);
+                        } else {
+                            // Error, short_name() == ""
+                        }
+                    } else if entity_adapter.has_short_proper(obj) {
+                        self.s("someone's");
+                    } else {
+                        self.s("something's");
+                    }
                 }
                 Thes_(obj) => {
-                    /* TODO */
-                    entity_adapter.write_text(entity_adapter.long_name(obj));
+                    if entity_adapter.is_me(self.who) {
+                        self.s("your");
+                    } else if entity_adapter.can_see(self.who, obj) {
+                        if let Some(ch) = entity_adapter.long_name(obj).chars().rev().next() {
+                            let uc = ch.is_uppercase();
+                            let add = match ch {
+                                's' | 'S' => "'",
+                                _ => {
+                                    if uc {
+                                        "'S"
+                                    } else {
+                                        "'s"
+                                    }
+                                }
+                            };
+                            self.the_(obj);
+                            self.add_space = false;
+                            self.s(add);
+                        } else {
+                            // Error, long_name() == ""
+                        }
+                    } else if entity_adapter.has_long_proper(obj) {
+                        self.s("someone's");
+                    } else {
+                        self.s("something's");
+                    }
                 }
-                Thess(obj) => {
+                Thess(_obj) => {
                     /* TODO */
-                    entity_adapter.write_text(entity_adapter.short_name(obj));
+                    unimplemented!();
                 }
-                Thess_(obj) => {
+                Thess_(_obj) => {
                     /* TODO */
-                    entity_adapter.write_text(entity_adapter.long_name(obj));
+                    unimplemented!();
                 }
-                My(who, obj) => {
+                My(_who, _obj) => {
                     /* TODO */
-                    entity_adapter.write_text(entity_adapter.short_name(who));
-                    entity_adapter.write_text("'s");
-                    entity_adapter.write_text(entity_adapter.short_name(obj));
+                    unimplemented!();
                 }
-                My_(who, obj) => {
+                My_(_who, _obj) => {
                     /* TODO */
-                    entity_adapter.write_text(entity_adapter.long_name(who));
-                    entity_adapter.write_text("'s");
-                    entity_adapter.write_text(entity_adapter.long_name(obj));
+                    unimplemented!();
                 }
-                Word(obj) => {
+                Word(_obj) => {
                     /* TODO */
-                    entity_adapter.write_text(entity_adapter.short_name(obj));
+                    unimplemented!();
                 }
-                Word_(obj) => {
+                Word_(_obj) => {
                     /* TODO */
-                    entity_adapter.write_text(entity_adapter.long_name(obj));
+                    unimplemented!();
                 }
                 Is(obj) => {
-                    if entity_adapter.is_me(obj) {
-                        /* TODO */
-                        entity_adapter.write_text("are");
-                    } else {
-                        /* TODO */
-                        entity_adapter.write_text("is");
-                    }
+                    self.sing_plur(entity_adapter, obj, "is", "are");
                 }
                 Has(obj) => {
-                    if entity_adapter.is_me(obj) {
-                        /* TODO */
-                        entity_adapter.write_text("have");
-                    } else {
-                        /* TODO */
-                        entity_adapter.write_text("has");
-                    }
+                    self.sing_plur(entity_adapter, obj, "has", "have");
                 }
                 TextRef(s) => {
-                    self.add_s(s);
+                    self.add_string(s);
                 }
                 Text(s) => {
-                    self.add_s(&s);
+                    self.add_string(&s);
                 }
-                VerbRef(who, s) => {
-                    // TODO
-                    entity_adapter.write_text(s);
-                    if entity_adapter.is_me(who) {
-                        /* TODO */
-                        entity_adapter.write_text("");
-                    } else {
-                        /* TODO */
-                        entity_adapter.write_text("s");
-                    }
+                VerbRef(who, verb) => {
+                    self.add_verb(entity_adapter, who, verb);
                 }
-                VerbString(who, s) => {
-                    entity_adapter.write_text(&s);
-                    if entity_adapter.is_me(who) {
-                        /* TODO */
-                        entity_adapter.write_text("");
-                    } else {
-                        /* TODO */
-                        entity_adapter.write_text("s");
-                    }
+                VerbString(who, verb) => {
+                    self.add_verb(entity_adapter, who, &verb);
                 }
                 Capitalize(capitalize) => {
                     self.supress_capitalize = !capitalize;
