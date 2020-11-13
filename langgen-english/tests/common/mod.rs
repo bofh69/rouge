@@ -1,9 +1,6 @@
 use langgen_english::*;
 use std::cell::Cell;
 
-#[derive(Debug, Clone, Copy)]
-pub struct EntNum(pub i32);
-
 pub struct DebugEntityAdapter {
     pub buffer: String,
     pub mock_can_see: bool,
@@ -17,8 +14,8 @@ pub struct DebugEntityAdapter {
     pub mock_short_plural_name: &'static str,
     pub mock_long_plural_name: &'static str,
 
-    pub last_who: Cell<EntNum>,
-    pub last_obj: Cell<EntNum>,
+    pub last_who: Cell<i32>,
+    pub last_obj: Cell<i32>,
 }
 
 impl DebugEntityAdapter {
@@ -35,59 +32,59 @@ impl DebugEntityAdapter {
             mock_long_name: "spirit of Kim",
             mock_short_plural_name: "Kims",
             mock_long_plural_name: "spirits of Kim",
-            last_obj: Cell::new(EntNum(-1)),
-            last_who: Cell::new(EntNum(-2)),
+            last_obj: Cell::new(-1),
+            last_who: Cell::new(-2),
         }
     }
 }
 
-impl<'a> EntityAdapter<'a, EntNum> for DebugEntityAdapter {
-    fn can_see(&self, who: EntNum, obj: EntNum) -> bool {
+impl<'a> EntityAdapter<'a, i32> for DebugEntityAdapter {
+    fn can_see(&self, who: i32, obj: i32) -> bool {
         self.last_who.set(who);
         self.last_obj.set(obj);
         self.mock_can_see
     }
 
-    fn is_me(&self, obj: EntNum) -> bool {
+    fn is_me(&self, obj: i32) -> bool {
         self.last_obj.set(obj);
         self.mock_is_me
     }
 
-    fn gender(&self, obj: EntNum) -> Gender {
+    fn gender(&self, obj: i32) -> Gender {
         self.last_obj.set(obj);
         self.mock_gender.clone()
     }
 
-    fn is_thing(&self, obj: EntNum) -> bool {
+    fn is_thing(&self, obj: i32) -> bool {
         self.last_obj.set(obj);
         self.mock_is_thing
     }
 
-    fn has_short_proper(&self, obj: EntNum) -> bool {
+    fn has_short_proper(&self, obj: i32) -> bool {
         self.last_obj.set(obj);
         self.mock_has_short_proper
     }
 
-    fn short_name(&self, obj: EntNum) -> &'a str {
+    fn short_name(&self, obj: i32) -> &'a str {
         self.last_obj.set(obj);
         self.mock_short_name
     }
 
-    fn has_long_proper(&self, obj: EntNum) -> bool {
+    fn has_long_proper(&self, obj: i32) -> bool {
         self.last_obj.set(obj);
         self.mock_has_long_proper
     }
-    fn long_name(&self, obj: EntNum) -> &'a str {
+    fn long_name(&self, obj: i32) -> &'a str {
         self.last_obj.set(obj);
         self.mock_long_name
     }
 
-    fn short_plural_name(&self, obj: EntNum) -> &'a str {
+    fn short_plural_name(&self, obj: i32) -> &'a str {
         self.last_obj.set(obj);
         self.mock_short_plural_name
     }
 
-    fn long_plural_name(&self, obj: EntNum) -> &'a str {
+    fn long_plural_name(&self, obj: i32) -> &'a str {
         self.last_obj.set(obj);
         self.mock_long_plural_name
     }

@@ -5,15 +5,14 @@ use langgen_english::*;
 use std::collections::vec_deque::VecDeque;
 use std::sync::Mutex;
 
-type DebQueue = Mutex<VecDeque<FragmentEntry<EntNum>>>;
+type DebQueue = Mutex<VecDeque<FragmentEntry<i32>>>;
 
-type DebOutputQueue<'a> =
-    langgen_english::OutputQueue<'a, common::EntNum, DebugEntityAdapter, DebQueue>;
+type DebOutputQueue<'a> = langgen_english::OutputQueue<'a, i32, DebugEntityAdapter, DebQueue>;
 
 #[test]
 fn output_kim() {
-    let mut oq = DebOutputQueue::new(Mutex::new(VecDeque::new()), EntNum(0));
-    oq.the(EntNum(1));
+    let mut oq = DebOutputQueue::new(Mutex::new(VecDeque::new()), 0);
+    oq.the(1);
     let mut dea = DebugEntityAdapter::new();
 
     oq.process_queue(&mut dea);
@@ -23,8 +22,8 @@ fn output_kim() {
 
 #[test]
 fn output_the_apple() {
-    let mut oq = DebOutputQueue::new(Mutex::new(VecDeque::new()), EntNum(16));
-    oq.the(EntNum(8 + 0));
+    let mut oq = DebOutputQueue::new(Mutex::new(VecDeque::new()), 16);
+    oq.the(8);
 
     let mut dea = DebugEntityAdapter::new();
     dea.mock_short_name = "apple";
