@@ -42,11 +42,11 @@
 #![warn(missing_docs)] // warn if there is missing docs
 
 mod output_queue;
+mod queue_adapter_impls;
 mod traits;
 
 pub use output_queue::*;
-use std::collections::LinkedList;
-use std::collections::VecDeque;
+pub use queue_adapter_impls::*;
 pub use traits::*;
 
 /// Messages between OutputBuilder and OutputQueue.process
@@ -96,54 +96,4 @@ pub enum Gender {
     Neuter,
     Plural,
     Uncountable,
-}
-
-/// A suitable QueueAdapter when different threads read/write to the same Queue.
-///
-/// Note: there is no locking employed for the whole sentance so
-/// different systems' output can interleave.
-impl<Entity> QueueAdapter<Entity> for std::sync::Mutex<VecDeque<FragmentEntry<Entity>>> {
-    fn push(&self, frag: FragmentEntry<Entity>) {
-        self.lock().unwrap().push_back(frag);
-    }
-
-    fn pop(&self) -> Option<FragmentEntry<Entity>> {
-        self.lock().unwrap().pop_front()
-    }
-}
-
-/// A suitable QueueAdapter when different threads read/write to the same Queue.
-///
-/// Note: there is no locking employed for the whole sentance so
-/// different systems' output can interleave.
-impl<Entity> QueueAdapter<Entity> for std::sync::Mutex<LinkedList<FragmentEntry<Entity>>> {
-    fn push(&self, frag: FragmentEntry<Entity>) {
-        self.lock().unwrap().push_back(frag);
-    }
-
-    fn pop(&self) -> Option<FragmentEntry<Entity>> {
-        self.lock().unwrap().pop_front()
-    }
-}
-
-/// A suitable QueueAdapter when only one thread can read/write to the same Queue.
-impl<Entity> QueueAdapter<Entity> for std::cell::RefCell<VecDeque<FragmentEntry<Entity>>> {
-    fn push(&self, frag: FragmentEntry<Entity>) {
-        self.borrow_mut().push_back(frag);
-    }
-
-    fn pop(&self) -> Option<FragmentEntry<Entity>> {
-        self.borrow_mut().pop_front()
-    }
-}
-
-/// A suitable QueueAdapter when only one thread can read/write to the same Queue.
-impl<Entity> QueueAdapter<Entity> for std::cell::RefCell<LinkedList<FragmentEntry<Entity>>> {
-    fn push(&self, frag: FragmentEntry<Entity>) {
-        self.borrow_mut().push_back(frag);
-    }
-
-    fn pop(&self) -> Option<FragmentEntry<Entity>> {
-        self.borrow_mut().pop_front()
-    }
 }
