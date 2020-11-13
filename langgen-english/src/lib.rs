@@ -6,11 +6,11 @@
 //! // This is put as a resource or component in the ECS:
 //! let mut output_queue = OutputQueue::new(Mutex::new(VecDeque::new()), PLAYER_ENTITY);
 //!
-//! // In some system you run:
+//! // In systems you write things like this:
 //! output_queue.the_(monster).v(monster, "swing").my(monster, object);
 //!
-//! // At the end of the tick/frame, run this to actually process the message.
-//! // Do it before entities are removed from the ECS or the message won't be seen.
+//! // At the end of the tick/frame, run output_queue to actually process the message.
+//! // Do it before entities are removed.
 //! output_queue.process_queue(&mut entity_adapter);
 //! ```
 //! The entity_adapter will in the end be asked out output strings like this:
@@ -31,14 +31,13 @@
 //! that runs `process_queue` and then update the primary components. Same when removing
 //! an Entity.
 //!
-//! To get a working system consists of:
+//! To get a working system, provide:
 //!
 //! * Entity - Copy type that represents all the characters, things and players.
 //! * [EntityAdapter](trait.EntityAdapter.html) - looks up info about the entity and outputs text to the player.
 //! * [QueueAdapter](trait.QueueAdapter.html) - handles queueing of messages between threads.
 //!
-//!
-//!
+//! The crate provide implementations of QueueAdapter for RefCell/Mutex together with LinkedList/VecDeque.
 
 #![warn(missing_docs)] // warn if there is missing docs
 
@@ -99,6 +98,10 @@ pub enum Gender {
     Uncountable,
 }
 
+/// A suitable QueueAdapter when different threads read/write to the same Queue.
+///
+/// Note: there is no locking employed for the whole sentance so
+/// different systems' output can interleave.
 impl<Entity> QueueAdapter<Entity> for std::sync::Mutex<VecDeque<FragmentEntry<Entity>>> {
     fn push(&self, frag: FragmentEntry<Entity>) {
         self.lock().unwrap().push_back(frag);
@@ -109,6 +112,10 @@ impl<Entity> QueueAdapter<Entity> for std::sync::Mutex<VecDeque<FragmentEntry<En
     }
 }
 
+/// A suitable QueueAdapter when different threads read/write to the same Queue.
+///
+/// Note: there is no locking employed for the whole sentance so
+/// different systems' output can interleave.
 impl<Entity> QueueAdapter<Entity> for std::sync::Mutex<LinkedList<FragmentEntry<Entity>>> {
     fn push(&self, frag: FragmentEntry<Entity>) {
         self.lock().unwrap().push_back(frag);
@@ -116,5 +123,27 @@ impl<Entity> QueueAdapter<Entity> for std::sync::Mutex<LinkedList<FragmentEntry<
 
     fn pop(&self) -> Option<FragmentEntry<Entity>> {
         self.lock().unwrap().pop_front()
+    }
+}
+
+/// A suitable QueueAdapter when only one thread can read/write to the same Queue.
+impl<Entity> QueueAdapter<Entity> for std::cell::RefCell<VecDeque<FragmentEntry<Entity>>> {
+    fn push(&self, frag: FragmentEntry<Entity>) {
+        self.borrow_mut().push_back(frag);
+    }
+
+    fn pop(&self) -> Option<FragmentEntry<Entity>> {
+        self.borrow_mut().pop_front()
+    }
+}
+
+/// A suitable QueueAdapter when only one thread can read/write to the same Queue.
+impl<Entity> QueueAdapter<Entity> for std::cell::RefCell<LinkedList<FragmentEntry<Entity>>> {
+    fn push(&self, frag: FragmentEntry<Entity>) {
+        self.borrow_mut().push_back(frag);
+    }
+
+    fn pop(&self) -> Option<FragmentEntry<Entity>> {
+        self.borrow_mut().pop_front()
     }
 }

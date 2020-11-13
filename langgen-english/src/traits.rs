@@ -1,7 +1,7 @@
 use crate::FragmentEntry;
 use crate::Gender;
 
-/// The interface between to the game's ECS Components and
+/// OutputQueue's interface to the game's ECS Components and
 /// the games output routines.
 ///
 /// Entity is a Copy type identifying a player, character or thing.
@@ -51,7 +51,7 @@ where
     fn done(&mut self);
 }
 
-/// Implemented by queues that can be used with OutputQueue.
+/// OutputQueue's interface against queues.
 pub trait QueueAdapter<Entity> {
     /// Pushes an entry to the end of the queue.
     fn push(&self, f: FragmentEntry<Entity>);
