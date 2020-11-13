@@ -14,9 +14,7 @@ pub struct DebugEntityAdapter {
     pub mock_short_name: &'static str,
     pub mock_has_long_proper: bool,
     pub mock_long_name: &'static str,
-    pub mock_has_short_plural_proper: bool,
     pub mock_short_plural_name: &'static str,
-    pub mock_has_long_plural_proper: bool,
     pub mock_long_plural_name: &'static str,
 
     pub last_who: Cell<EntNum>,
@@ -35,9 +33,7 @@ impl DebugEntityAdapter {
             mock_short_name: "Kim",
             mock_has_long_proper: false,
             mock_long_name: "spirit of Kim",
-            mock_has_short_plural_proper: true,
             mock_short_plural_name: "Kims",
-            mock_has_long_plural_proper: false,
             mock_long_plural_name: "spirits of Kim",
             last_obj: Cell::new(EntNum(-1)),
             last_who: Cell::new(EntNum(-2)),
@@ -86,19 +82,9 @@ impl<'a> EntityAdapter<'a, EntNum> for DebugEntityAdapter {
         self.mock_long_name
     }
 
-    fn has_short_plural_proper(&self, obj: EntNum) -> bool {
-        self.last_obj.set(obj);
-        self.mock_has_short_plural_proper
-    }
-
     fn short_plural_name(&self, obj: EntNum) -> &'a str {
         self.last_obj.set(obj);
         self.mock_short_plural_name
-    }
-
-    fn has_long_plural_proper(&self, obj: EntNum) -> bool {
-        self.last_obj.set(obj);
-        self.mock_has_long_plural_proper
     }
 
     fn long_plural_name(&self, obj: EntNum) -> &'a str {

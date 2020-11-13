@@ -8,6 +8,7 @@ pub use output_builder::*;
 use output_helper::*;
 use std::marker::PhantomData;
 
+/// OutputQueue is used to create sentances for a single player.
 pub struct OutputQueue<'a, Entity, A, QA>
 where
     Entity: Copy,
@@ -29,6 +30,10 @@ where
     QA: QueueAdapter<Entity>,
     Entity: std::fmt::Debug + Copy,
 {
+    /// Create a new OutputQueue for player who, using
+    /// the given [QueueAdapter](trait.QueueAdapter.html)
+    /// to store messages before they are processed
+    /// with `process_queue`.
     pub fn new(queue_adapter: QA, who: Entity) -> Self {
         Self {
             queue_adapter,
@@ -45,95 +50,127 @@ where
         OutputBuilder::new(&mut self.queue_adapter)
     }
 
+    /// Output a/an short-name, ProperName or something/someone/some/you.
     pub fn a(&mut self, who: Entity) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().a(who)
     }
 
+    /// Output a/an long name, ProperLongName or something/someone/some/you.
     pub fn a_(&mut self, who: Entity) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().a_(who)
     }
 
+    /// Output the short-name, ProperName or something/someone/some/you.
     pub fn the(&mut self, who: Entity) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().the(who)
     }
 
+    /// Output the long-name, ProperName or something/someone/some/you.
     pub fn the_(&mut self, who: Entity) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().the_(who)
     }
 
+    /// Output "the <object-short-name>'s".
+    /// If the viewer can't see it, "something's"/"someone's" is used.
     pub fn thes(&mut self, who: Entity) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().thes(who)
     }
 
+    /// Output "the <object-long-name>'s".
+    /// If the viewer can't see it, "something's"/"someone's" is used.
     pub fn thes_(&mut self, who: Entity) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().thes_(who)
     }
 
+    /// Output "yours"/"the <object-short-name>'s".
+    /// If the viewer can't see it, "something's"/"someone's" is used.
     pub fn thess(&mut self, who: Entity) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().thess(who)
     }
 
+    /// Output "yours"/"the <object-long-name>'s".
+    /// If the viewer can't see it, "something's"/"someone's" is used.
     pub fn thess_(&mut self, who: Entity) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().thess_(who)
     }
 
+    /// Output "my/his/her/their/its <object-short-name>".
+    /// If the viewer can't see it, a() is used instead.
     pub fn my(&mut self, who: Entity, obj: Entity) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().my(who, obj)
     }
 
+    /// Output "my/his/her/their/its <object-long-name>".
+    /// If the viewer can't see it, a_() is used instead.
     pub fn my_(&mut self, who: Entity, obj: Entity) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().my_(who, obj)
     }
 
-    pub fn word(&mut self, who: Entity) -> OutputBuilder<'_, QA, Entity> {
-        self.make_output_builder().word(who)
+    /// Output "you"/<objects-short-name>.
+    /// If the viewer can't see it, "something"/"someone" is used.
+    pub fn word(&mut self, obj: Entity) -> OutputBuilder<'_, QA, Entity> {
+        self.make_output_builder().word(obj)
     }
 
-    pub fn word_(&mut self, who: Entity) -> OutputBuilder<'_, QA, Entity> {
-        self.make_output_builder().word_(who)
+    /// Output "you"/<objects-long-name>.
+    /// If the viewer can't see it, "something"/"someone" is used.
+    pub fn word_(&mut self, obj: Entity) -> OutputBuilder<'_, QA, Entity> {
+        self.make_output_builder().word_(obj)
     }
 
-    pub fn is(&mut self, who: Entity) -> OutputBuilder<'_, QA, Entity> {
-        self.make_output_builder().is(who)
+    /// Output "is"/"are".
+    pub fn is(&mut self, obj: Entity) -> OutputBuilder<'_, QA, Entity> {
+        self.make_output_builder().is(obj)
     }
 
-    pub fn has(&mut self, who: Entity) -> OutputBuilder<'_, QA, Entity> {
-        self.make_output_builder().has(who)
+    /// Output "has"/"have".
+    pub fn has(&mut self, obj: Entity) -> OutputBuilder<'_, QA, Entity> {
+        self.make_output_builder().has(obj)
     }
 
+    /// Output the string.
     pub fn s(&mut self, s: &'static str) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().s(s)
     }
 
+    /// Output the string.
     pub fn string(&mut self, s: String) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().string(s)
     }
 
+    /// Output the verb and adds "s"/"es" as needed.
     pub fn v(&mut self, who: Entity, verb: &'static str) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().v(who, verb)
     }
 
+    /// Output the verb and adds "s"/"es" as needed.
     pub fn verb(&mut self, who: Entity, verb: String) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().verb(who, verb)
     }
 
+    /// Don't capitalize the next word.
+    ///
+    /// Only relevant for the first word.
     pub fn supress_capitalize(&mut self) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().supress_capitalize()
     }
 
+    /// Capitalize the next word.
     pub fn capitalize(&mut self) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().capitalize()
     }
 
+    /// Supress automatic addition of an dot at the end of the sentance when needed.
     pub fn supress_dot(&mut self) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().supress_dot()
     }
 
+    /// Change the output color.
     pub fn color(&mut self, color: (i32, i32, i32)) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().color(color)
     }
 
-    pub fn add_s(&mut self, text: &str) {
+    fn add_s(&mut self, text: &str) {
         if self.add_space {
             self.output_string.push(' ');
         }
@@ -188,6 +225,7 @@ where
         }
     }
 
+    /// Process all the queued output with the entity_adapter.
     pub fn process_queue(&mut self, entity_adapter: &mut A) {
         while let Some(FragmentEntry(frag)) = self.queue_adapter.pop() {
             use crate::Fragment::*;

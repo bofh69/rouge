@@ -1,3 +1,47 @@
+//! ECS friendly way of sending correct English texts to players.
+//!
+//! Example:
+//! ```ignore
+//!
+//! // This is put as a resource or component in the ECS:
+//! let mut output_queue = OutputQueue::new(Mutex::new(VecDeque::new()), PLAYER_ENTITY);
+//!
+//! // In some system you run:
+//! output_queue.the_(monster).v(monster, "swing").my(monster, object);
+//!
+//! // At the end of the tick/frame, run this to actually process the message.
+//! // Do it before entities are removed from the ECS or the message won't be seen.
+//! output_queue.process_queue(&mut entity_adapter);
+//! ```
+//! The entity_adapter will in the end be asked out output strings like this:
+//! ```text
+//! The tall goblin swings her club. (Correct pronoun before the object's name).
+//! Gandalf the great swings his staff. (No the before proper names).
+//! The band of brothers swing something. (The player can't see the object).
+//! You swing your fist. (The player won't see herself in third person).
+//! ```
+//!
+//! OutputQueue queues messages until `process_queue` is called.
+//! This is needed to avoid lifetime/concurrency issues when one system
+//! is running and the EntityAdapter needs to lookup some Entity's Component.
+//!
+//! The game will have to be architectured with this in mind whenever the results from
+//! the EntityAdapter might change between creating a message and calling `process_queue`.
+//! Instead of changing the attributes directly, use some temporary marker, have a system
+//! that runs `process_queue` and then update the primary components. Same when removing
+//! an Entity.
+//!
+//! To get a working system consists of:
+//!
+//! * Entity - Copy type that represents all the characters, things and players.
+//! * [EntityAdapter](trait.EntityAdapter.html) - looks up info about the entity and outputs text to the player.
+//! * [QueueAdapter](trait.QueueAdapter.html) - handles queueing of messages between threads.
+//!
+//!
+//!
+
+#![warn(missing_docs)] // warn if there is missing docs
+
 mod output_queue;
 mod traits;
 
@@ -6,6 +50,7 @@ use std::collections::LinkedList;
 use std::collections::VecDeque;
 pub use traits::*;
 
+/// Messages between OutputBuilder and OutputQueue.process
 #[derive(Debug)]
 enum Fragment<Entity> {
     The(Entity),
@@ -40,9 +85,12 @@ enum Fragment<Entity> {
     EndOfLine,
 }
 
+/// Encapsulates messages sent via [QueueAdapter](trait.QueueAdapter.html)s.
 pub struct FragmentEntry<Entity>(Fragment<Entity>);
 
+/// Represents the gender & uncountability of an Entity
 #[derive(Copy, Clone)]
+#[allow(missing_docs)]
 pub enum Gender {
     Male,
     Female,

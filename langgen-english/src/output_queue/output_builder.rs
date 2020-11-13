@@ -1,5 +1,10 @@
 use super::*;
 
+#[allow(missing_docs)]
+/// OutputBuilder helps output queue building whole sentences.
+///
+/// This struct has a subset of [OutputQueue](struct.OutputQueue.html)'s functions
+/// and they are described there.
 pub struct OutputBuilder<'a, QA, Entity>
 where
     QA: QueueAdapter<Entity>,
@@ -8,11 +13,11 @@ where
     _entity: PhantomData<Entity>,
 }
 
+#[allow(missing_docs)]
 impl<'a, Entity, QA> OutputBuilder<'a, QA, Entity>
 where
     QA: QueueAdapter<Entity>,
 {
-    /// Create a new OutputBuilder from the OutputQueue.
     pub(crate) fn new(queue_adapter: &'a mut QA) -> Self {
         Self {
             queue_adapter,
@@ -25,17 +30,14 @@ where
         self
     }
 
-    /// Output a/an short-name, ProperName or something/someone/some/you.
     pub fn a(self, obj: Entity) -> Self {
         self.push_fragment(crate::Fragment::A(obj))
     }
 
-    /// Output a/an long name, ProperLongName or something/someone/some/you.
     pub fn a_(self, obj: Entity) -> Self {
         self.push_fragment(crate::Fragment::A_(obj))
     }
 
-    /// Output the short-name, ProperName or something/someone/some/you.
     pub fn the(self, obj: Entity) -> Self {
         self.push_fragment(crate::Fragment::The(obj))
     }
@@ -117,6 +119,7 @@ where
     }
 }
 
+/// Drop implementation to send the end of line message.
 impl<'a, Entity, QA> Drop for OutputBuilder<'a, QA, Entity>
 where
     QA: QueueAdapter<Entity>,

@@ -4,9 +4,10 @@ version = "0.1.0"
 authors = ["Sebastian Andersson <sebastian@bittr.nu>"]
 edition = "2018"
 repository = "https://github.com/bofh69/rouge/"
-keywords = [ "game", "text-output", "english" ]
-categories = [ "games" ]
-license = "MIT"
+description = "Output proper English in games"
+keywords = [ "gamedev", "text", "english" ]
+categories = [ "game-development", "text-processing" ]
+license = "MIT OR Apache-2.0"
 
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
