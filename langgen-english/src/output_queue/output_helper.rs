@@ -6,10 +6,7 @@ pub(crate) fn last_char(s: &str) -> Option<char> {
 
 pub(crate) fn needs_dot(s: &str) -> bool {
     if let Some(c) = last_char(s) {
-        match c {
-            '.' | '?' | '!' | ':' | ';' | '"' => false,
-            _ => true,
-        }
+        !matches!(c, '.' | '?' | '!' | ':' | ';' | '"')
     } else {
         false
     }
@@ -17,11 +14,8 @@ pub(crate) fn needs_dot(s: &str) -> bool {
 
 // Used to decide between a/an.
 pub(crate) fn is_vowel(c: char) -> bool {
-    match c {
-        'a' | 'e' | 'i' | 'o' | 'u' | 'A' | 'E' | 'I' | 'O' | 'U' => true,
-        // y is usually not pronounced like a vowel.
-        _ => false,
-    }
+    matches!(c, 'a' | 'e' | 'i' | 'o' | 'u' | 'A' | 'E' | 'I' | 'O' | 'U')
+    // y is usually not pronounced like a vowel.
 }
 
 pub(crate) fn uppercase_first_char(s: &str, to: &mut String) {
@@ -35,10 +29,7 @@ pub(crate) fn uppercase_first_char(s: &str, to: &mut String) {
 }
 
 pub(crate) fn is_singular(gender: Gender) -> bool {
-    match gender {
-        Gender::Plural | Gender::Uncountable => false,
-        _ => true,
-    }
+    !matches!(gender, Gender::Plural | Gender::Uncountable)
 }
 
 pub(crate) fn add_verb_end_s(str: &mut String) {

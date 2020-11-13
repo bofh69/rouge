@@ -174,13 +174,13 @@ where
         if self.add_space {
             self.output_string.push(' ');
         }
-        self.add_space = true;
         if !self.supress_capitalize {
             self.supress_capitalize = true;
             uppercase_first_char(text, &mut self.output_string);
         } else {
             self.output_string.push_str(text);
         }
+        self.add_space = true;
     }
 
     fn add_a_word(&mut self, entity_adapter: &A, obj: Entity, name: &str, is_prop: bool) {
@@ -353,10 +353,8 @@ where
                     entity_adapter.set_color(rgb);
                 }
                 EndOfLine => {
-                    if !self.supress_dot {
-                        if needs_dot(&self.output_string) {
-                            self.output_string.push('.');
-                        }
+                    if !self.supress_dot && needs_dot(&self.output_string) {
+                        self.output_string.push('.');
                     }
                     entity_adapter.write_text(&self.output_string);
                     entity_adapter.done();
