@@ -5,7 +5,7 @@ use crate::Gender;
 /// the games output routines.
 ///
 /// Entity is a Copy type identifying a player, character or thing.
-pub trait EntityAdapter<'a, Entity>
+pub trait EntityAdapter<Entity>
 where
     Entity: Copy,
 {
@@ -24,25 +24,25 @@ where
     fn has_short_proper(&self, obj: Entity) -> bool;
 
     /// The objects short name. Typically a single word, like "apple".
-    fn short_name(&self, obj: Entity) -> &'a str;
+    fn append_short_name(&self, obj: Entity, s: &mut String);
 
     /// Is the object's long name a proper name (ie Ada Lovecraft)?
     fn has_long_proper(&self, obj: Entity) -> bool;
 
     /// The object's long name, ie "red apple".
-    fn long_name(&self, obj: Entity) -> &'a str;
+    fn append_long_name(&self, obj: Entity, s: &mut String);
 
     /// The objects short, plural name. Typically a single word, like "apples".
-    fn short_plural_name(&self, obj: Entity) -> &'a str;
+    fn append_short_plural_name(&self, obj: Entity, s: &mut String);
 
     /// The object's long, plural name, ie "red apples".
-    fn long_plural_name(&self, obj: Entity) -> &'a str;
+    fn append_long_plural_name(&self, obj: Entity, s: &mut String);
 
     /// Writes the given text to the player.
     fn write_text(&mut self, text: &str);
 
     /// Sets the output color to the given color.
-    fn set_color(&mut self, color: (i32, i32, i32));
+    fn set_color(&mut self, color: (u8, u8, u8));
 
     /// Called when all the text for the current line/sentance has been
     /// written with write_text.

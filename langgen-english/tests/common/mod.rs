@@ -38,7 +38,7 @@ impl DebugEntityAdapter {
     }
 }
 
-impl<'a> EntityAdapter<'a, i32> for DebugEntityAdapter {
+impl EntityAdapter<i32> for DebugEntityAdapter {
     fn can_see(&self, who: i32, obj: i32) -> bool {
         self.last_who.set(who);
         self.last_obj.set(obj);
@@ -65,35 +65,36 @@ impl<'a> EntityAdapter<'a, i32> for DebugEntityAdapter {
         self.mock_has_short_proper
     }
 
-    fn short_name(&self, obj: i32) -> &'a str {
+    fn append_short_name(&self, obj: i32, s: &mut String) {
         self.last_obj.set(obj);
-        self.mock_short_name
+
+        s.push_str(self.mock_short_name);
     }
 
     fn has_long_proper(&self, obj: i32) -> bool {
         self.last_obj.set(obj);
         self.mock_has_long_proper
     }
-    fn long_name(&self, obj: i32) -> &'a str {
+    fn append_long_name(&self, obj: i32, s: &mut String) {
         self.last_obj.set(obj);
-        self.mock_long_name
+        s.push_str(self.mock_long_name);
     }
 
-    fn short_plural_name(&self, obj: i32) -> &'a str {
+    fn append_short_plural_name(&self, obj: i32, s: &mut String) {
         self.last_obj.set(obj);
-        self.mock_short_plural_name
+        s.push_str(self.mock_short_plural_name);
     }
 
-    fn long_plural_name(&self, obj: i32) -> &'a str {
+    fn append_long_plural_name(&self, obj: i32, s: &mut String) {
         self.last_obj.set(obj);
-        self.mock_long_plural_name
+        s.push_str(self.mock_long_plural_name);
     }
 
     fn write_text(&mut self, text: &str) {
         self.buffer.push_str(text);
     }
 
-    fn set_color(&mut self, color: (i32, i32, i32)) {
+    fn set_color(&mut self, color: (u8, u8, u8)) {
         self.write_text(&format!("{:?}", color));
     }
 

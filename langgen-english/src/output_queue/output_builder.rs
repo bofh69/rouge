@@ -118,7 +118,7 @@ where
         self.push_fragment(crate::Fragment::SupressDot(true))
     }
 
-    pub fn color(self, color: (i32, i32, i32)) -> Self {
+    pub fn color(self, color: (u8, u8, u8)) -> Self {
         self.push_fragment(crate::Fragment::Color(color))
     }
 }

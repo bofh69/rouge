@@ -9,24 +9,23 @@ use output_helper::*;
 use std::marker::PhantomData;
 
 /// OutputQueue is used to create sentances that should be sent to a player.
-/// 
+///
 /// It can adapt the sentances based on the involved objects' genders,
 /// plural/uncountability and if the player can see them or not.
-/// 
-/// 
+///
+///
 /// The first word in a sentance will become capitalized, unless supress_capitalize is called before.
-/// 
+///
 /// At the end of a sentance, a dot will be added if the message didn't already end with a punctuation mark.
 /// Use supress_dot to supress it.
-/// 
+///
 /// Between each fragment a space is normally added. The next space can be supressed by called cupress_space.
 /// If the text being added starts with ',' or '"' no space will be added before it.
 /// If the text being added ends with '"' no space will be added after it, use "\" ", if needed.
-/// 
-pub struct OutputQueue<'a, Entity, A, QA>
+///
+pub struct OutputQueue<Entity, QA>
 where
     Entity: Copy,
-    A: EntityAdapter<'a, Entity>,
     QA: QueueAdapter<Entity>,
 {
     queue_adapter: QA,
@@ -34,13 +33,12 @@ where
     supress_capitalize: bool,
     add_space: bool,
     output_string: String,
+    clear_output: bool,
     who: Entity,
-    _entity_adapter: PhantomData<&'a A>,
 }
 
-impl<'a, Entity, A, QA> OutputQueue<'a, Entity, A, QA>
+impl<Entity, QA> OutputQueue<Entity, QA>
 where
-    A: EntityAdapter<'a, Entity>,
     QA: QueueAdapter<Entity>,
     Entity: std::fmt::Debug + Copy,
 {
@@ -55,8 +53,8 @@ where
             supress_capitalize: false,
             add_space: false,
             output_string: String::new(),
+            clear_output: false,
             who,
-            _entity_adapter: Default::default(),
         }
     }
 
@@ -185,24 +183,48 @@ where
     }
 
     /// Change the output color.
-   pub fn color(&mut self, color: (i32, i32, i32)) -> OutputBuilder<'_, QA, Entity> {
+    pub fn color(&mut self, color: (u8, u8, u8)) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().color(color)
     }
 
+    fn maybe_clear_output(&mut self) {
+        if self.clear_output {
+            self.output_string.clear();
+            self.clear_output = false;
+        }
+    }
+
+    fn push_char(&mut self, c: char) {
+        self.maybe_clear_output();
+        self.output_string.push(c);
+    }
+
+    fn push_str(&mut self, s: &str) {
+        self.maybe_clear_output();
+        self.output_string.push_str(s);
+    }
+
     fn add_string(&mut self, text: &str) {
-        if self.add_space && !(text.starts_with(",") || text.starts_with("\"")) {
-            self.output_string.push(' ');
+        if self.add_space && !(text.starts_with(',') || text.starts_with('"')) {
+            self.push_char(' ');
         }
         if !self.supress_capitalize {
             self.supress_capitalize = true;
+            self.maybe_clear_output();
             uppercase_first_char(text, &mut self.output_string);
         } else {
-            self.output_string.push_str(text);
+            self.push_str(text);
         }
-        self.add_space = !text.ends_with("\"");
+        self.add_space = !text.ends_with('"');
     }
 
-    fn add_a_word(&mut self, entity_adapter: &A, obj: Entity, name: &str, is_prop: bool) {
+    fn add_a_word<A: EntityAdapter<Entity>>(
+        &mut self,
+        entity_adapter: &A,
+        obj: Entity,
+        name: &str,
+        is_prop: bool,
+    ) {
         if entity_adapter.is_me(obj) {
             self.add_string("you");
         } else if entity_adapter.can_see(self.who, obj) {
@@ -229,7 +251,13 @@ where
         }
     }
 
-    fn add_the_word(&mut self, entity_adapter: &A, obj: Entity, name: &str, is_proper: bool) {
+    fn add_the_word<A: EntityAdapter<Entity>>(
+        &mut self,
+        entity_adapter: &A,
+        obj: Entity,
+        name: &str,
+        is_proper: bool,
+    ) {
         if entity_adapter.is_me(obj) {
             self.add_string("you");
         } else if entity_adapter.can_see(self.who, obj) {
@@ -244,7 +272,7 @@ where
         }
     }
 
-    fn sing_plur(
+    fn sing_plur<A: EntityAdapter<Entity>>(
         &mut self,
         entity_adapter: &A,
         who: Entity,
@@ -263,14 +291,14 @@ where
         });
     }
 
-    fn add_verb(&mut self, entity_adapter: &A, who: Entity, verb: &str) {
+    fn add_verb<A: EntityAdapter<Entity>>(&mut self, entity_adapter: &A, who: Entity, verb: &str) {
         if !self.supress_capitalize {
             unimplemented!();
         }
         if self.add_space {
-            self.output_string.push(' ');
+            self.push_char(' ');
         }
-        self.output_string.push_str(verb);
+        self.push_str(verb);
         self.supress_capitalize = true;
         self.add_space = false;
         if is_singular(entity_adapter.gender(who)) && !entity_adapter.is_me(who) {
@@ -280,47 +308,49 @@ where
     }
 
     /// Process all the queued output with the entity_adapter.
-    pub fn process_queue(&mut self, entity_adapter: &mut A) {
+    pub fn process_queue<A: EntityAdapter<Entity>>(&mut self, entity_adapter: &mut A) {
         while let Some(FragmentEntry(frag)) = self.queue_adapter.pop() {
             use crate::Fragment::*;
             match frag {
                 A(obj) => {
+                    // TODO; Fix add_a_word to take function.
+                    let mut s = String::new();
+                    entity_adapter.append_short_name(obj, &mut s);
                     self.add_a_word(
                         entity_adapter,
                         obj,
-                        entity_adapter.short_name(obj),
+                        &s,
                         entity_adapter.has_short_proper(obj),
                     );
                 }
                 A_(obj) => {
-                    self.add_a_word(
-                        entity_adapter,
-                        obj,
-                        entity_adapter.long_name(obj),
-                        entity_adapter.has_long_proper(obj),
-                    );
+                    let mut s = String::new();
+                    entity_adapter.append_long_name(obj, &mut s);
+                    self.add_a_word(entity_adapter, obj, &s, entity_adapter.has_long_proper(obj));
                 }
                 The(obj) => {
+                    let mut s = String::new();
+                    entity_adapter.append_short_name(obj, &mut s);
                     self.add_the_word(
                         entity_adapter,
                         obj,
-                        entity_adapter.short_name(obj),
+                        &s,
                         entity_adapter.has_short_proper(obj),
                     );
                 }
                 The_(obj) => {
-                    self.add_the_word(
-                        entity_adapter,
-                        obj,
-                        entity_adapter.long_name(obj),
-                        entity_adapter.has_long_proper(obj),
-                    );
+                    let mut s = String::new();
+                    entity_adapter.append_long_name(obj, &mut s);
+                    self.add_the_word(entity_adapter, obj, &s, entity_adapter.has_long_proper(obj));
                 }
                 Thes(obj) => {
                     if entity_adapter.is_me(self.who) {
                         self.add_string("your");
                     } else if entity_adapter.can_see(self.who, obj) {
-                        if let Some(ch) = entity_adapter.short_name(obj).chars().rev().next() {
+                        let mut s = String::new();
+                        entity_adapter.append_short_name(obj, &mut s);
+                        // TODO; just append string to s.
+                        if let Some(ch) = s.chars().rev().next() {
                             let uc = ch.is_uppercase();
                             let add = match ch {
                                 's' | 'S' => "'",
@@ -335,7 +365,7 @@ where
                             self.add_the_word(
                                 entity_adapter,
                                 obj,
-                                entity_adapter.short_name(obj),
+                                &s,
                                 entity_adapter.has_short_proper(obj),
                             );
                             self.add_space = false;
@@ -353,7 +383,9 @@ where
                     if entity_adapter.is_me(self.who) {
                         self.add_string("your");
                     } else if entity_adapter.can_see(self.who, obj) {
-                        if let Some(ch) = entity_adapter.long_name(obj).chars().rev().next() {
+                        let mut s = String::new();
+                        entity_adapter.append_long_name(obj, &mut s);
+                        if let Some(ch) = s.chars().rev().next() {
                             let uc = ch.is_uppercase();
                             let add = match ch {
                                 's' | 'S' => "'",
@@ -368,7 +400,7 @@ where
                             self.add_the_word(
                                 entity_adapter,
                                 obj,
-                                entity_adapter.long_name(obj),
+                                &s,
                                 entity_adapter.has_long_proper(obj),
                             );
                             self.add_space = false;
@@ -434,11 +466,16 @@ where
                     self.add_space = !supress_space;
                 }
                 Color(rgb) => {
+                    entity_adapter.write_text(&self.output_string);
                     entity_adapter.set_color(rgb);
+                    self.clear_output = true;
+                    self.add_space = false;
                 }
                 EndOfLine => {
                     if !self.supress_dot && needs_dot(&self.output_string) {
-                        self.output_string.push('.');
+                        self.push_char('.');
+                    } else {
+                        self.maybe_clear_output();
                     }
                     entity_adapter.write_text(&self.output_string);
                     entity_adapter.done();
@@ -447,6 +484,7 @@ where
                     self.supress_capitalize = false;
                     self.add_space = false;
                     self.output_string.clear();
+                    self.clear_output = false;
                 }
             }
         }

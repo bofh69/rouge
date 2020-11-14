@@ -70,7 +70,7 @@ enum Fragment<Entity> {
     Word(Entity),  // Just the name
     Word_(Entity), // Just the name
 
-    Color((i32, i32, i32)),
+    Color((u8, u8, u8)),
 
     VerbRef(Entity, &'static str),
     VerbString(Entity, String),
@@ -79,8 +79,8 @@ enum Fragment<Entity> {
     Text(String),
 
     SupressSpace(bool), // Weather to not automatically add a space or not.
-    SupressDot(bool), // Weather to automatically add a dot or not.
-    Capitalize(bool), // Capitalize the next word or not.
+    SupressDot(bool),   // Weather to automatically add a dot or not.
+    Capitalize(bool),   // Capitalize the next word or not.
 
     EndOfLine,
 }
