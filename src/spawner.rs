@@ -27,7 +27,8 @@ pub(crate) fn player(ecs: &mut Ecs, player_x: i32, player_y: i32) -> Entity {
             dirty: true,
         },
         Name {
-            name: "Player".to_string(),
+            name: "player".to_string(),
+            proper_name: false,
         },
         CombatStats {
             hp: 30,
@@ -75,6 +76,7 @@ fn monster<S: ToString>(ecs: &mut Ecs, x: i32, y: i32, glyph: u16, name: S) {
         Monster {},
         Name {
             name: name.to_string(),
+            proper_name: true,
         },
         BlocksTile {},
         CombatStats {
@@ -110,7 +112,8 @@ fn health_potion(ecs: &mut Ecs, x: i32, y: i32) {
             render_order: 2,
         },
         Name {
-            name: "Health Potion".to_string(),
+            name: "health potion".to_string(),
+            proper_name: false,
         },
         Item {},
         Consumable {},
@@ -128,7 +131,8 @@ fn ball(ecs: &mut Ecs, x: i32, y: i32) {
             render_order: 2,
         },
         Name {
-            name: "Ball".to_string(),
+            name: "ball".to_string(),
+            proper_name: false,
         },
         Item {},
     ));
@@ -144,7 +148,8 @@ fn magic_missile_scroll(ecs: &mut Ecs, x: i32, y: i32) {
             render_order: 2,
         },
         Name {
-            name: "Magic Missile Scroll".to_string(),
+            name: "magic missile scroll".to_string(),
+            proper_name: false,
         },
         Item {},
         Consumable {},
@@ -163,7 +168,8 @@ fn fireball_scroll(ecs: &mut Ecs, x: i32, y: i32) {
             render_order: 2,
         },
         Name {
-            name: "Fireball Scroll".to_string(),
+            name: "fireball scroll".to_string(),
+            proper_name: false,
         },
         Item {},
         Consumable {},

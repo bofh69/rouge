@@ -5,6 +5,7 @@ mod inventory_system;
 mod map_indexing_system;
 mod melee_combat_system;
 mod monster_ai_systems;
+mod output_system;
 mod visibility_system;
 
 pub(crate) use camera_system::*;
@@ -14,4 +15,5 @@ pub(crate) use inventory_system::*;
 pub(crate) use map_indexing_system::*;
 pub(crate) use melee_combat_system::*;
 pub(crate) use monster_ai_systems::*;
+pub(crate) use output_system::*;
 pub(crate) use visibility_system::*;

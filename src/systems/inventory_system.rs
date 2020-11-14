@@ -1,9 +1,8 @@
-use crate::components::{
-    InBackpack, ItemIndex, Name, Position, WantsToDropItem, WantsToPickupItem,
-};
+use crate::components::{InBackpack, ItemIndex, Position, WantsToDropItem, WantsToPickupItem};
 use crate::ecs::*;
-use crate::gamelog::GameLog;
+use crate::gamelog::OutputQueue;
 use crate::{PlayerEntity, PlayerPosition};
+use bracket_lib::terminal::YELLOW;
 use legion::*;
 
 pub(crate) fn drop_system(ecs: &mut Ecs) {
@@ -20,13 +19,11 @@ pub(crate) fn drop_system(ecs: &mut Ecs) {
         entry.add_component(Position(player_position));
         entry.remove_component::<InBackpack>();
         if dropper_entity == player_entity {
-            let mut gamelog = resource_get_mut!(ecs, GameLog); // xecs::getresource_get_mut!(ecs, GameLog);
-            gamelog.log(format!(
-                "You drop the {}.",
-                entry
-                    .get_component::<Name>()
-                    .map_or("unknown item", |n| &n.name)
-            ));
+            let mut output = resource_get_mut!(ecs, OutputQueue);
+            output
+                .the(dropper_entity)
+                .v(dropper_entity, "drop")
+                .the(item);
         }
         ecs.world
             .entry(dropper_entity)
@@ -37,7 +34,7 @@ pub(crate) fn drop_system(ecs: &mut Ecs) {
 
 pub(crate) fn pickup_system(ecs: &mut Ecs) {
     let player_entity = resource_get!(ecs, PlayerEntity).0;
-    let mut gamelog = resource_get_mut!(ecs, GameLog);
+    let mut output = resource_get_mut!(ecs, OutputQueue);
 
     let things_to_pickup: Vec<_> = <&WantsToPickupItem>::query()
         .iter(&ecs.world)
@@ -72,17 +69,19 @@ pub(crate) fn pickup_system(ecs: &mut Ecs) {
             let mut item_entry = ecs.world.entry(item_entity).unwrap();
             if idx == 255u8 {
                 if possible_indexes.is_empty() {
-                    gamelog.log("Your backpack is full.");
+                    output.s("Your backpack is full.");
                     continue;
                 }
                 idx = possible_indexes[0];
                 item_entry.add_component(ItemIndex { index: idx });
             }
-            gamelog.log(format!(
-                "You pick up the {} ({}).",
-                item_entry.get_component::<Name>().unwrap().name,
-                crate::gui::index_to_letter(idx)
-            ));
+            output
+                .the(who_entity)
+                .v(who_entity, "pick")
+                .s("up")
+                .a(item_entity)
+                .color(YELLOW)
+                .string(format!(" ({})", crate::gui::index_to_letter(idx)));
         }
 
         let mut item_entry = ecs.world.entry(item_entity).unwrap();

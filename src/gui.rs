@@ -353,8 +353,8 @@ pub(crate) fn show_inventory(
     inventory.sort_by(|a, b| a.1.cmp(&b.1));
 
     if count == 0 {
-        let mut gamelog = resource_get_mut!(ecs, GameLog);
-        gamelog.log("Your backpack is empty");
+        let mut gamelog = resource_get_mut!(ecs, crate::gamelog::OutputQueue);
+        gamelog.s("Your backpack is empty");
         return (ItemMenuResult::Cancel, None);
     }
 
@@ -468,12 +468,7 @@ pub(crate) fn draw_ui(ecs: &Ecs, ctx: &mut BTerm) {
     }
 
     let gamelog = resource_get!(ecs, GameLog);
-    for (i, entry) in gamelog.entries.iter().rev().enumerate() {
-        if i > 4 {
-            break;
-        }
-        ctx.print(1, screen_height - 2 - i as i32, entry);
-    }
+    gamelog.draw_log(ctx, screen_height as u32 - 2, 4);
 
     draw_tooltips(ecs, ctx);
 }

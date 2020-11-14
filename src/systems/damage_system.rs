@@ -1,4 +1,4 @@
-use crate::gamelog::GameLog;
+use crate::gamelog::OutputQueue;
 use crate::Map;
 use crate::{components::*, PlayerEntity};
 use legion::{systems::CommandBuffer, *};
@@ -31,27 +31,40 @@ pub(crate) fn health(
 }
 
 #[system(for_each)]
-#[allow(clippy::too_many_arguments)]
-pub(crate) fn delete_the_dead(
+pub(crate) fn output_die(
     entity: &Entity,
     stats: &mut CombatStats,
-    name: &Name,
-    pos: &Position,
-    cb: &mut CommandBuffer,
-    #[resource] gamelog: &mut GameLog,
+    #[resource] output: &mut OutputQueue,
     #[resource] player_entity: &PlayerEntity,
-    #[resource] map: &mut Map,
 ) {
     if stats.hp < 1 {
         if player_entity.0 == *entity {
-            gamelog.log("You are dead");
+            output.s("You are dead");
         } else {
-            gamelog.log(format!("{} dies.", &name.name));
-            let idx = map.pos_to_idx(pos.0.into());
-            // TODO: Handle via Events instead
-            map.blocked[idx] = false;
-            map.dangerous[idx] = false;
-            cb.remove(*entity);
+            output.the(*entity).v(*entity, "die");
         }
     }
+}
+
+#[system(for_each)]
+pub(crate) fn delete_the_dead(
+    entity: &Entity,
+    stats: &mut CombatStats,
+    pos: &Position,
+    cb: &mut CommandBuffer,
+    #[resource] player_entity: &PlayerEntity,
+    #[resource] map: &mut Map,
+) {
+    if stats.hp < 1 && player_entity.0 != *entity {
+        let idx = map.pos_to_idx(pos.0.into());
+        // TODO: Handle via Events instead
+        map.blocked[idx] = false;
+        map.dangerous[idx] = false;
+        cb.remove(*entity);
+    }
+}
+
+#[system(for_each)]
+pub(crate) fn delete_items(entity: &Entity, _remove: &RemoveItem, cb: &mut CommandBuffer) {
+    cb.remove(*entity);
 }

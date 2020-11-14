@@ -16,7 +16,6 @@ impl Scene<Ecs> for MainMenuScene {
             self.time -= 10.;
         }
         ctx.cls();
-        ctx.print(30, 1, format!("{}", self.time));
         match crate::gui::show_main_menu(ctx, self.time, self.state) {
             Selected(New) => SceneResult::Replace(Box::new(super::game::GameScene::new(ecs))),
             Selected(Quit) => SceneResult::Pop,

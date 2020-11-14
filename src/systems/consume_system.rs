@@ -1,5 +1,5 @@
 use crate::components::*;
-use crate::gamelog::GameLog;
+use crate::gamelog::OutputQueue;
 use crate::map::Map;
 use crate::PlayerEntity;
 use crate::ScreenPosition;
@@ -7,39 +7,23 @@ use crate::{camera::Camera, ecs::Ecs};
 use legion::*;
 
 pub(crate) fn consume_system(ecs: &mut Ecs) {
-    let data: Vec<_> = <(Entity, &WantsToUseItem, &Name)>::query()
+    let data: Vec<_> = <(Entity, &WantsToUseItem)>::query()
         .iter(&ecs.world)
-        .map(|(entity, wants_to_use, drinker_name)| {
-            (
-                *entity,
-                wants_to_use.item,
-                wants_to_use.target,
-                drinker_name.name.clone(),
-            )
-        })
+        .map(|(entity, wants_to_use)| (*entity, wants_to_use.item, wants_to_use.target))
         .collect();
 
-    for (user_entity, wants_to_use_item, wants_to_use_target, drinker_name) in data {
+    let mut cb = legion::systems::CommandBuffer::new(&ecs.world);
+
+    for (user_entity, wants_to_use_item, wants_to_use_target) in data {
         let item_entry = ecs.world.entry(wants_to_use_item);
         let player_entity = resource_get!(ecs, PlayerEntity).0;
 
         if item_entry.is_some() {
-            let mut gamelog = ecs.resources.get_mut::<GameLog>().unwrap();
-
-            gamelog.log(format!(
-                "{} consume{} the {}",
-                if user_entity == player_entity {
-                    "You"
-                } else {
-                    &drinker_name
-                },
-                if user_entity == player_entity {
-                    ""
-                } else {
-                    "s"
-                },
-                &item_entry.unwrap().get_component::<Name>().unwrap().name
-            ));
+            let mut output = ecs.resources.get_mut::<OutputQueue>().unwrap();
+            output
+                .the(user_entity)
+                .v(user_entity, "consume")
+                .the(wants_to_use_item);
 
             let mut targets: Vec<Entity> = Vec::new();
             match wants_to_use_target {
@@ -95,13 +79,9 @@ pub(crate) fn consume_system(ecs: &mut Ecs) {
                 for target in targets {
                     let mut target_entry = ecs.world.entry(target).unwrap();
                     if target == player_entity {
-                        gamelog.log("You feel better.");
+                        output.s("You feel better.");
                     } else {
-                        let name = &target_entry
-                            .get_component::<Name>()
-                            .expect("Target's name is missing")
-                            .name;
-                        gamelog.log(format!("The {} feel better.", name));
+                        output.the(target).v(target, "feel").s("better");
                     }
                     target_entry.add_component(ReceiveHealth {
                         amount: heal_amount,
@@ -123,32 +103,22 @@ pub(crate) fn consume_system(ecs: &mut Ecs) {
                 if let Some(item_damage) = item_damage {
                     for target in targets {
                         let mut target_entry = ecs.world.entry(target).unwrap();
-                        if target == player_entity {
-                            gamelog.log(format!("You lose {} hp.", item_damage));
-                        } else {
-                            let name = &target_entry
-                                .get_component::<Name>()
-                                .expect("Target's name is missing")
-                                .name;
-                            gamelog.log(format!("The {} loses {} hp.", name, item_damage));
-                        }
+                        output
+                            .the(target)
+                            .v(target, "lose")
+                            .string(format!("{} hp", item_damage));
                         target_entry.add_component(SufferDamage {
                             amount: item_damage,
                         });
                     }
                 }
             }
-            ecs.world.remove(wants_to_use_item);
+            cb.add_component(wants_to_use_item, RemoveItem {});
         } else if user_entity == player_entity {
-            let mut gamelog = ecs.resources.get_mut::<GameLog>().unwrap();
-            gamelog.log(format!(
-                "You cannot use the {}",
-                &item_entry.unwrap().get_component::<Name>().unwrap().name
-            ));
+            let mut output = ecs.resources.get_mut::<OutputQueue>().unwrap();
+            output.s("You cannot use").the(wants_to_use_item);
         }
-        ecs.world
-            .entry(user_entity)
-            .unwrap()
-            .remove_component::<WantsToUseItem>();
+        cb.remove_component::<WantsToUseItem>(user_entity);
     }
+    cb.flush(&mut ecs.world);
 }

@@ -8,7 +8,7 @@ use crate::{
 };
 // use crate::components::*;
 use crate::ecs::Ecs;
-use crate::gamelog::GameLog;
+use crate::gamelog::OutputQueue;
 use crate::map::Map;
 use crate::{Direction, PlayerTarget, ScreenPosition};
 use crate::{InventoryType, PlayerEntity, PlayerPosition, RunState};
@@ -41,9 +41,9 @@ pub(crate) fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut Ecs) -> RunS
                 .is_ok()
             {
                 // Attack it
-                let mut gamelog = resource_get_mut!(ecs, GameLog);
+                let mut output = resource_get_mut!(ecs, OutputQueue);
 
-                gamelog.log("From Hell's Heart, I stab thee!");
+                output.s("From Hell's Heart, I stab thee!");
                 let mut entry = ecs.world.entry(player_entity).unwrap();
                 entry.add_component(WantsToMelee {
                     target: *potential_target,
@@ -78,7 +78,7 @@ pub(crate) fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut Ecs) -> RunS
 pub(crate) fn get_item(ecs: &mut Ecs) -> RunState {
     let player_pos = resource_get!(ecs, PlayerPosition).0;
     let player_entity = resource_get!(ecs, PlayerEntity).0;
-    let mut gamelog = resource_get_mut!(ecs, GameLog);
+    let mut output = resource_get_mut!(ecs, OutputQueue);
 
     let mut query = <(Entity, &Position, &Item)>::query();
 
@@ -100,7 +100,7 @@ pub(crate) fn get_item(ecs: &mut Ecs) -> RunState {
             });
         RunState::PlayerTurn
     } else {
-        gamelog.log("There is nothing you can pickup here!");
+        output.s("There is nothing you can pickup here!");
 
         RunState::AwaitingInput
     }

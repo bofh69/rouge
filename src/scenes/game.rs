@@ -162,7 +162,12 @@ impl GameScene {
         builder2
             .add_system(crate::systems::damage_system())
             .add_system(crate::systems::health_system())
+            .add_system(crate::systems::output_die_system())
+            .flush()
+            .add_system(crate::systems::output_system())
+            .flush()
             .add_system(crate::systems::delete_the_dead_system())
+            .add_system(crate::systems::delete_items_system())
             .flush()
             .add_system(crate::systems::map_indexing_clear_system())
             .add_system(crate::systems::map_indexing_system());

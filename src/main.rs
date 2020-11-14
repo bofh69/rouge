@@ -5,6 +5,7 @@ mod ecs;
 
 mod camera;
 mod components;
+mod entity_adapter;
 mod gamelog;
 mod gui;
 mod map;
@@ -18,6 +19,8 @@ use camera::Camera;
 use components::*;
 use legion::*;
 use map::Map;
+use std::collections::VecDeque;
+use std::sync::Mutex;
 
 #[derive(PartialEq, Copy, Clone)]
 pub(crate) enum InventoryType {
@@ -212,14 +215,16 @@ fn main() -> Result<(), Box<dyn std::error::Error + 'static + Send + Sync>> {
     };
 
     gs.ecs.resources.insert(RandomNumberGenerator::new());
-    gs.ecs.resources.insert(gamelog::GameLog {
-        entries: vec!["Welcome to Rouge".to_string()],
-    });
+    gs.ecs.resources.insert(gamelog::GameLog::new());
 
     for room in map.rooms.iter().skip(1) {
         spawner::spawn_room(&mut gs.ecs, room);
     }
     let player_entity = spawner::player(&mut gs.ecs, player_pos.x, player_pos.y);
+
+    let mut output_queue = gamelog::OutputQueue::new(Mutex::new(VecDeque::new()), player_entity);
+    output_queue.s("Welcome to ").color(RED).s("Rouge");
+    gs.ecs.resources.insert(output_queue);
 
     let player_pos = PlayerPosition(MapPosition {
         x: player_pos.x,

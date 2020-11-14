@@ -50,6 +50,7 @@ pub(crate) struct Monster {}
 #[derive(Clone, Debug)]
 pub(crate) struct Name {
     pub name: String,
+    pub proper_name: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -73,6 +74,9 @@ pub(crate) struct Ranged {
 pub(crate) struct ReceiveHealth {
     pub amount: i32,
 }
+
+#[derive(Debug, Clone)]
+pub(crate) struct RemoveItem {}
 
 #[derive(Clone)]
 pub(crate) struct Renderable {
