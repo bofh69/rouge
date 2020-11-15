@@ -5,8 +5,8 @@ use crate::MapPosition;
 use bracket_lib::prelude::*;
 use legion::*;
 
-pub(crate) const MAX_MONSTERS: i32 = 5;
-pub(crate) const MAX_ITEMS: i32 = 3;
+pub(crate) const MAX_MONSTERS: i32 = 3;
+pub(crate) const MAX_ITEMS: i32 = 4;
 
 pub(crate) fn player(ecs: &mut Ecs, player_x: i32, player_y: i32) -> Entity {
     ecs.world.push((
@@ -92,12 +92,13 @@ fn monster<S: ToString>(ecs: &mut Ecs, x: i32, y: i32, glyph: u16, name: S) {
 pub(crate) fn random_item(ecs: &mut Ecs, x: i32, y: i32) {
     let roll = {
         let mut rng = resource_get_mut!(ecs, RandomNumberGenerator);
-        rng.roll_dice(1, 4)
+        rng.roll_dice(1, 5)
     };
     match roll {
         1 => health_potion(ecs, x, y),
         2 => magic_missile_scroll(ecs, x, y),
         3 => fireball_scroll(ecs, x, y),
+        4 => apple(ecs, x, y),
         _ => ball(ecs, x, y),
     }
 }
@@ -118,6 +119,25 @@ fn health_potion(ecs: &mut Ecs, x: i32, y: i32) {
         Item {},
         Consumable {},
         HealthProvider { heal_amount: 8 },
+    ));
+}
+
+fn apple(ecs: &mut Ecs, x: i32, y: i32) {
+    ecs.world.push((
+        Position(MapPosition { x, y }),
+        Renderable {
+            glyph: to_cp437('°'),
+            fg: RGB::named(YELLOW),
+            bg: RGB::named(BLACK),
+            render_order: 2,
+        },
+        Name {
+            name: "apple".to_string(),
+            proper_name: false,
+        },
+        Item {},
+        Consumable {},
+        HealthProvider { heal_amount: 5 },
     ));
 }
 
