@@ -14,6 +14,8 @@ mod scenes;
 mod spawner;
 mod systems;
 
+use crate::gamelog::GameLog;
+use crate::gamelog::OutputQueue;
 use bracket_lib::prelude::*;
 use camera::Camera;
 use components::*;
@@ -166,6 +168,19 @@ impl GameState for State {
             }
             self.old_shift = ctx.shift;
 
+            let ctrl = input.key_pressed_set().contains(&VirtualKeyCode::LControl)
+                || input.key_pressed_set().contains(&VirtualKeyCode::RControl);
+
+            if let Some(VirtualKeyCode::P) = ctx.key {
+                if ctrl {
+                    ctx.screenshot("screenshot.png");
+                    let mut gamelog = resource_get_mut!(self.ecs, GameLog);
+                    gamelog.set_color(GREEN);
+                    gamelog.write_text("Screenshot taken.");
+                    gamelog.end_of_line();
+                }
+            }
+
             #[allow(clippy::single_match)]
             input.for_each_message(|event| match event {
                 BEvent::CloseRequested => ctx.quitting = true,
@@ -215,14 +230,14 @@ fn main() -> Result<(), Box<dyn std::error::Error + 'static + Send + Sync>> {
     };
 
     gs.ecs.resources.insert(RandomNumberGenerator::new());
-    gs.ecs.resources.insert(gamelog::GameLog::new());
+    gs.ecs.resources.insert(GameLog::new());
 
     for room in map.rooms.iter().skip(1) {
         spawner::spawn_room(&mut gs.ecs, room);
     }
     let player_entity = spawner::player(&mut gs.ecs, player_pos.x, player_pos.y);
 
-    let mut output_queue = gamelog::OutputQueue::new(Mutex::new(VecDeque::new()), player_entity);
+    let mut output_queue = OutputQueue::new(Mutex::new(VecDeque::new()), player_entity);
     output_queue.s("Welcome to ").color(RED).s("Rouge");
     gs.ecs.resources.insert(output_queue);
 
