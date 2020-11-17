@@ -1,9 +1,7 @@
+use crate::components::{Item, Monster, Name, Position, Viewshed};
 use crate::entity_adapter::EntityAdapterImpl;
 use crate::gamelog::GameLog;
 use crate::gamelog::OutputQueue;
-use crate::Item;
-use crate::Monster;
-use crate::Name;
 use crate::PlayerEntity;
 use ::legion::*;
 use legion::world::SubWorld;
@@ -11,6 +9,8 @@ use legion::world::SubWorld;
 #[system]
 #[read_component(Name)]
 #[read_component(Item)]
+#[read_component(Position)]
+#[read_component(Viewshed)]
 #[read_component(Monster)]
 pub(crate) fn output(
     world: &mut SubWorld,

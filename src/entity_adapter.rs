@@ -1,6 +1,8 @@
 use crate::gamelog::GameLog;
 use crate::Item;
 use crate::Name;
+use crate::Position;
+use crate::Viewshed;
 use ::langgen_english::*;
 use ::legion::*;
 use legion::world::SubWorld;
@@ -29,9 +31,24 @@ impl<'a, 'w> EntityAdapter<Entity> for EntityAdapterImpl<'a, 'w> {
     fn is_me(&self, who: Entity) -> bool {
         who == self.player
     }
-    fn can_see(&self, _: Entity, _: Entity) -> bool {
-        // TODO:
-        true
+    fn can_see(&self, who: Entity, obj: Entity) -> bool {
+        if let Ok(who_entry) = self.world.entry_ref(who) {
+            if let Ok(obj_entry) = self.world.entry_ref(obj) {
+                if let Ok(pos) = obj_entry.get_component::<Position>() {
+                    if let Ok(vs) = who_entry.get_component::<Viewshed>() {
+                        vs.visible_tiles.contains(&pos.0)
+                    } else {
+                        true
+                    }
+                } else {
+                    true
+                }
+            } else {
+                true
+            }
+        } else {
+            true
+        }
     }
     fn gender(&self, _: Entity) -> langgen_english::Gender {
         // TODO:
