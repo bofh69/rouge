@@ -3,6 +3,7 @@ use crate::gamelog::OutputQueue;
 use crate::{CombatStats, SufferDamage, WantsToMelee};
 use legion::*;
 
+// TODO Make a proper system
 pub(crate) fn melee_combat_system(ecs: &mut Ecs) {
     let combatees: Vec<_> = <(Entity, &WantsToMelee, &CombatStats)>::query()
         .iter(&ecs.world)

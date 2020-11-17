@@ -7,6 +7,7 @@ use ::legion::*;
 
 struct ViewshedPlayerUpdate(bool);
 
+// TODO: Make a proper system
 pub(crate) fn add_viewshed_system(
     ecs: &mut crate::ecs::Ecs,
     schedule_builder: &mut systems::Builder,

@@ -1342,6 +1342,7 @@ name = "rouge"
 version = "0.1.0"
 dependencies = [
  "bracket-lib",
+ "crossbeam-channel 0.5.0",
  "langgen_english",
  "legion",
 ]

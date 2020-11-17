@@ -1,6 +1,8 @@
 use crate::gamelog::OutputQueue;
 use crate::Map;
+use crate::ReceiveHealthQueue;
 use crate::{components::*, PlayerEntity};
+use legion::world::SubWorld;
 use legion::{systems::CommandBuffer, *};
 
 #[system(for_each)]
@@ -14,20 +16,21 @@ pub(crate) fn damage(
     cb.remove_component::<SufferDamage>(*entity);
 }
 
-#[system(for_each)]
-pub(crate) fn health(
-    entity: &Entity,
-    stats: &mut CombatStats,
-    health: &ReceiveHealth,
-    cb: &mut CommandBuffer,
-) {
-    if stats.max_hp == stats.hp {
-        stats.max_hp += 1 + health.amount / 8;
-        stats.hp = stats.max_hp;
-    } else {
-        stats.hp = i32::min(stats.max_hp, stats.hp + health.amount);
+#[system]
+#[write_component(CombatStats)]
+pub(crate) fn health(world: &mut SubWorld, #[resource] receive_health_queue: &ReceiveHealthQueue) {
+    for ReceiveHealthMessage { target, amount } in receive_health_queue.rx.try_iter() {
+        if let Ok(ref mut entry) = world.entry_mut(target) {
+            if let Ok(stats) = entry.get_component_mut::<CombatStats>() {
+                if stats.max_hp == stats.hp {
+                    stats.max_hp += 1 + amount / 8;
+                    stats.hp = stats.max_hp;
+                } else {
+                    stats.hp = i32::min(stats.max_hp, stats.hp + amount);
+                }
+            }
+        }
     }
-    cb.remove_component::<ReceiveHealth>(*entity);
 }
 
 #[system(for_each)]

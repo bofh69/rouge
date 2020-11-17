@@ -5,6 +5,7 @@ use crate::{PlayerEntity, PlayerPosition};
 use bracket_lib::terminal::YELLOW;
 use legion::*;
 
+// TODO: Make a proper system
 pub(crate) fn drop_system(ecs: &mut Ecs) {
     let player_position = resource_get!(ecs, PlayerPosition).0;
     let player_entity = resource_get!(ecs, PlayerEntity).0;

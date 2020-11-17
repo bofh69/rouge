@@ -153,13 +153,14 @@ impl Scene<Ecs> for GameScene {
 }
 
 impl GameScene {
-    pub fn new(ecs: &mut Ecs) -> Self {
+    pub(crate) fn new(ecs: &mut Ecs) -> Self {
         ecs.resources.insert(RunState::PreRun);
         let mut builder = Schedule::builder();
         crate::systems::add_viewshed_system(ecs, &mut builder);
 
         let mut builder2 = Schedule::builder();
         builder2
+            // .flush()
             .add_system(crate::systems::damage_system())
             .add_system(crate::systems::health_system())
             .add_system(crate::systems::output_die_system())

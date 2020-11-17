@@ -10,6 +10,7 @@ mod gamelog;
 mod gui;
 mod map;
 mod player;
+mod queues;
 mod scenes;
 mod spawner;
 mod systems;
@@ -21,6 +22,7 @@ use camera::Camera;
 use components::*;
 use legion::*;
 use map::Map;
+use queues::*;
 use std::collections::VecDeque;
 use std::sync::Mutex;
 
@@ -254,6 +256,7 @@ fn main() -> Result<(), Box<dyn std::error::Error + 'static + Send + Sync>> {
     gs.ecs.resources.insert(player_pos);
     gs.ecs.resources.insert(PlayerEntity(player_entity));
     gs.ecs.resources.insert(PlayerTarget::None);
+    queues::register_queues(&mut gs.ecs.resources);
 
     gs.scene_manager
         .push(Box::new(scenes::MainMenuScene::new()));

@@ -71,7 +71,8 @@ pub(crate) struct Ranged {
 }
 
 #[derive(Clone, Debug)]
-pub(crate) struct ReceiveHealth {
+pub(crate) struct ReceiveHealthMessage {
+    pub target: Entity,
     pub amount: i32,
 }
 
