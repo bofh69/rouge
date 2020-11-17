@@ -70,12 +70,6 @@ pub(crate) struct Ranged {
     pub range: i32,
 }
 
-#[derive(Clone, Debug)]
-pub(crate) struct ReceiveHealthMessage {
-    pub target: Entity,
-    pub amount: i32,
-}
-
 #[derive(Debug, Clone)]
 pub(crate) struct RemoveItem {}
 
@@ -85,11 +79,6 @@ pub(crate) struct Renderable {
     pub fg: RGB,
     pub bg: RGB,
     pub render_order: i32,
-}
-
-#[derive(Debug, Clone)]
-pub(crate) struct SufferDamage {
-    pub amount: i32,
 }
 
 #[derive(Clone)]

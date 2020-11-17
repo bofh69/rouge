@@ -1,6 +1,8 @@
 use crate::ecs::*;
 use crate::gamelog::OutputQueue;
-use crate::{CombatStats, SufferDamage, WantsToMelee};
+use crate::messages::SufferDamageMessage;
+use crate::queues::SufferDamageQueue;
+use crate::{CombatStats, WantsToMelee};
 use legion::*;
 
 // TODO Make a proper system
@@ -10,10 +12,11 @@ pub(crate) fn melee_combat_system(ecs: &mut Ecs) {
         .filter(|(_entity, _wants_to_melee, stats)| stats.hp > 0)
         .map(|(entity, wants_to_melee, stats)| (*entity, wants_to_melee.target, stats.power))
         .collect();
+    let suffer_damage_queue = resource_get!(ecs, SufferDamageQueue);
 
     for (attacker_entity, melee_target_entity, attacker_power) in combatees {
         let target = ecs.world.entry(melee_target_entity);
-        let mut target = target.unwrap();
+        let target = target.unwrap();
         let target_stats = target.get_component::<CombatStats>().unwrap();
 
         if target_stats.hp > 0 {
@@ -33,7 +36,13 @@ pub(crate) fn melee_combat_system(ecs: &mut Ecs) {
                     .v(attacker_entity, "hit")
                     .the(melee_target_entity)
                     .string(format!(", for {} hp", damage));
-                target.add_component(SufferDamage { amount: damage });
+                suffer_damage_queue
+                    .tx
+                    .send(SufferDamageMessage {
+                        target: melee_target_entity,
+                        amount: damage,
+                    })
+                    .unwrap();
             }
         }
         ecs.world

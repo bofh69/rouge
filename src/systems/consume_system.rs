@@ -1,8 +1,9 @@
 use crate::components::*;
 use crate::gamelog::OutputQueue;
 use crate::map::Map;
+use crate::messages::{ReceiveHealthMessage, SufferDamageMessage};
+use crate::queues::{ReceiveHealthQueue, SufferDamageQueue};
 use crate::PlayerEntity;
-use crate::ReceiveHealthQueue;
 use crate::ScreenPosition;
 use crate::{camera::Camera, ecs::Ecs};
 use legion::*;
@@ -18,6 +19,7 @@ pub(crate) fn consume_system(ecs: &mut Ecs) {
 
     {
         let receive_health_queue = resource_get!(ecs, ReceiveHealthQueue);
+        let suffer_damage_queue = resource_get!(ecs, SufferDamageQueue);
         for (user_entity, wants_to_use_item, wants_to_use_target) in data {
             let item_entry = ecs.world.entry(wants_to_use_item);
             let player_entity = resource_get!(ecs, PlayerEntity).0;
@@ -114,14 +116,17 @@ pub(crate) fn consume_system(ecs: &mut Ecs) {
                     };
                     if let Some(item_damage) = item_damage {
                         for target in targets {
-                            let mut target_entry = ecs.world.entry(target).unwrap();
                             output
                                 .the(target)
                                 .v(target, "lose")
                                 .string(format!("{} hp", item_damage));
-                            target_entry.add_component(SufferDamage {
-                                amount: item_damage,
-                            });
+                            suffer_damage_queue
+                                .tx
+                                .send(SufferDamageMessage {
+                                    target,
+                                    amount: item_damage,
+                                })
+                                .unwrap();
                         }
                     }
                 }

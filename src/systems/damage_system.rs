@@ -1,19 +1,21 @@
 use crate::gamelog::OutputQueue;
+use crate::messages::{ReceiveHealthMessage, SufferDamageMessage};
+use crate::queues::{ReceiveHealthQueue, SufferDamageQueue};
 use crate::Map;
-use crate::ReceiveHealthQueue;
 use crate::{components::*, PlayerEntity};
 use legion::world::SubWorld;
 use legion::{systems::CommandBuffer, *};
 
-#[system(for_each)]
-pub(crate) fn damage(
-    entity: &Entity,
-    stats: &mut CombatStats,
-    damage: &SufferDamage,
-    cb: &mut CommandBuffer,
-) {
-    stats.hp -= damage.amount;
-    cb.remove_component::<SufferDamage>(*entity);
+#[system]
+#[write_component(CombatStats)]
+pub(crate) fn damage(world: &mut SubWorld, #[resource] queue: &SufferDamageQueue) {
+    for SufferDamageMessage { target, amount } in queue.rx.try_iter() {
+        if let Ok(ref mut entry) = world.entry_mut(target) {
+            if let Ok(stats) = entry.get_component_mut::<CombatStats>() {
+                stats.hp -= amount;
+            }
+        }
+    }
 }
 
 #[system]

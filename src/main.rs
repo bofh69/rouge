@@ -9,6 +9,7 @@ mod entity_adapter;
 mod gamelog;
 mod gui;
 mod map;
+mod messages;
 mod player;
 mod queues;
 mod scenes;
@@ -22,7 +23,6 @@ use camera::Camera;
 use components::*;
 use legion::*;
 use map::Map;
-use queues::*;
 use std::collections::VecDeque;
 use std::sync::Mutex;
 
