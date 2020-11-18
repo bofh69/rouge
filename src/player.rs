@@ -179,8 +179,8 @@ fn clear_auto_walk(ecs: &mut Ecs) {
 
 pub(crate) fn player_input(ecs: &mut Ecs, ctx: &mut BTerm) -> RunState {
     if ctx.left_click {
-        let pos = ctx.mouse_pos();
-        let pos = ScreenPosition { x: pos.0, y: pos.1 };
+        let pos = ctx.mouse_point();
+        let pos: ScreenPosition = pos.into();
         init_auto_walk(ecs, pos);
         auto_walk(ecs)
     } else if ctx.shift {

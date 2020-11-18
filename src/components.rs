@@ -70,6 +70,7 @@ pub(crate) struct Ranged {
     pub range: i32,
 }
 
+// TODO Change to Message
 #[derive(Debug, Clone)]
 pub(crate) struct RemoveItem {}
 
@@ -95,6 +96,7 @@ pub(crate) struct WantsToDropItem {
     pub item: Entity,
 }
 
+// TODO should be changed to a message
 #[derive(Debug, Clone)]
 pub(crate) struct WantsToMelee {
     pub target: Entity,
@@ -108,6 +110,7 @@ pub(crate) struct WantsToPickupItem {
     pub item: Entity,
 }
 
+// TODO should be changed to a message
 #[derive(Clone, Debug)]
 pub(crate) struct WantsToUseItem {
     pub item: Entity,

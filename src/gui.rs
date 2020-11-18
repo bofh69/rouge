@@ -83,16 +83,16 @@ pub(crate) fn index_to_letter(idx: u8) -> char {
 #[derive(PartialEq, Copy, Clone)]
 pub(crate) struct TargetingInfo {
     range: i32,
-    last_mouse_pos: (i32, i32),
-    current_pos: (i32, i32),
+    last_mouse_point: Point,
+    current_point: Point,
 }
 
 impl TargetingInfo {
     pub fn new(range: i32, start_pos: ScreenPosition, ctx: &mut BTerm) -> Self {
         Self {
             range,
-            last_mouse_pos: ctx.mouse_pos(),
-            current_pos: start_pos.into(),
+            last_mouse_point: ctx.mouse_point(),
+            current_point: start_pos.into(),
         }
     }
 
@@ -105,22 +105,21 @@ impl TargetingInfo {
             return (ItemMenuResult::Cancel, None);
         }
 
-        if self.last_mouse_pos != ctx.mouse_pos() {
-            self.last_mouse_pos = ctx.mouse_pos();
-            self.current_pos = ctx.mouse_pos();
+        if self.last_mouse_point != ctx.mouse_point() {
+            self.last_mouse_point = ctx.mouse_point();
+            self.current_point = ctx.mouse_point();
         } else if ctx.left_click {
-            self.current_pos = ctx.mouse_pos();
+            self.current_point = ctx.mouse_point();
         } else if let Some(key) = ctx.key {
             if let Some(dir) = key_to_dir(key) {
-                let (dx, dy) = dir.into();
-                let temp_pos = (self.current_pos.0 + dx, self.current_pos.1 + dy);
+                let temp_pos: Point = self.current_point + dir;
                 let (screen_width, screen_height) = ctx.get_char_size();
-                if temp_pos.0 >= 0
-                    && temp_pos.0 < screen_width as i32
-                    && temp_pos.1 >= 0
-                    && temp_pos.1 < (screen_height as i32 - BOTTOM_HEIGHT)
+                if temp_pos.x >= 0
+                    && temp_pos.x < screen_width as i32
+                    && temp_pos.y >= 0
+                    && temp_pos.y < (screen_height as i32 - BOTTOM_HEIGHT)
                 {
-                    self.current_pos = temp_pos;
+                    self.current_point = temp_pos;
                 }
             }
         }
@@ -158,12 +157,12 @@ impl TargetingInfo {
         // Draw mouse cursor
         let mut valid_target = false;
         for idx in available_cells.iter() {
-            if idx.x == self.current_pos.0 && idx.y == self.current_pos.1 {
+            if self.current_point == (*idx).into() {
                 valid_target = true;
             }
         }
         if valid_target {
-            ctx.set_bg(self.current_pos.0, self.current_pos.1, RGB::named(CYAN));
+            ctx.set_bg(self.current_point.x, self.current_point.y, RGB::named(CYAN));
 
             match (ctx.key, ctx.left_click) {
                 (_, true)
@@ -171,16 +170,13 @@ impl TargetingInfo {
                 | (Some(VirtualKeyCode::Space), _) => {
                     return (
                         ItemMenuResult::Selected,
-                        Some(camera.transform_screen_pos(ScreenPosition {
-                            x: self.current_pos.0,
-                            y: self.current_pos.1,
-                        })),
+                        Some(camera.transform_screen_pos(self.current_point.into())),
                     );
                 }
                 _ => (),
             }
         } else {
-            ctx.set_bg(self.current_pos.0, self.current_pos.1, RGB::named(RED));
+            ctx.set_bg(self.current_point.x, self.current_point.y, RGB::named(RED));
             match (ctx.key, ctx.left_click) {
                 (Some(VirtualKeyCode::Return), _) | (_, true) => {
                     return (ItemMenuResult::Cancel, None)
