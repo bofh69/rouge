@@ -50,24 +50,27 @@ pub(crate) fn consume_system(ecs: &mut Ecs) {
                                 &*map,
                             )
                             .iter()
-                            .filter(|p| {
-                                p.x >= 0
+                            .filter_map(|p| {
+                                if p.x >= 0
                                     && p.x < camera.width()
                                     && p.y >= 0
                                     && p.y < camera.height()
-                            })
-                            .map(|p| ScreenPosition { x: p.x, y: p.y })
-                            {
+                                {
+                                    Some(ScreenPosition { x: p.x, y: p.y })
+                                } else {
+                                    None
+                                }
+                            }) {
                                 let idx =
                                     map.map_pos_to_idx(camera.transform_screen_pos(tile_point));
-                                for mob in map.tile_content[idx].iter() {
+                                for mob in &map.tile_content[idx] {
                                     targets.push(*mob);
                                 }
                             }
                         } else {
                             // Single target in tile
                             let idx = map.map_pos_to_idx(target);
-                            for mob in map.tile_content[idx].iter() {
+                            for mob in &map.tile_content[idx] {
                                 targets.push(*mob);
                             }
                         }

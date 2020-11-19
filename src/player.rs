@@ -52,7 +52,9 @@ pub(crate) fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut Ecs) -> RunS
             }
         }
 
-        if !map.blocked[idx] {
+        if map.blocked[idx] {
+            None
+        } else {
             let mut player_entry = ecs.world.entry(player_entity).unwrap();
             let pos = {
                 let pos = player_entry.get_component_mut::<Position>().unwrap();
@@ -64,8 +66,6 @@ pub(crate) fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut Ecs) -> RunS
             viewshed.dirty = true;
             ret = RunState::PlayerTurn;
             Some(pos)
-        } else {
-            None
         }
     };
     if let Some(pos) = pos {

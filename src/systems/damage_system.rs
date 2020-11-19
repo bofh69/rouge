@@ -4,7 +4,7 @@ use crate::queues::{ReceiveHealthQueue, SufferDamageQueue};
 use crate::Map;
 use crate::{components::*, PlayerEntity};
 use legion::world::SubWorld;
-use legion::{systems::CommandBuffer, *};
+use legion::{system, systems::CommandBuffer, Entity, EntityStore};
 
 #[system]
 #[write_component(CombatStats)]

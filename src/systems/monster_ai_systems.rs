@@ -1,8 +1,8 @@
-use crate::components::*;
+use crate::components::{Monster, Position, Viewshed, WantsToMelee};
 use crate::map::Map;
 use crate::{PlayerEntity, PlayerPosition, RunState};
 use bracket_lib::prelude::*;
-use legion::*;
+use legion::{Entity, IntoQuery};
 
 // TODO: Change to proper monster_ai_system
 pub(crate) fn monster_ai_system(ecs: &mut crate::ecs::Ecs) {

@@ -1,16 +1,21 @@
-use crate::ecs::*;
+use crate::ecs::Ecs;
 use crate::gamelog::OutputQueue;
 use crate::messages::SufferDamageMessage;
 use crate::queues::SufferDamageQueue;
 use crate::{CombatStats, WantsToMelee};
-use legion::*;
+use legion::{Entity, IntoQuery};
 
 // TODO Make a proper system
 pub(crate) fn melee_combat_system(ecs: &mut Ecs) {
     let combatees: Vec<_> = <(Entity, &WantsToMelee, &CombatStats)>::query()
         .iter(&ecs.world)
-        .filter(|(_entity, _wants_to_melee, stats)| stats.hp > 0)
-        .map(|(entity, wants_to_melee, stats)| (*entity, wants_to_melee.target, stats.power))
+        .filter_map(|(entity, wants_to_melee, stats)| {
+            if stats.hp > 0 {
+                Some((*entity, wants_to_melee.target, stats.power))
+            } else {
+                None
+            }
+        })
         .collect();
     let suffer_damage_queue = resource_get!(ecs, SufferDamageQueue);
 

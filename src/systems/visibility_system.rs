@@ -3,7 +3,7 @@ use crate::map::Map;
 use crate::PlayerEntity;
 use crate::{MapPosition, PlayerTarget, Position, Viewshed};
 use ::bracket_lib::prelude::field_of_view;
-use ::legion::*;
+use ::legion::{systems, Entity, IntoQuery, Read, SystemBuilder, Write};
 
 struct ViewshedPlayerUpdate(bool);
 
@@ -30,10 +30,13 @@ pub(crate) fn add_viewshed_system(
                         viewshed.visible_tiles =
                             field_of_view(pos.0.into(), viewshed.range, &**map)
                                 .iter()
-                                .filter(|p| {
-                                    p.x >= 0 && p.x < map.width && p.y >= 0 && p.y < map.height
+                                .filter_map(|p| {
+                                    if p.x >= 0 && p.x < map.width && p.y >= 0 && p.y < map.height {
+                                        Some(MapPosition { x: p.x, y: p.y })
+                                    } else {
+                                        None
+                                    }
                                 })
-                                .map(|p| MapPosition { x: p.x, y: p.y })
                                 .collect();
 
                         // If this is the player, reveal what they can see
@@ -55,12 +58,12 @@ pub(crate) fn add_viewshed_system(
         .build(
             move |_commands, world, (viewshed_player_update, map, player_target), query| {
                 if viewshed_player_update.0 {
-                    for vt in map.visible_tiles.iter_mut() {
+                    for vt in &mut map.visible_tiles {
                         *vt = false;
                     }
 
                     for (viewshed, _player) in query.iter_mut(world) {
-                        for vis in viewshed.visible_tiles.iter() {
+                        for vis in &viewshed.visible_tiles {
                             let idx = map.map_pos_to_idx(*vis);
                             map.revealed_tiles[idx] = true;
                             map.visible_tiles[idx] = true;

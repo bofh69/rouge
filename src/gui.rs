@@ -404,15 +404,15 @@ pub(crate) fn show_inventory(
                 } else {
                     let mut selected = selected as u8;
                     if ctx.shift {
-                        selected += 27u8;
+                        selected += 27_u8;
                     }
-                    if !items.contains_key(&selected) {
-                        (ItemMenuResult::NoResponse, None)
-                    } else {
+                    if items.contains_key(&selected) {
                         (
                             ItemMenuResult::Selected,
                             Some(*items.get(&selected).unwrap()),
                         )
+                    } else {
+                        (ItemMenuResult::NoResponse, None)
                     }
                 }
             }

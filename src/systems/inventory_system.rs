@@ -1,9 +1,9 @@
 use crate::components::{InBackpack, ItemIndex, Position, WantsToDropItem, WantsToPickupItem};
-use crate::ecs::*;
+use crate::ecs::Ecs;
 use crate::gamelog::OutputQueue;
 use crate::{PlayerEntity, PlayerPosition};
-use bracket_lib::terminal::YELLOW;
-use legion::*;
+use ::bracket_lib::prelude::YELLOW;
+use ::legion::{Entity, IntoQuery};
 
 // TODO: Make a proper system
 pub(crate) fn drop_system(ecs: &mut Ecs) {
@@ -56,7 +56,7 @@ pub(crate) fn pickup_system(ecs: &mut Ecs) {
             let mut possible_indexes: Vec<_> = possible_indexes.drain().collect();
             possible_indexes.sort_unstable();
 
-            let mut idx = 255u8;
+            let mut idx = 255_u8;
             if let Ok(ItemIndex { index }) = ecs
                 .world
                 .entry(item_entity)
@@ -68,7 +68,7 @@ pub(crate) fn pickup_system(ecs: &mut Ecs) {
                 }
             }
             let mut item_entry = ecs.world.entry(item_entity).unwrap();
-            if idx == 255u8 {
+            if idx == 255_u8 {
                 if possible_indexes.is_empty() {
                     output.s("Your backpack is full.");
                     continue;

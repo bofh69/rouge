@@ -21,10 +21,10 @@ use crate::gamelog::GameLog;
 use crate::gamelog::OutputQueue;
 use bracket_lib::prelude::*;
 use camera::Camera;
-use components::*;
-use legion::*;
+use components::{CombatStats, Item, Name, Position, Viewshed, WantsToMelee};
+use legion::Entity;
 use map::Map;
-use positions::*;
+use positions::{Direction, MapPosition, PlayerPosition, ScreenPosition};
 use std::collections::VecDeque;
 use std::sync::Mutex;
 
