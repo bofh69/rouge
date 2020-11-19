@@ -47,27 +47,21 @@ pub(crate) fn add_verb_end_s(str: &mut String) {
                 's' | 'o' | 'z' | 'x' | 'S' | 'O' | 'Z' | 'X' => "es",
                 'y' | 'Y' => {
                     remove = 1;
-                    if let Some(c2) = ci.next() {
-                        if is_vowel(c2) {
+
+                    ci.next().map_or("ies", |c2| if is_vowel(c2) {
                             remove = 0;
                             "s"
                         } else {
                             "ies"
-                        }
-                    } else {
-                        "ies"
-                    }
+                        })
                 }
                 'h' | 'H' => {
-                    if let Some(c2) = ci.next() {
-                        if c2 == 'c' || c2 == 's' || c2 == 'C' || c2 == 'S' {
+
+                    ci.next().map_or("s", |c2| if c2 == 'c' || c2 == 's' || c2 == 'C' || c2 == 'S' {
                             "es"
                         } else {
                             "s"
-                        }
-                    } else {
-                        "s"
-                    }
+                        })
                 }
                 _ => "s",
             }

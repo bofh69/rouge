@@ -1,7 +1,7 @@
 use crate::FragmentEntry;
 use crate::Gender;
 
-/// OutputQueue's interface to the game's ECS Components and
+/// `OutputQueue`'s interface to the game's ECS Components and
 /// the games output routines.
 ///
 /// Entity is a Copy type identifying a player, character or thing.
@@ -45,17 +45,17 @@ where
     fn set_color(&mut self, color: (u8, u8, u8));
 
     /// Called when all the text for the current line/sentance has been
-    /// written with write_text.
+    /// written with `write_text`.
     ///
     /// Restores the color to the default color.
     fn done(&mut self);
 }
 
-/// OutputQueue's interface against queues.
+/// `OutputQueue`'s interface against queues.
 pub trait QueueAdapter<Entity> {
     /// Pushes an entry to the end of the queue.
     fn push(&self, f: FragmentEntry<Entity>);
 
-    /// Pops the next entry from the queue, or None if there are none.
+    /// Pops the next entry from the queue, or `None` if there are none.
     fn pop(&self) -> Option<FragmentEntry<Entity>>;
 }

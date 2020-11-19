@@ -8,18 +8,18 @@ pub use output_builder::*;
 use output_helper::*;
 use std::marker::PhantomData;
 
-/// OutputQueue is used to create sentances that should be sent to a player.
+/// `OutputQueue` is used to create sentances that should be sent to a player.
 ///
 /// It can adapt the sentances based on the involved objects' genders,
 /// plural/uncountability and if the player can see them or not.
 ///
 ///
-/// The first word in a sentance will become capitalized, unless supress_capitalize is called before.
+/// The first word in a sentance will become capitalized, unless `supress_capitalize` is called before.
 ///
 /// At the end of a sentance, a dot will be added if the message didn't already end with a punctuation mark.
-/// Use supress_dot to supress it.
+/// Use `supress_dot` to supress it.
 ///
-/// Between each fragment a space is normally added. The next space can be supressed by called cupress_space.
+/// Between each fragment a space is normally added. The next space can be supressed by called `supress_space`.
 /// If the text being added starts with ',' or '"' no space will be added before it.
 /// If the text being added ends with '"' no space will be added after it, use "\" ", if needed.
 ///
@@ -42,8 +42,8 @@ where
     QA: QueueAdapter<Entity>,
     Entity: std::fmt::Debug + Copy,
 {
-    /// Create a new OutputQueue for player who, using
-    /// the given [QueueAdapter](trait.QueueAdapter.html)
+    /// Create a new `OutputQueue` for player `who`, using
+    /// the given [`QueueAdapter`](trait.QueueAdapter.html)
     /// to store messages before they are processed
     /// with `process_queue`.
     pub fn new(queue_adapter: QA, who: Entity) -> Self {
@@ -62,22 +62,22 @@ where
         OutputBuilder::new(&mut self.queue_adapter)
     }
 
-    /// Output a/an short-name, ProperName or something/someone/some/you.
+    /// Output a/an short-name, Proper-name or something/someone/some/you.
     pub fn a(&mut self, who: Entity) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().a(who)
     }
 
-    /// Output a/an long name, ProperLongName or something/someone/some/you.
+    /// Output a/an long name, Proper-long-name or something/someone/some/you.
     pub fn a_(&mut self, who: Entity) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().a_(who)
     }
 
-    /// Output the short-name, ProperName or something/someone/some/you.
+    /// Output the short-name, Proper-name or something/someone/some/you.
     pub fn the(&mut self, who: Entity) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().the(who)
     }
 
-    /// Output the long-name, ProperName or something/someone/some/you.
+    /// Output the long-name, Proper-name or something/someone/some/you.
     pub fn the_(&mut self, who: Entity) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().the_(who)
     }
@@ -208,12 +208,12 @@ where
         if self.add_space && !(text.starts_with(',') || text.starts_with('"')) {
             self.push_char(' ');
         }
-        if !self.supress_capitalize {
+        if self.supress_capitalize {
+            self.push_str(text);
+        } else {
             self.supress_capitalize = true;
             self.maybe_clear_output();
             uppercase_first_char(text, &mut self.output_string);
-        } else {
-            self.push_str(text);
         }
         self.add_space = !text.ends_with('"');
     }
@@ -307,7 +307,7 @@ where
         self.add_string("");
     }
 
-    /// Process all the queued output with the entity_adapter.
+    /// Process all the queued output with the `entity_adapter`.
     pub fn process_queue<A: EntityAdapter<Entity>>(&mut self, entity_adapter: &mut A) {
         while let Some(FragmentEntry(frag)) = self.queue_adapter.pop() {
             use crate::Fragment::*;

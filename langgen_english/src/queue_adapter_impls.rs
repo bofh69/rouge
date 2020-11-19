@@ -3,7 +3,7 @@ use ::std::cell::RefCell;
 use ::std::collections::{LinkedList, VecDeque};
 use ::std::sync::Mutex;
 
-/// A suitable QueueAdapter when different threads read/write to the same Queue.
+/// A suitable `QueueAdapter` when different threads read/write to the same `Queue`.
 ///
 /// Note: there is no locking employed for the whole sentance so
 /// different systems' output can interleave.
@@ -17,7 +17,7 @@ impl<Entity> QueueAdapter<Entity> for Mutex<VecDeque<FragmentEntry<Entity>>> {
     }
 }
 
-/// A suitable QueueAdapter when different threads read/write to the same Queue.
+/// A suitable `QueueAdapter` when different threads read/write to the same `Queue`.
 ///
 /// Note: there is no locking employed for the whole sentance so
 /// different systems' output can interleave.
@@ -31,7 +31,7 @@ impl<Entity> QueueAdapter<Entity> for Mutex<LinkedList<FragmentEntry<Entity>>> {
     }
 }
 
-/// A suitable QueueAdapter when only one thread can read/write to the same Queue.
+/// A suitable `QueueAdapter` when only one thread can read/write to the same `Queue`.
 impl<Entity> QueueAdapter<Entity> for RefCell<VecDeque<FragmentEntry<Entity>>> {
     fn push(&self, frag: FragmentEntry<Entity>) {
         self.borrow_mut().push_back(frag);
@@ -42,7 +42,7 @@ impl<Entity> QueueAdapter<Entity> for RefCell<VecDeque<FragmentEntry<Entity>>> {
     }
 }
 
-/// A suitable QueueAdapter when only one thread can read/write to the same Queue.
+/// A suitable `QueueAdapter` when only one thread can read/write to the same `Queue`.
 impl<Entity> QueueAdapter<Entity> for RefCell<LinkedList<FragmentEntry<Entity>>> {
     fn push(&self, frag: FragmentEntry<Entity>) {
         self.borrow_mut().push_back(frag);
