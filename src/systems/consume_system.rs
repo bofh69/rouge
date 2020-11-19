@@ -1,11 +1,10 @@
 use crate::components::*;
-use crate::gamelog::OutputQueue;
-use crate::map::Map;
+use crate::ecs::Ecs;
 use crate::messages::{ReceiveHealthMessage, SufferDamageMessage};
 use crate::queues::{ReceiveHealthQueue, SufferDamageQueue};
+use crate::resources::{Camera, Map, OutputQueue};
 use crate::PlayerEntity;
 use crate::ScreenPosition;
-use crate::{camera::Camera, ecs::Ecs};
 use legion::*;
 
 // TODO, make a proper system

@@ -1,6 +1,6 @@
 use crate::components::{InBackpack, ItemIndex, Position, WantsToDropItem, WantsToPickupItem};
 use crate::ecs::Ecs;
-use crate::gamelog::OutputQueue;
+use crate::resources::OutputQueue;
 use crate::{PlayerEntity, PlayerPosition};
 use ::bracket_lib::prelude::YELLOW;
 use ::legion::{Entity, IntoQuery};

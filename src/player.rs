@@ -1,17 +1,15 @@
 use crate::{
-    camera::Camera,
-    components::{Position, Viewshed, WantsToMelee},
-};
-use crate::{
     components::{Item, WantsToPickupItem},
     CombatStats,
 };
+use crate::{
+    components::{Position, Viewshed, WantsToMelee},
+    resources::{Camera, Map, OutputQueue, PlayerEntity, PlayerPosition, PlayerTarget},
+};
 // use crate::components::*;
 use crate::ecs::Ecs;
-use crate::gamelog::OutputQueue;
-use crate::map::Map;
-use crate::{Direction, PlayerTarget, ScreenPosition};
-use crate::{InventoryType, PlayerEntity, PlayerPosition, RunState};
+use crate::positions::{Direction, ScreenPosition};
+use crate::{InventoryType, RunState};
 use bracket_lib::prelude::*;
 use legion::*;
 use std::cmp::{max, min};

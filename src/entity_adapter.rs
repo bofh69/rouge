@@ -1,4 +1,4 @@
-use crate::gamelog::GameLog;
+use crate::resources::GameLog;
 use crate::Item;
 use crate::Name;
 use crate::Position;

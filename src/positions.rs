@@ -1,4 +1,4 @@
-use crate::components::Position;
+use crate::resources::PlayerPosition;
 use ::bracket_lib::prelude::Point;
 
 #[derive(PartialEq, Debug, Copy, Clone)]
@@ -70,15 +70,6 @@ impl Into<ScreenPosition> for Point {
             x: self.x,
             y: self.y,
         }
-    }
-}
-
-#[derive(Debug, Copy, Clone)]
-pub(crate) struct PlayerPosition(pub MapPosition);
-
-impl Into<Position> for PlayerPosition {
-    fn into(self) -> Position {
-        Position(self.0)
     }
 }
 

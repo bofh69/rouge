@@ -1,8 +1,7 @@
-use crate::gamelog::OutputQueue;
+use crate::components::*;
 use crate::messages::{ReceiveHealthMessage, SufferDamageMessage};
 use crate::queues::{ReceiveHealthQueue, SufferDamageQueue};
-use crate::Map;
-use crate::{components::*, PlayerEntity};
+use crate::resources::{Map, OutputQueue, PlayerEntity};
 use legion::world::SubWorld;
 use legion::{system, systems::CommandBuffer, Entity, EntityStore};
 

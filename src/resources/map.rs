@@ -1,7 +1,8 @@
 use crate::components::Position;
+use crate::ecs::Ecs;
+use crate::resources::Camera;
 use crate::MapPosition;
 use crate::ScreenPosition;
-use crate::{camera::Camera, ecs::Ecs};
 use bracket_lib::prelude::*;
 use legion::*;
 use std::cmp::{max, min};

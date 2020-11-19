@@ -1,5 +1,5 @@
 use crate::components::Player;
-use crate::map::Map;
+use crate::resources::Map;
 use crate::PlayerEntity;
 use crate::{MapPosition, PlayerTarget, Position, Viewshed};
 use ::bracket_lib::prelude::field_of_view;

@@ -1,7 +1,8 @@
+use crate::components::*;
 use crate::ecs::Ecs;
-use crate::{camera::Camera, components::*, map::Map};
-use crate::{gui, PlayerEntity, RunState};
-use crate::{player::player_input, PlayerPosition};
+use crate::player::player_input;
+use crate::resources::{Camera, Map, PlayerEntity, PlayerPosition};
+use crate::{gui, RunState};
 use ::bracket_lib::prelude::*;
 use ::legion::*;
 
@@ -26,7 +27,7 @@ impl Scene<Ecs> for GameScene {
                 .build();
             schedule.execute(&mut ecs.world, &mut ecs.resources);
 
-            crate::map::draw_map(ecs, ctx);
+            crate::resources::draw_map(ecs, ctx);
 
             let camera = resource_get!(ecs, Camera);
             let player_position = resource_get!(ecs, PlayerPosition);

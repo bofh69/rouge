@@ -1,6 +1,6 @@
 use crate::components::{BlocksTile, Monster, Position};
-use crate::map::Map;
-use legion::{Entity, system};
+use crate::resources::Map;
+use legion::{system, Entity};
 use std::option::Option;
 
 #[system]

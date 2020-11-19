@@ -1,7 +1,7 @@
 use crate::ecs::Ecs;
-use crate::gamelog::OutputQueue;
 use crate::messages::SufferDamageMessage;
 use crate::queues::SufferDamageQueue;
+use crate::resources::OutputQueue;
 use crate::{CombatStats, WantsToMelee};
 use legion::{Entity, IntoQuery};
 

@@ -3,28 +3,24 @@ bracket_lib::prelude::add_wasm_support!();
 #[macro_use]
 mod ecs;
 
-mod camera;
 mod components;
 mod entity_adapter;
-mod gamelog;
 mod gui;
-mod map;
 mod messages;
 mod player;
 mod positions;
 mod queues;
+mod resources;
 mod scenes;
 mod spawner;
 mod systems;
 
-use crate::gamelog::GameLog;
-use crate::gamelog::OutputQueue;
+use crate::resources::{Camera, GameLog, OutputQueue};
+use crate::resources::{PlayerEntity, PlayerPosition, PlayerTarget};
 use bracket_lib::prelude::*;
-use camera::Camera;
 use components::{CombatStats, Item, Name, Position, Viewshed, WantsToMelee};
 use legion::Entity;
-use map::Map;
-use positions::{Direction, MapPosition, PlayerPosition, ScreenPosition};
+use positions::{Direction, MapPosition, ScreenPosition};
 use std::collections::VecDeque;
 use std::sync::Mutex;
 
@@ -44,15 +40,6 @@ pub(crate) enum RunState {
     ShowInventory(InventoryType),
     ShowTargeting(gui::TargetingInfo, Entity),
     SaveGame,
-}
-
-pub(crate) struct PlayerEntity(Entity);
-
-#[derive(PartialEq, Debug, Copy, Clone)]
-pub(crate) enum PlayerTarget {
-    None,
-    Position(MapPosition),
-    Dir(Direction),
 }
 
 pub(crate) struct State {
@@ -106,7 +93,7 @@ const LAYERS: usize = 7;
 fn main() -> Result<(), Box<dyn std::error::Error + 'static + Send + Sync>> {
     const SCREEN_WIDTH: i32 = 80;
     const SCREEN_HEIGHT: i32 = 50;
-    let map = Map::new_map_rooms_and_corridors();
+    let map = resources::Map::new_map_rooms_and_corridors();
     let player_pos = map.rooms[0].center();
 
     // link_resource!(TILE_FONT, "resources/cheepicus8x8.png");

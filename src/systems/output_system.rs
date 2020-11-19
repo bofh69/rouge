@@ -1,7 +1,6 @@
 use crate::components::{Item, Monster, Name, Position, Viewshed};
 use crate::entity_adapter::EntityAdapterImpl;
-use crate::gamelog::GameLog;
-use crate::gamelog::OutputQueue;
+use crate::resources::{GameLog, OutputQueue};
 use crate::PlayerEntity;
 use ::legion::system;
 use legion::world::SubWorld;

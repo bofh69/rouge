@@ -1,5 +1,5 @@
 use crate::components::{Monster, Position, Viewshed, WantsToMelee};
-use crate::map::Map;
+use crate::resources::Map;
 use crate::{PlayerEntity, PlayerPosition, RunState};
 use bracket_lib::prelude::*;
 use legion::{Entity, IntoQuery};

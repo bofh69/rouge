@@ -1,6 +1,6 @@
-use crate::camera::Camera;
-use crate::map::{MAP_HEIGHT, MAP_WIDTH};
-use crate::{MapPosition, PlayerPosition, ScreenPosition};
+use crate::positions::{MapPosition, ScreenPosition};
+use crate::resources::{Camera, PlayerPosition};
+use crate::resources::{MAP_HEIGHT, MAP_WIDTH};
 use ::legion::*;
 
 fn diff_to_interval(v: i32, min: i32, max: i32) -> i32 {
