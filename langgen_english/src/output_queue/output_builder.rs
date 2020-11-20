@@ -3,7 +3,7 @@ use super::{FragmentEntry, PhantomData, QueueAdapter};
 #[allow(missing_docs)]
 /// `OutputBuilder` helps output queue building whole sentences.
 ///
-/// This struct has a subset of [`OutputQueue`](struct.OutputQueue.html)'s functions
+/// This struct has a subset of [`OutputQueue`](crate::OutputQueue)'s functions
 /// and they are described there.
 pub struct OutputBuilder<'a, QA, Entity>
 where

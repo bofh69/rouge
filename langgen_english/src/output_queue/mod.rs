@@ -43,7 +43,7 @@ where
     Entity: std::fmt::Debug + Copy,
 {
     /// Create a new `OutputQueue` for player `who`, using
-    /// the given [`QueueAdapter`](trait.QueueAdapter.html)
+    /// the given [`QueueAdapter`](QueueAdapter)
     /// to store messages before they are processed
     /// with `process_queue`.
     pub fn new(queue_adapter: QA, who: Entity) -> Self {

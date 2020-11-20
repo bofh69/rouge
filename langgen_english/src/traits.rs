@@ -1,7 +1,7 @@
 use crate::FragmentEntry;
 use crate::Gender;
 
-/// `OutputQueue`'s interface to the game's ECS Components and
+/// [`OutputQueue`](crate::OutputQueue)'s interface to the game's ECS Components and
 /// the games output routines.
 ///
 /// Entity is a Copy type identifying a player, character or thing.

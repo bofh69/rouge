@@ -34,8 +34,8 @@
 //! To get a working system, provide:
 //!
 //! * `Entity` - Copy type that represents all the characters, things and players.
-//! * [`EntityAdapter`](trait.EntityAdapter.html) - looks up info about the entity and outputs text to the player.
-//! * [`QueueAdapter`](trait.QueueAdapter.html) - handles queueing of messages between threads.
+//! * [`EntityAdapter`](EntityAdapter) - looks up info about the entity and outputs text to the player.
+//! * [`QueueAdapter`](QueueAdapter) - handles queueing of messages between threads.
 //!
 //! The crate provide implementations of `QueueAdapter` for `RefCell/Mutex` together with `LinkedList`/`VecDeque`.
 
@@ -85,7 +85,7 @@ enum Fragment<Entity> {
     EndOfLine,
 }
 
-/// Encapsulates messages sent via [`QueueAdapter`](trait.QueueAdapter.html)s.
+/// Encapsulates messages sent via [`QueueAdapter`](QueueAdapter)s.
 pub struct FragmentEntry<Entity>(Fragment<Entity>);
 
 /// Represents the gender & uncountability of an `Entity`
