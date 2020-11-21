@@ -1,7 +1,8 @@
-use crate::components::{InBackpack, ItemIndex, Position, WantsToDropItem, WantsToPickupItem};
+use crate::components::{
+    Energy, InBackpack, ItemIndex, Position, WantsToDropItem, WantsToPickupItem,
+};
 use crate::ecs::Ecs;
-use crate::resources::OutputQueue;
-use crate::{PlayerEntity, PlayerPosition};
+use crate::resources::{OutputQueue, PlayerEntity, PlayerPosition};
 use ::bracket_lib::prelude::YELLOW;
 use ::legion::{Entity, IntoQuery};
 
@@ -26,10 +27,9 @@ pub(crate) fn drop_system(ecs: &mut Ecs) {
                 .v(dropper_entity, "drop")
                 .the(item);
         }
-        ecs.world
-            .entry(dropper_entity)
-            .unwrap()
-            .remove_component::<WantsToDropItem>();
+        let mut who_entity = ecs.world.entry(dropper_entity).unwrap();
+        who_entity.get_component_mut::<Energy>().unwrap().energy = -50;
+        who_entity.remove_component::<WantsToDropItem>();
     }
 }
 
@@ -88,9 +88,8 @@ pub(crate) fn pickup_system(ecs: &mut Ecs) {
         let mut item_entry = ecs.world.entry(item_entity).unwrap();
         item_entry.remove_component::<Position>();
         item_entry.add_component(InBackpack { owner: who_entity });
-        ecs.world
-            .entry(who_entity)
-            .unwrap()
-            .remove_component::<WantsToPickupItem>();
+        let mut who_entity = ecs.world.entry(who_entity).unwrap();
+        who_entity.get_component_mut::<Energy>().unwrap().energy = -90;
+        who_entity.remove_component::<WantsToPickupItem>();
     }
 }

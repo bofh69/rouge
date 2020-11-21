@@ -1,9 +1,5 @@
 use crate::{
-    components::{Item, WantsToPickupItem},
-    CombatStats,
-};
-use crate::{
-    components::{Position, Viewshed, WantsToMelee},
+    components::{CombatStats, Energy, Item, Position, Viewshed, WantsToMelee, WantsToPickupItem},
     resources::{Camera, Map, OutputQueue, PlayerEntity, PlayerPosition, PlayerTarget},
 };
 // use crate::components::*;
@@ -20,14 +16,14 @@ pub(crate) fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut Ecs) -> RunS
     let mut ret = RunState::AwaitingInput;
 
     let pos = {
-        let map = resource_get!(ecs, Map);
+        let mut map = resource_get_mut!(ecs, Map);
 
-        let (x, y, idx) = {
+        let (x, y, idx, old_idx) = {
             let player_entry = ecs.world.entry(player_entity).unwrap();
-            let pos = player_entry.into_component::<Position>().unwrap();
+            let pos = player_entry.into_component::<Position>().unwrap().0;
 
-            let (x, y) = (pos.0.x + delta_x, pos.0.y + delta_y);
-            (x, y, map.xy_to_idx(x, y))
+            let (x, y) = (pos.x + delta_x, pos.y + delta_y);
+            (x, y, map.xy_to_idx(x, y), map.xy_to_idx(pos.x, pos.y))
         };
 
         for potential_target in map.tile_content[idx].iter() {
@@ -39,14 +35,13 @@ pub(crate) fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut Ecs) -> RunS
                 .is_ok()
             {
                 // Attack it
-                let mut output = resource_get_mut!(ecs, OutputQueue);
-
-                output.s("From Hell's Heart, I stab thee!");
+                // let mut output = resource_get_mut!(ecs, OutputQueue);
+                // output.s("From Hell's Heart, I stab thee!");
                 let mut entry = ecs.world.entry(player_entity).unwrap();
                 entry.add_component(WantsToMelee {
                     target: *potential_target,
                 });
-                return RunState::PlayerTurn;
+                return RunState::EnergylessTick;
             }
         }
 
@@ -62,7 +57,10 @@ pub(crate) fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut Ecs) -> RunS
             };
             let viewshed = player_entry.get_component_mut::<Viewshed>().unwrap();
             viewshed.dirty = true;
-            ret = RunState::PlayerTurn;
+            map.blocked[old_idx] = false;
+            map.blocked[idx] = true;
+            player_entry.get_component_mut::<Energy>().unwrap().energy = -100;
+            ret = RunState::EnergylessTick;
             Some(pos)
         }
     };
@@ -96,7 +94,7 @@ pub(crate) fn get_item(ecs: &mut Ecs) -> RunState {
                 collected_by: player_entity,
                 item: found_entity,
             });
-        RunState::PlayerTurn
+        RunState::EnergylessTick
     } else {
         output.s("There is nothing you can pickup here!");
 
@@ -162,8 +160,8 @@ fn auto_walk(ecs: &mut Ecs) -> RunState {
     let dest = get_auto_walk_dest(ecs);
 
     if let Some((dx, dy)) = dest {
-        if try_move_player(dx, dy, ecs) == RunState::PlayerTurn {
-            return RunState::PlayerTurn;
+        if try_move_player(dx, dy, ecs) == RunState::EnergylessTick {
+            return RunState::EnergylessTick;
         }
     }
     clear_auto_walk(ecs);
@@ -210,8 +208,12 @@ pub(crate) fn player_input(ecs: &mut Ecs, ctx: &mut BTerm) -> RunState {
                     VirtualKeyCode::B => try_move_player(-1, 1, ecs),
                     VirtualKeyCode::N => try_move_player(1, 1, ecs),
 
-                    VirtualKeyCode::Space => RunState::PlayerTurn,
-
+                    VirtualKeyCode::Space => {
+                        let player_entity = resource_get!(ecs, PlayerEntity).0;
+                        let mut player_entry = ecs.world.entry(player_entity).unwrap();
+                        player_entry.get_component_mut::<Energy>().unwrap().energy = -50;
+                        RunState::EnergylessTick
+                    }
                     VirtualKeyCode::Comma => get_item(ecs),
 
                     VirtualKeyCode::A => RunState::ShowInventory(InventoryType::Apply),

@@ -21,6 +21,17 @@ pub(crate) struct CombatStats {
 #[derive(Clone, Debug)]
 pub(crate) struct Consumable {}
 
+/// Animated objects need energy to perform actions.
+/// The more an action cost, the more energy it drains.
+/// Energy >= 0 means the object can act, the new energy becomes -action_cost.
+/// If the player has energy >= 0, it makes a turn.
+/// Then monster with the highest energy go first. If it can't do anything, it will have more energy
+/// next time.
+#[derive(Clone, Debug)]
+pub(crate) struct Energy {
+    pub energy: i32,
+}
+
 #[derive(Clone, Debug)]
 pub(crate) struct HealthProvider {
     pub heal_amount: i32,

@@ -1,7 +1,6 @@
-use crate::components::Player;
-use crate::resources::Map;
-use crate::PlayerEntity;
-use crate::{MapPosition, PlayerTarget, Position, Viewshed};
+use crate::components::{Player, Position, Viewshed};
+use crate::positions::MapPosition;
+use crate::resources::{Map, PlayerEntity, PlayerTarget};
 use ::bracket_lib::prelude::field_of_view;
 use ::legion::{systems, Entity, IntoQuery, Read, SystemBuilder, Write};
 

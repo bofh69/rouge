@@ -1,8 +1,5 @@
+use crate::components::{Item, Name, Position, Viewshed};
 use crate::resources::GameLog;
-use crate::Item;
-use crate::Name;
-use crate::Position;
-use crate::Viewshed;
 use ::langgen_english::*;
 use ::legion::*;
 use legion::world::SubWorld;

@@ -78,7 +78,7 @@ pub(crate) fn index_to_letter(idx: u8) -> char {
     }
 }
 
-#[derive(PartialEq, Copy, Clone)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub(crate) struct TargetingInfo {
     range: i32,
     last_mouse_point: Point,

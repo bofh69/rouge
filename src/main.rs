@@ -18,25 +18,24 @@ mod systems;
 use crate::resources::{Camera, GameLog, OutputQueue};
 use crate::resources::{PlayerEntity, PlayerPosition, PlayerTarget};
 use bracket_lib::prelude::*;
-use components::{CombatStats, Item, Name, Position, Viewshed, WantsToMelee};
 use legion::Entity;
 use positions::{Direction, MapPosition, ScreenPosition};
 use std::collections::VecDeque;
 use std::sync::Mutex;
 
-#[derive(PartialEq, Copy, Clone)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub(crate) enum InventoryType {
     Apply,
     Drop,
 }
 
-#[derive(PartialEq, Copy, Clone)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub(crate) enum RunState {
     AwaitingInput,
     ReallyQuit,
     PreRun,
-    PlayerTurn,
-    MonsterTurn,
+    Tick,
+    EnergylessTick,
     ShowInventory(InventoryType),
     ShowTargeting(gui::TargetingInfo, Entity),
     SaveGame,

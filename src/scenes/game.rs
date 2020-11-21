@@ -1,7 +1,7 @@
 use crate::components::*;
 use crate::ecs::Ecs;
 use crate::player::player_input;
-use crate::resources::{Camera, Map, PlayerEntity, PlayerPosition, Time};
+use crate::resources::{Camera, Map, PlayerEntity, PlayerPosition};
 use crate::{gui, RunState};
 use ::bracket_lib::prelude::*;
 use ::legion::*;
@@ -54,7 +54,8 @@ impl Scene<Ecs> for GameScene {
             }
         }
 
-        let mut newrunstate = { *resource_get!(ecs, RunState) };
+        let oldrunstate = { *resource_get!(ecs, RunState) };
+        let mut newrunstate = oldrunstate;
 
         match newrunstate {
             RunState::SaveGame => {
@@ -75,14 +76,19 @@ impl Scene<Ecs> for GameScene {
                 (gui::ItemMenuResult::Selected, true) => ctx.quit(),
                 _ => (),
             },
-            RunState::PlayerTurn => {
+            RunState::EnergylessTick | RunState::Tick => {
                 self.run_systems(ecs);
-                resource_get_mut!(ecs, Time).tick_time += 1;
-                newrunstate = RunState::MonsterTurn;
-            }
-            RunState::MonsterTurn => {
-                self.run_systems(ecs);
-                newrunstate = RunState::AwaitingInput;
+                let entity = resource_get!(ecs, PlayerEntity).0;
+                newrunstate = ecs
+                    .world
+                    .entry(entity)
+                    .map_or(RunState::ReallyQuit, |entry| {
+                        if entry.get_component::<Energy>().unwrap().energy >= 0 {
+                            RunState::AwaitingInput
+                        } else {
+                            RunState::Tick
+                        }
+                    });
             }
             RunState::ShowInventory(inv_type) => match gui::show_inventory(ecs, ctx, inv_type) {
                 (gui::ItemMenuResult::Cancel, _) => newrunstate = RunState::AwaitingInput,
@@ -111,7 +117,7 @@ impl Scene<Ecs> for GameScene {
                                     item: item_entity,
                                     target: None,
                                 });
-                                newrunstate = RunState::PlayerTurn;
+                                newrunstate = RunState::Tick;
                             }
                         }
                         crate::InventoryType::Drop => {
@@ -119,7 +125,7 @@ impl Scene<Ecs> for GameScene {
                                 .entry(player_entity)
                                 .unwrap()
                                 .add_component(WantsToDropItem { item: item_entity });
-                            newrunstate = RunState::PlayerTurn;
+                            newrunstate = RunState::Tick;
                         }
                     }
                 }
@@ -138,12 +144,19 @@ impl Scene<Ecs> for GameScene {
                                 item: item_entity,
                                 target: Some(target_position),
                             });
-                        newrunstate = RunState::PlayerTurn;
+                        newrunstate = RunState::Tick;
                     }
                     _ => (),
                 }
             }
         }
+
+        /*
+        if newrunstate != oldrunstate || oldrunstate != RunState::AwaitingInput {
+            let time = resource_get!(ecs, Time);
+            println!( "ORS: {:?}, NRS: {:?}, time={:?}", oldrunstate, newrunstate, time);
+        }
+        */
 
         gui::draw_ui(ecs, ctx);
 
@@ -158,6 +171,7 @@ impl GameScene {
     pub(crate) fn new(ecs: &mut Ecs) -> Self {
         ecs.resources.insert(RunState::PreRun);
         let mut builder = Schedule::builder();
+        builder.add_system(crate::systems::regain_energy_system());
         crate::systems::add_viewshed_system(ecs, &mut builder);
 
         let mut builder2 = Schedule::builder();

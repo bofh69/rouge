@@ -10,6 +10,7 @@ pub(crate) const MAX_ITEMS: i32 = 4;
 
 pub(crate) fn player(ecs: &mut Ecs, player_x: i32, player_y: i32) -> Entity {
     ecs.world.push((
+        Energy { energy: 0 },
         Position(MapPosition {
             x: player_x,
             y: player_y,
@@ -21,6 +22,7 @@ pub(crate) fn player(ecs: &mut Ecs, player_x: i32, player_y: i32) -> Entity {
             render_order: 0,
         },
         Player {},
+        BlocksTile {},
         Viewshed {
             visible_tiles: Vec::new(),
             range: 8,
@@ -61,6 +63,7 @@ fn janouch(ecs: &mut Ecs, x: i32, y: i32) {
 
 fn monster<S: ToString>(ecs: &mut Ecs, x: i32, y: i32, glyph: u16, name: S) {
     ecs.world.push((
+        Energy { energy: 0 },
         Position(MapPosition { x, y }),
         Renderable {
             glyph,
