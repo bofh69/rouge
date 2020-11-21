@@ -4,16 +4,32 @@ on: [push]
 
 jobs:
   build:
-
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v2
       with:
         submodules: 'true'
-    - name: Build
-      run: cargo build --verbose
+    - name: Build Release
+      run: cargo build --release --verbose
     - name: Run tests
+      if: matrix.os == 'ubuntu-latest'
       run: cargo test --verbose
     - name: Check format
+      if: matrix.os == 'ubuntu-latest'
       run: cargo fmt -- --check
+    - name: Archive Windows artifacts
+      if: matrix.os == 'windows-latest'
+      uses: actions/upload-artifact@v2
+      with:
+        name: Windows Executable
+        path: target/release/rouge.exe
+    - name: Archive MacOS artifacts
+      if: matrix.os == 'macos-latest'
+      uses: actions/upload-artifact@v2
+      with:
+        name: MacOS Executable
+        path: target/release/rouge

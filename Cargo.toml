@@ -18,3 +18,5 @@ langgen_english = { path = "langgen_english" }
 crossbeam-channel = "0.5.0"
 # bracket-lib = "0.8.*"
 # legion = "^0.3.2"
+# wfc = "*" # For maps?
+# grid_2d = "*" # For the Map and Position/ScreenPosition/MapPosition?
