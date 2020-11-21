@@ -2,25 +2,22 @@ use super::*;
 use crate::ecs::Ecs;
 use crate::gui::MainMenuResult::*;
 use crate::gui::MainMenuState::*;
+use legion::Schedule;
 
-#[derive(Debug)]
 pub(crate) struct MainMenuScene {
     state: crate::gui::MainMenuState,
-    comet_line: i32,
+    schedule: Schedule,
 }
 
 impl Scene<Ecs> for MainMenuScene {
     fn tick(&mut self, ecs: &mut Ecs, ctx: &mut BTerm) -> SceneResult<Ecs> {
-        let time = {
-            let time = resource_get!(ecs, crate::resources::Time);
-            (time.real_time_ms % 10000) as f32 / 1000.
-        };
         ctx.cls();
-        match crate::gui::show_main_menu(ctx, time, &mut self.comet_line, self.state) {
+        self.schedule.execute(&mut ecs.world, &mut ecs.resources);
+        match crate::gui::show_main_menu(ctx, ecs, self.state) {
             Selected(New) => SceneResult::Replace(Box::new(super::game::GameScene::new(ecs))),
             Selected(Quit) => SceneResult::Pop,
             Selected(Load) => {
-                // TODO Implent call to load
+                // TODO Implement call to load
                 SceneResult::Pop
             }
             NoSelection(state) => {
@@ -32,10 +29,19 @@ impl Scene<Ecs> for MainMenuScene {
 }
 
 impl MainMenuScene {
+    fn build_schedule() -> Schedule {
+        let mut builder = Schedule::builder();
+        builder
+            .add_system(crate::systems::delete_after_time_system())
+            .add_system(crate::systems::delete_after_tick_system())
+            .flush()
+            .build()
+    }
+
     pub fn new() -> MainMenuScene {
         MainMenuScene {
             state: crate::gui::MainMenuState::New,
-            comet_line: 0,
+            schedule: Self::build_schedule(),
         }
     }
 
@@ -43,7 +49,7 @@ impl MainMenuScene {
     pub fn new_for_load() -> MainMenuScene {
         MainMenuScene {
             state: crate::gui::MainMenuState::Load,
-            comet_line: 0,
+            schedule: Self::build_schedule(),
         }
     }
 }

@@ -21,6 +21,18 @@ pub(crate) struct CombatStats {
 #[derive(Clone, Debug)]
 pub(crate) struct Consumable {}
 
+/// The object is removed at the given tick.
+#[derive(Clone, Debug)]
+pub(crate) struct EndTick {
+    pub end_tick: i64,
+}
+
+/// The object is removed at the given time.
+#[derive(Clone, Debug)]
+pub(crate) struct EndTime {
+    pub end_time_ms: i64,
+}
+
 /// Animated objects need energy to perform actions.
 /// The more an action cost, the more energy it drains.
 /// Energy >= 0 means the object can act, the new energy becomes -action_cost.

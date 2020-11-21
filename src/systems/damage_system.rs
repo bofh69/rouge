@@ -1,7 +1,7 @@
 use crate::components::*;
 use crate::messages::{ReceiveHealthMessage, SufferDamageMessage};
 use crate::queues::{ReceiveHealthQueue, SufferDamageQueue};
-use crate::resources::{Map, OutputQueue, PlayerEntity};
+use crate::resources::{Map, OutputQueue, PlayerEntity, Time};
 use legion::world::SubWorld;
 use legion::{system, systems::CommandBuffer, Entity, EntityStore};
 
@@ -71,4 +71,28 @@ pub(crate) fn delete_the_dead(
 #[system(for_each)]
 pub(crate) fn delete_items(entity: &Entity, _remove: &RemoveItem, cb: &mut CommandBuffer) {
     cb.remove(*entity);
+}
+
+#[system(for_each)]
+pub(crate) fn delete_after_tick(
+    entity: &Entity,
+    end_tick: &EndTick,
+    cb: &mut CommandBuffer,
+    #[resource] time: &Time,
+) {
+    if end_tick.end_tick <= time.tick {
+        cb.remove(*entity);
+    }
+}
+
+#[system(for_each)]
+pub(crate) fn delete_after_time(
+    entity: &Entity,
+    end_time: &EndTime,
+    cb: &mut CommandBuffer,
+    #[resource] time: &Time,
+) {
+    if end_time.end_time_ms <= time.real_time_ms {
+        cb.remove(*entity);
+    }
 }

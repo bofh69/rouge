@@ -185,6 +185,8 @@ impl GameScene {
             .flush()
             .add_system(crate::systems::delete_the_dead_system())
             .add_system(crate::systems::delete_items_system())
+            .add_system(crate::systems::delete_after_time_system())
+            .add_system(crate::systems::delete_after_tick_system())
             .flush()
             .add_system(crate::systems::map_indexing_clear_system())
             .add_system(crate::systems::map_indexing_system());

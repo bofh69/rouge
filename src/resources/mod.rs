@@ -33,5 +33,5 @@ impl Into<Position> for PlayerPosition {
 pub(crate) struct Time {
     pub real_time_ms: i64,
     pub last_real_time_ms: i64,
-    pub tick_time: i64,
+    pub tick: i64,
 }

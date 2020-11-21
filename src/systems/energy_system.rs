@@ -18,7 +18,7 @@ pub(crate) fn regain_energy(
     let mut max = i32::MIN;
 
     // Find highest energy below zero.
-    for (energy) in <&Energy>::query().iter(world) {
+    for energy in <&Energy>::query().iter(world) {
         if energy.energy < 0 && energy.energy > max {
             max = energy.energy;
         }
@@ -34,6 +34,6 @@ pub(crate) fn regain_energy(
                 energy.energy += -max;
             }
         }
-        time.tick_time += -max as i64;
+        time.tick += -max as i64;
     }
 }
