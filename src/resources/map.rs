@@ -120,7 +120,7 @@ impl Map {
     }
 
     pub fn is_exit_valid(&self, x: i32, y: i32) -> bool {
-        if x < 1 || x > self.width - 1 || y < 1 || y > self.height - 1 {
+        if x < 0 || x > self.width - 1 || y < 0 || y > self.height - 1 {
             return false;
         }
         let idx = self.xy_to_idx(x, y);
