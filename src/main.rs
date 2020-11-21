@@ -51,6 +51,12 @@ pub(crate) struct State {
 impl GameState for State {
     fn tick(&mut self, ctx: &mut BTerm) {
         {
+            let mut time = self.ecs.resources.get_mut_or_default::<resources::Time>();
+            time.last_real_time_ms = time.real_time_ms;
+            time.real_time_ms += ctx.frame_time_ms as i64;
+        }
+
+        {
             let mut input = INPUT.lock();
 
             ctx.shift = input.key_pressed_set().contains(&VirtualKeyCode::LShift)

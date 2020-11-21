@@ -1,7 +1,7 @@
 use crate::components::*;
 use crate::ecs::Ecs;
 use crate::player::player_input;
-use crate::resources::{Camera, Map, PlayerEntity, PlayerPosition};
+use crate::resources::{Camera, Map, PlayerEntity, PlayerPosition, Time};
 use crate::{gui, RunState};
 use ::bracket_lib::prelude::*;
 use ::legion::*;
@@ -77,6 +77,7 @@ impl Scene<Ecs> for GameScene {
             },
             RunState::PlayerTurn => {
                 self.run_systems(ecs);
+                resource_get_mut!(ecs, Time).tick_time += 1;
                 newrunstate = RunState::MonsterTurn;
             }
             RunState::MonsterTurn => {

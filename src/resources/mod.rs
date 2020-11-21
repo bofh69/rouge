@@ -28,3 +28,10 @@ impl Into<Position> for PlayerPosition {
         Position(self.0)
     }
 }
+
+#[derive(Debug, Default, Copy, Clone)]
+pub(crate) struct Time {
+    pub real_time_ms: i64,
+    pub last_real_time_ms: i64,
+    pub tick_time: i64,
+}

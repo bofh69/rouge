@@ -190,6 +190,7 @@ impl TargetingInfo {
 pub(crate) fn show_main_menu(
     ctx: &mut BTerm,
     time: f32,
+    comet_line: &mut i32,
     current_state: MainMenuState,
 ) -> MainMenuResult {
     let (screen_width, screen_height) = ctx.get_char_size();
@@ -197,6 +198,23 @@ pub(crate) fn show_main_menu(
     let text_width = 7;
     let x = (screen_width / 2 - text_width / 2) as i32;
     let y = (screen_height / 2) as i32 - 1;
+
+    fn write_comet(ctx: &mut BTerm, pos: i32, screen_width: i32, y: i32, c: char) {
+        if pos >= 0 && pos < screen_width {
+            ctx.set(pos, y, RGB::named(YELLOW), RGB::named(BLACK), to_cp437(c));
+        }
+    }
+
+    let pos = ((5. - time) * 20. - 10.) as i32;
+
+    write_comet(ctx, pos, screen_width, *comet_line, '*');
+    for i in 1..5 {
+        write_comet(ctx, pos + i, screen_width, *comet_line, '-');
+    }
+    if pos >= screen_width {
+        let mut rnd = RandomNumberGenerator::new();
+        *comet_line = rnd.roll_dice(1, screen_height - BOTTOM_HEIGHT);
+    }
 
     ctx.print_color(
         (80 - 14) / 2,
@@ -225,18 +243,6 @@ pub(crate) fn show_main_menu(
             RGB::named(BLACK),
             line,
         );
-    }
-
-    fn write_comet(ctx: &mut BTerm, pos: i32, screen_width: i32, y: i32, c: char) {
-        if pos >= 0 && pos < screen_width {
-            ctx.set(pos, y, RGB::named(YELLOW), RGB::named(BLACK), to_cp437(c));
-        }
-    }
-
-    let pos = ((5. - time) * 20. - 10.) as i32;
-    write_comet(ctx, pos, screen_width, y - 2, '*');
-    for i in 1..5 {
-        write_comet(ctx, pos + i, screen_width, y - 2, '-');
     }
 
     ctx.draw_box_double(
