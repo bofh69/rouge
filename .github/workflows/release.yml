@@ -1,0 +1,64 @@
+name: Release for tag
+
+on:
+  push:
+    tags:
+    - 'v*' # For tags starting with v
+
+jobs:
+  build:
+    name: Release
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            os_name: Ubuntu
+          - os: macOS-latest
+            os_name: MacOS
+          - os: windows-latest
+            os_name: Windows
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: 'true'
+
+    - name: Build Release
+      run: |
+        cargo build --release --verbose
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: true
+        prerelease: true
+
+    - name: Upload release asset
+      if: matrix.os != 'windows-latest'
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: target/release/rouge
+        asset_name: rouge-${{ matrix.os_name }}
+        asset_content_type: application/binary
+
+    - name: Upload Windows release asset
+      if: matrix.os == 'windows-latest'
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: target/release/rouge.exe
+        asset_name: rouge-${{ matrix.os_name }}.exe
+        asset_content_type: application/binary
