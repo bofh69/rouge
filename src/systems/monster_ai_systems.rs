@@ -26,7 +26,7 @@ pub(crate) fn monster_ai_system(ecs: &mut crate::ecs::Ecs) {
 
     for (entity, mut viewshed, mut pos, mut energy) in ready {
         let distance =
-            DistanceAlg::Manhattan.distance2d(Point::new(pos.0.x, pos.0.y), player_pos.into());
+            DistanceAlg::Chebyshev.distance2d(Point::new(pos.0.x, pos.0.y), player_pos.into());
         if distance < 1.5 {
             // Attack goes here
             cb.add_component(

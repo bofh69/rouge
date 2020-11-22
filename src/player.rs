@@ -16,14 +16,14 @@ pub(crate) fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut Ecs) -> RunS
     let mut ret = RunState::AwaitingInput;
 
     let pos = {
-        let mut map = resource_get_mut!(ecs, Map);
+        let map = resource_get_mut!(ecs, Map);
 
-        let (x, y, idx, old_idx) = {
+        let (x, y, idx) = {
             let player_entry = ecs.world.entry(player_entity).unwrap();
             let pos = player_entry.into_component::<Position>().unwrap().0;
 
             let (x, y) = (pos.x + delta_x, pos.y + delta_y);
-            (x, y, map.xy_to_idx(x, y), map.xy_to_idx(pos.x, pos.y))
+            (x, y, map.xy_to_idx(x, y))
         };
 
         for potential_target in map.tile_content[idx].iter() {
@@ -57,8 +57,6 @@ pub(crate) fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut Ecs) -> RunS
             };
             let viewshed = player_entry.get_component_mut::<Viewshed>().unwrap();
             viewshed.dirty = true;
-            map.blocked[old_idx] = false;
-            map.blocked[idx] = true;
             player_entry.get_component_mut::<Energy>().unwrap().energy = -100;
             ret = RunState::EnergylessTick;
             Some(pos)

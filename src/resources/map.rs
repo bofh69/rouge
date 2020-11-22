@@ -93,7 +93,7 @@ impl BaseMap for Map {
     fn get_pathing_distance(&self, idx1: usize, idx2: usize) -> f32 {
         let p1 = Point::new(idx1 as i32 % self.width, idx1 as i32 / self.width);
         let p2 = Point::new(idx2 as i32 % self.width, idx2 as i32 / self.width);
-        DistanceAlg::Pythagoras.distance2d(p1, p2)
+        DistanceAlg::Chebyshev.distance2d(p1, p2)
     }
 }
 

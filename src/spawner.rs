@@ -22,7 +22,6 @@ pub(crate) fn player(ecs: &mut Ecs, player_x: i32, player_y: i32) -> Entity {
             render_order: 0,
         },
         Player {},
-        BlocksTile {},
         Viewshed {
             visible_tiles: Vec::new(),
             range: 8,
