@@ -1,0 +1,50 @@
+name: Release for tag
+
+on:
+  push:
+    tags:
+    - 'v*' # For tags starting with v
+
+jobs:
+  release_it:
+    name: Create release from tag
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+      with:
+        submodules: 'true'
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: true
+        prerelease: true
+
+    - name: Repository dispatch tag created event
+      uses: peter-evans/repository-dispatch@v1
+      with:
+        token: ${{ secrets.REPO_ACCESS_TOKEN }}
+        event-type: release-created
+        client-payload: '{"upload_url": "${{ steps.create_release.outputs.upload_url }}"}'
+
+# Automatically tag on 
+#    - name: Bump version and push tag/create release point
+#      id: bump_version
+#      uses: anothrNick/github-tag-action@1.17.2
+#      env:
+#        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        WITH_V: true
+
+#    - name: Repository dispatch tag created event
+#      uses: peter-evans/repository-dispatch@v1
+#      with:
+#        token: ${{ secrets.REPO_ACCESS_TOKEN }}
+#        event-type: tag-created
+#        client-payload: '{"new_version": "${{ steps.bump_version.outputs.new_tag }}"}'
