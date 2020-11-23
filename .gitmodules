@@ -4,3 +4,6 @@
 [submodule "vendor/bracket-lib"]
 	path = vendor/bracket-lib
 	url = git@github.com:bofh69/rltk_rs.git
+[submodule "vendor/legion_typeuuid"]
+	path = vendor/legion_typeuuid
+	url = git@github.com:bofh69/legion_typeuuid.git
