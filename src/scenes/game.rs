@@ -162,7 +162,10 @@ impl GameScene {
         self.schedule.execute(&mut ecs.world, &mut ecs.resources);
 
         crate::systems::monster_ai_system(ecs);
-        crate::systems::melee_combat_system(ecs);
+        let mut schedule = legion::Schedule::builder()
+            .add_system(crate::systems::melee_combat_system())
+            .build();
+        schedule.execute(&mut ecs.world, &mut ecs.resources);
         crate::systems::drop_system(ecs);
         crate::systems::pickup_system(ecs);
         crate::systems::consume_system(ecs);

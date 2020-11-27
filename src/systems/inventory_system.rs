@@ -33,6 +33,7 @@ pub(crate) fn drop_system(ecs: &mut Ecs) {
     }
 }
 
+// TODO: Make a proper system
 pub(crate) fn pickup_system(ecs: &mut Ecs) {
     let player_entity = resource_get!(ecs, PlayerEntity).0;
     let mut output = resource_get_mut!(ecs, OutputQueue);

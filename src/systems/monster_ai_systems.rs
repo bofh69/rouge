@@ -1,4 +1,6 @@
-use crate::components::{Energy, Monster, Position, Viewshed, WantsToMelee};
+use crate::components::{Energy, Monster, Position, Viewshed};
+use crate::messages::WantsToMeleeMessage;
+use crate::queues::WantsToMeleeQueue;
 use crate::resources::{Map, PlayerEntity, PlayerPosition};
 use crate::RunState;
 use bracket_lib::prelude::*;
@@ -13,6 +15,7 @@ pub(crate) fn monster_ai_system(ecs: &mut crate::ecs::Ecs) {
     let mut map = resource_get_mut!(ecs, Map);
     let player_pos = resource_get!(ecs, PlayerPosition).0;
     let player_entity = resource_get!(ecs, PlayerEntity).0;
+    let wants_to_melee_queue = resource_get!(ecs, WantsToMeleeQueue);
 
     let mut cb = legion::systems::CommandBuffer::new(&ecs.world);
 
@@ -29,12 +32,13 @@ pub(crate) fn monster_ai_system(ecs: &mut crate::ecs::Ecs) {
             DistanceAlg::Chebyshev.distance2d(Point::new(pos.0.x, pos.0.y), player_pos.into());
         if distance < 1.5 {
             // Attack goes here
-            cb.add_component(
-                *entity,
-                WantsToMelee {
+            wants_to_melee_queue
+                .tx
+                .send(WantsToMeleeMessage {
+                    attacker: *entity,
                     target: player_entity,
-                },
-            );
+                })
+                .unwrap();
         } else if viewshed.visible_tiles.contains(&player_pos) {
             let path = a_star_search(
                 map.pos_to_idx(*pos) as i32,

@@ -165,14 +165,6 @@ pub(crate) struct WantsToDropItem {
 register_serialize!(WantsToDropItem);
 
 // TODO should be changed to a message
-#[derive(Serialize, Deserialize, Debug, Clone, TypeUuid)]
-#[uuid = "eb9301e7-f09f-47d7-a406-c8e4c07afeee"]
-pub(crate) struct WantsToMelee {
-    pub target: Entity,
-}
-register_serialize!(WantsToMelee);
-
-// TODO should be changed to a message
 // TODO how to handle "get all"?
 #[derive(Serialize, Deserialize, Debug, Clone, TypeUuid)]
 #[uuid = "b71eebb4-dee9-4406-985a-554126e567d4"]

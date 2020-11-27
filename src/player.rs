@@ -1,5 +1,7 @@
 use crate::{
-    components::{CombatStats, Energy, Item, Position, Viewshed, WantsToMelee, WantsToPickupItem},
+    components::{CombatStats, Energy, Item, Position, Viewshed, WantsToPickupItem},
+    messages::WantsToMeleeMessage,
+    queues::WantsToMeleeQueue,
     resources::{Camera, Map, OutputQueue, PlayerEntity, PlayerPosition, PlayerTarget},
 };
 // use crate::components::*;
@@ -37,10 +39,14 @@ pub(crate) fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut Ecs) -> RunS
                 // Attack it
                 // let mut output = resource_get_mut!(ecs, OutputQueue);
                 // output.s("From Hell's Heart, I stab thee!");
-                let mut entry = ecs.world.entry(player_entity).unwrap();
-                entry.add_component(WantsToMelee {
-                    target: *potential_target,
-                });
+                let wants_to_melee_queue = resource_get!(ecs, WantsToMeleeQueue);
+                wants_to_melee_queue
+                    .tx
+                    .send(WantsToMeleeMessage {
+                        attacker: player_entity,
+                        target: *potential_target,
+                    })
+                    .expect("Queue full");
                 return RunState::EnergylessTick;
             }
         }
