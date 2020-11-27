@@ -19,40 +19,10 @@ impl Scene<Ecs> for GameScene {
             ctx.set_active_console(i);
             ctx.cls();
         }
+
+        self.draw_map(ecs, ctx);
+
         // ctx.print(35, 22, &format!("{} fps", ctx.fps as u32));
-
-        {
-            let mut schedule = Schedule::builder()
-                .add_system(crate::systems::camera_update_system())
-                .build();
-            schedule.execute(&mut ecs.world, &mut ecs.resources);
-
-            crate::resources::draw_map(ecs, ctx);
-
-            let camera = resource_get!(ecs, Camera);
-            let player_position = resource_get!(ecs, PlayerPosition);
-            let screen_pos = camera.transform_map_pos(player_position.0);
-
-            for i in 0..crate::LAYERS {
-                ctx.set_active_console(i);
-                ctx.set_scale(1.0 + i as f32 * 0.01, screen_pos.x, screen_pos.y);
-            }
-            ctx.set_active_console(crate::LAYERS);
-
-            let mut data = <(&Position, &Renderable)>::query()
-                .iter(&ecs.world)
-                .filter(|(p, _)| camera.is_in_view(p.0))
-                .collect::<Vec<_>>();
-            data.sort_by(|&a, &b| b.1.render_order.cmp(&a.1.render_order));
-
-            let map = resource_get!(ecs, Map);
-            for (pos, render) in data.iter() {
-                if map.visible_tiles[map.pos_to_idx(**pos)] {
-                    let point = camera.transform_map_pos(pos.0);
-                    ctx.set(point.x, point.y, render.fg, render.bg, render.glyph);
-                }
-            }
-        }
 
         let oldrunstate = { *resource_get!(ecs, RunState) };
         let mut newrunstate = oldrunstate;
@@ -151,18 +121,10 @@ impl Scene<Ecs> for GameScene {
             }
         }
 
-        /*
-        if newrunstate != oldrunstate || oldrunstate != RunState::AwaitingInput {
-            let time = resource_get!(ecs, Time);
-            println!( "ORS: {:?}, NRS: {:?}, time={:?}", oldrunstate, newrunstate, time);
-        }
-        */
-
         gui::draw_ui(ecs, ctx);
 
-        {
-            ecs.resources.insert(newrunstate);
-        }
+        ecs.resources.insert(newrunstate);
+
         SceneResult::Continue
     }
 }
@@ -206,5 +168,39 @@ impl GameScene {
         crate::systems::consume_system(ecs);
 
         self.schedule2.execute(&mut ecs.world, &mut ecs.resources);
+    }
+
+    fn draw_map(&mut self, ecs: &mut Ecs, ctx: &mut BTerm) {
+        let player_position = resource_get!(ecs, PlayerPosition);
+        {
+            let mut camera = resource_get_mut!(ecs, Camera);
+            crate::systems::camera_update(&mut *camera, &*player_position);
+        }
+
+        crate::resources::draw_map(ecs, ctx);
+
+        let camera = resource_get!(ecs, Camera);
+
+        let screen_pos = camera.transform_map_pos(player_position.0);
+
+        for i in 0..crate::LAYERS {
+            ctx.set_active_console(i);
+            ctx.set_scale(1.0 + i as f32 * 0.01, screen_pos.x, screen_pos.y);
+        }
+        ctx.set_active_console(crate::LAYERS);
+
+        let mut data = <(&Position, &Renderable)>::query()
+            .iter(&ecs.world)
+            .filter(|(p, _)| camera.is_in_view(p.0))
+            .collect::<Vec<_>>();
+        data.sort_by(|&a, &b| b.1.render_order.cmp(&a.1.render_order));
+
+        let map = resource_get!(ecs, Map);
+        for (pos, render) in data.iter() {
+            if map.visible_tiles[map.pos_to_idx(**pos)] {
+                let point = camera.transform_map_pos(pos.0);
+                ctx.set(point.x, point.y, render.fg, render.bg, render.glyph);
+            }
+        }
     }
 }
