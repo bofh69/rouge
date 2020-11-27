@@ -460,7 +460,7 @@ pub(crate) fn draw_map(ecs: &Ecs, ctx: &mut BTerm) {
                     match tile {
                         TileType::Floor => {
                             fg = RGB::from_f32(0.5, 0.5, 0.5);
-                            glyph = to_cp437('.');
+                            glyph = to_cp437('·');
                         }
                         TileType::Wall(walltype) => {
                             fg = RGB::from_f32(0.7, 0.9, 0.7);
