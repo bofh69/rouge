@@ -1,16 +1,17 @@
 use crate::components::Position;
 use crate::ecs::Ecs;
+use crate::positions::{MapPosition, ScreenPosition};
 use crate::resources::Camera;
-use crate::MapPosition;
-use crate::ScreenPosition;
-use bracket_lib::prelude::*;
-use legion::*;
+use ::bracket_lib::prelude::*;
+use ::legion::*;
+use ::serde::*;
 use std::cmp::{max, min};
 
 pub(crate) const MAP_WIDTH: i32 = 120;
 pub(crate) const MAP_HEIGHT: i32 = 60;
 
-#[derive(PartialEq, Copy, Clone, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Copy, Clone, Debug)]
+#[serde(tag = "type")]
 pub(crate) enum WallType {
     Vertical,          /* - */
     Horizontal,        /* | */
@@ -26,14 +27,15 @@ pub(crate) enum WallType {
     Pilar,             /* ● */
 }
 
-#[derive(PartialEq, Copy, Clone, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Copy, Clone, Debug)]
+#[serde(tag = "type")]
 pub(crate) enum TileType {
     Stone,
     Wall(WallType),
     Floor,
 }
 
-#[derive(Default, Clone)]
+#[derive(Serialize, Deserialize, Default, Clone)]
 pub(crate) struct Map {
     pub tiles: Vec<TileType>,
     pub rooms: Vec<Rect>,

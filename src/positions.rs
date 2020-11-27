@@ -1,7 +1,8 @@
 use crate::resources::PlayerPosition;
 use ::bracket_lib::prelude::Point;
+use ::serde::*;
 
-#[derive(PartialEq, Debug, Copy, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Copy, Clone)]
 pub(crate) struct MapPosition {
     pub x: i32,
     pub y: i32,

@@ -15,13 +15,17 @@ mod scenes;
 mod spawner;
 mod systems;
 
-use crate::resources::{Camera, GameLog, OutputQueue};
-use crate::resources::{PlayerEntity, PlayerPosition, PlayerTarget};
-use bracket_lib::prelude::*;
-use legion::Entity;
-use positions::{Direction, MapPosition, ScreenPosition};
-use std::collections::VecDeque;
-use std::sync::Mutex;
+use crate::positions::{Direction, MapPosition, ScreenPosition};
+use crate::resources::{Camera, GameLog, OutputQueue, PlayerEntity, PlayerPosition, PlayerTarget};
+use ::bracket_lib::prelude::*;
+use ::legion::Entity;
+use ::legion_typeuuid::collect_registry;
+use ::std::collections::VecDeque;
+use ::std::sync::Mutex;
+use legion_typeuuid::SerializableTypeUuid;
+use std::io::Write;
+
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error + 'static + Send + Sync>>;
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub(crate) enum InventoryType {
@@ -43,6 +47,7 @@ pub(crate) enum RunState {
 
 pub(crate) struct State {
     ecs: ecs::Ecs,
+    registry: legion::Registry<SerializableTypeUuid>,
     scene_manager: scenes::SceneManager<ecs::Ecs>,
     old_shift: bool,
 }
@@ -91,17 +96,14 @@ impl GameState for State {
 
 impl State {}
 
-// embedded_resource!(TILE_FONT, "../resources/cheepicus8x8.png");
-
 const LAYERS: usize = 7;
 
-fn main() -> Result<(), Box<dyn std::error::Error + 'static + Send + Sync>> {
+fn main() -> Result<()> {
     const SCREEN_WIDTH: i32 = 80;
     const SCREEN_HEIGHT: i32 = 50;
+
     let map = resources::Map::new_map_rooms_and_corridors();
     let player_pos = map.rooms[0].center();
-
-    // link_resource!(TILE_FONT, "resources/cheepicus8x8.png");
 
     let mut builder = BTermBuilder::simple(SCREEN_WIDTH, SCREEN_HEIGHT)?
         .with_title("Rouge World")
@@ -123,6 +125,7 @@ fn main() -> Result<(), Box<dyn std::error::Error + 'static + Send + Sync>> {
     let mut gs = State {
         ecs: ecs::Ecs::new(),
         scene_manager: scenes::SceneManager::new(),
+        registry: collect_registry(),
         old_shift: false,
     };
 
@@ -156,6 +159,46 @@ fn main() -> Result<(), Box<dyn std::error::Error + 'static + Send + Sync>> {
     gs.scene_manager
         .push(Box::new(scenes::MainMenuScene::new()));
 
+    {
+        let mut fil = std::fs::File::create("save.dat")?;
+        save(&gs, &mut fil)?;
+    }
+
+    /*
+    {
+        let mut fil = std::fs::File::open("save.dat")?;
+        load(&mut gs, &mut fil)?;
+    }
+    */
+
     main_loop(context, gs)?;
     Ok(())
 }
+
+pub(crate) fn save(gs: &State, writer: &mut dyn Write) -> Result<()> {
+    let bytes = serde_cbor::to_vec(
+        &gs.ecs
+            .world
+            .as_serializable(legion::query::any(), &gs.registry),
+    )?;
+    writer.write_all(&bytes).unwrap();
+
+    // Write resources.
+    // TODO: This probably doesn't work to deserialize later, it will be joined with the above code:
+    serde_cbor::to_writer(writer, &*resource_get!(gs.ecs, crate::resources::Map)).unwrap();
+
+    Ok(())
+}
+
+/*
+pub(crate) fn load(gs: &mut State, reader: &mut dyn Read) -> Result<()> {
+    use serde::de::DeserializeSeed;
+    let obj = serde_cbor::de::from_reader(reader)?;
+    let world: ::legion::World = gs.registry.as_deserialize().deserialize(obj)?;
+
+    // Read resources
+    //serde_cbor::to_writer(writer, &*resource_get!(gs.ecs, crate::resources::Map)).unwrap();
+
+    Ok(())
+}
+*/
