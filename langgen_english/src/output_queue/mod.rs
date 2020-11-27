@@ -58,132 +58,132 @@ where
         }
     }
 
-    fn make_output_builder(&mut self) -> OutputBuilder<'_, QA, Entity> {
-        OutputBuilder::new(&mut self.queue_adapter)
+    fn make_output_builder(&self) -> OutputBuilder<'_, QA, Entity> {
+        OutputBuilder::new(&self.queue_adapter)
     }
 
     /// Output a/an short-name, Proper-name or something/someone/some/you.
-    pub fn a(&mut self, who: Entity) -> OutputBuilder<'_, QA, Entity> {
+    pub fn a(&self, who: Entity) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().a(who)
     }
 
     /// Output a/an long name, Proper-long-name or something/someone/some/you.
-    pub fn a_(&mut self, who: Entity) -> OutputBuilder<'_, QA, Entity> {
+    pub fn a_(&self, who: Entity) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().a_(who)
     }
 
     /// Output the short-name, Proper-name or something/someone/some/you.
-    pub fn the(&mut self, who: Entity) -> OutputBuilder<'_, QA, Entity> {
+    pub fn the(&self, who: Entity) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().the(who)
     }
 
     /// Output the long-name, Proper-name or something/someone/some/you.
-    pub fn the_(&mut self, who: Entity) -> OutputBuilder<'_, QA, Entity> {
+    pub fn the_(&self, who: Entity) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().the_(who)
     }
 
     /// Output "the <object-short-name>'s".
     /// If the viewer can't see it, "something's"/"someone's" is used.
-    pub fn thes(&mut self, who: Entity) -> OutputBuilder<'_, QA, Entity> {
+    pub fn thes(&self, who: Entity) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().thes(who)
     }
 
     /// Output "the <object-long-name>'s".
     /// If the viewer can't see it, "something's"/"someone's" is used.
-    pub fn thes_(&mut self, who: Entity) -> OutputBuilder<'_, QA, Entity> {
+    pub fn thes_(&self, who: Entity) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().thes_(who)
     }
 
     /// Output "yours"/"the <object-short-name>'s".
     /// If the viewer can't see it, "something's"/"someone's" is used.
-    pub fn thess(&mut self, who: Entity) -> OutputBuilder<'_, QA, Entity> {
+    pub fn thess(&self, who: Entity) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().thess(who)
     }
 
     /// Output "yours"/"the <object-long-name>'s".
     /// If the viewer can't see it, "something's"/"someone's" is used.
-    pub fn thess_(&mut self, who: Entity) -> OutputBuilder<'_, QA, Entity> {
+    pub fn thess_(&self, who: Entity) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().thess_(who)
     }
 
     /// Output "my/his/her/their/its <object-short-name>".
     /// If the viewer can't see it, a() is used instead.
-    pub fn my(&mut self, who: Entity, obj: Entity) -> OutputBuilder<'_, QA, Entity> {
+    pub fn my(&self, who: Entity, obj: Entity) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().my(who, obj)
     }
 
     /// Output "my/his/her/their/its <object-long-name>".
     /// If the viewer can't see it, a_() is used instead.
-    pub fn my_(&mut self, who: Entity, obj: Entity) -> OutputBuilder<'_, QA, Entity> {
+    pub fn my_(&self, who: Entity, obj: Entity) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().my_(who, obj)
     }
 
     /// Output "you"/<objects-short-name>.
     /// If the viewer can't see it, "something"/"someone" is used.
-    pub fn word(&mut self, obj: Entity) -> OutputBuilder<'_, QA, Entity> {
+    pub fn word(&self, obj: Entity) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().word(obj)
     }
 
     /// Output "you"/<objects-long-name>.
     /// If the viewer can't see it, "something"/"someone" is used.
-    pub fn word_(&mut self, obj: Entity) -> OutputBuilder<'_, QA, Entity> {
+    pub fn word_(&self, obj: Entity) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().word_(obj)
     }
 
     /// Output "is"/"are".
-    pub fn is(&mut self, obj: Entity) -> OutputBuilder<'_, QA, Entity> {
+    pub fn is(&self, obj: Entity) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().is(obj)
     }
 
     /// Output "has"/"have".
-    pub fn has(&mut self, obj: Entity) -> OutputBuilder<'_, QA, Entity> {
+    pub fn has(&self, obj: Entity) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().has(obj)
     }
 
     /// Output the string.
-    pub fn s(&mut self, s: &'static str) -> OutputBuilder<'_, QA, Entity> {
+    pub fn s(&self, s: &'static str) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().s(s)
     }
 
     /// Output the string.
-    pub fn string(&mut self, s: String) -> OutputBuilder<'_, QA, Entity> {
+    pub fn string(&self, s: String) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().string(s)
     }
 
     /// Output the verb and adds "s"/"es" as needed.
-    pub fn v(&mut self, who: Entity, verb: &'static str) -> OutputBuilder<'_, QA, Entity> {
+    pub fn v(&self, who: Entity, verb: &'static str) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().v(who, verb)
     }
 
     /// Output the verb and adds "s"/"es" as needed.
-    pub fn verb(&mut self, who: Entity, verb: String) -> OutputBuilder<'_, QA, Entity> {
+    pub fn verb(&self, who: Entity, verb: String) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().verb(who, verb)
     }
 
     /// Don't capitalize the next word.
     ///
     /// Only relevant for the first word.
-    pub fn supress_capitalize(&mut self) -> OutputBuilder<'_, QA, Entity> {
+    pub fn supress_capitalize(&self) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().supress_capitalize()
     }
 
     /// Don't add a space before the next word.
-    pub fn supress_space(&mut self) -> OutputBuilder<'_, QA, Entity> {
+    pub fn supress_space(&self) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().supress_space()
     }
 
     /// Capitalize the next word.
-    pub fn capitalize(&mut self) -> OutputBuilder<'_, QA, Entity> {
+    pub fn capitalize(&self) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().capitalize()
     }
 
     /// Supress automatic addition of an dot at the end of the sentance when needed.
-    pub fn supress_dot(&mut self) -> OutputBuilder<'_, QA, Entity> {
+    pub fn supress_dot(&self) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().supress_dot()
     }
 
     /// Change the output color.
-    pub fn color(&mut self, color: (u8, u8, u8)) -> OutputBuilder<'_, QA, Entity> {
+    pub fn color(&self, color: (u8, u8, u8)) -> OutputBuilder<'_, QA, Entity> {
         self.make_output_builder().color(color)
     }
 

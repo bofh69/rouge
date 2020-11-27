@@ -9,7 +9,7 @@ pub struct OutputBuilder<'a, QA, Entity>
 where
     QA: QueueAdapter<Entity>,
 {
-    queue_adapter: &'a mut QA,
+    queue_adapter: &'a QA,
     _entity: PhantomData<Entity>,
 }
 
@@ -18,7 +18,7 @@ impl<'a, Entity, QA> OutputBuilder<'a, QA, Entity>
 where
     QA: QueueAdapter<Entity>,
 {
-    pub(crate) fn new(queue_adapter: &'a mut QA) -> Self {
+    pub(crate) fn new(queue_adapter: &'a QA) -> Self {
         Self {
             queue_adapter,
             _entity: PhantomData::default(),
