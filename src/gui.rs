@@ -362,7 +362,7 @@ pub(crate) fn show_inventory(
     inventory.sort_by(|a, b| a.1.cmp(&b.1));
 
     if count == 0 {
-        let mut gamelog = resource_get_mut!(ecs, crate::resources::OutputQueue);
+        let gamelog = resource_get!(ecs, crate::resources::OutputQueue);
         gamelog.s("Your backpack is empty");
         return (ItemMenuResult::Cancel, None);
     }

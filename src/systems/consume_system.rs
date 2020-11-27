@@ -24,7 +24,7 @@ pub(crate) fn consume_system(ecs: &mut Ecs) {
             let player_entity = resource_get!(ecs, PlayerEntity).0;
 
             if item_entry.is_some() {
-                let mut output = ecs.resources.get_mut::<OutputQueue>().unwrap();
+                let output = ecs.resources.get::<OutputQueue>().unwrap();
                 output
                     .the(user_entity)
                     .v(user_entity, "consume")
@@ -134,7 +134,7 @@ pub(crate) fn consume_system(ecs: &mut Ecs) {
                 }
                 cb.add_component(wants_to_use_item, RemoveItem {});
             } else if user_entity == player_entity {
-                let mut output = ecs.resources.get_mut::<OutputQueue>().unwrap();
+                let output = ecs.resources.get::<OutputQueue>().unwrap();
                 output.s("You cannot use").the(wants_to_use_item);
             }
             cb.remove_component::<WantsToUseItem>(user_entity);

@@ -137,7 +137,7 @@ fn main() -> Result<()> {
     }
     let player_entity = spawner::player(&mut gs.ecs, player_pos.x, player_pos.y);
 
-    let mut output_queue = OutputQueue::new(Mutex::new(VecDeque::new()), player_entity);
+    let output_queue = OutputQueue::new(Mutex::new(VecDeque::new()), player_entity);
     output_queue.s("Welcome to ").color(RED).s("Rouge");
     gs.ecs.resources.insert(output_queue);
 

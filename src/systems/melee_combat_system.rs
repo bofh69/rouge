@@ -12,7 +12,7 @@ pub(crate) fn melee_combat(
     world: &mut SubWorld,
     #[resource] suffer_damage_queue: &SufferDamageQueue,
     #[resource] wants_to_melee_queue: &mut WantsToMeleeQueue,
-    #[resource] output: &mut OutputQueue,
+    #[resource] output: &OutputQueue,
 ) {
     for WantsToMeleeMessage {
         attacker: attacker_entity,

@@ -21,7 +21,7 @@ pub(crate) fn drop_system(ecs: &mut Ecs) {
         entry.add_component(Position(player_position));
         entry.remove_component::<InBackpack>();
         if dropper_entity == player_entity {
-            let mut output = resource_get_mut!(ecs, OutputQueue);
+            let output = resource_get!(ecs, OutputQueue);
             output
                 .the(dropper_entity)
                 .v(dropper_entity, "drop")
@@ -36,7 +36,7 @@ pub(crate) fn drop_system(ecs: &mut Ecs) {
 // TODO: Make a proper system
 pub(crate) fn pickup_system(ecs: &mut Ecs) {
     let player_entity = resource_get!(ecs, PlayerEntity).0;
-    let mut output = resource_get_mut!(ecs, OutputQueue);
+    let output = resource_get!(ecs, OutputQueue);
 
     let things_to_pickup: Vec<_> = <&WantsToPickupItem>::query()
         .iter(&ecs.world)

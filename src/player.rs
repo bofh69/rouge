@@ -78,7 +78,7 @@ pub(crate) fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut Ecs) -> RunS
 pub(crate) fn get_item(ecs: &mut Ecs) -> RunState {
     let player_pos = resource_get!(ecs, PlayerPosition).0;
     let player_entity = resource_get!(ecs, PlayerEntity).0;
-    let mut output = resource_get_mut!(ecs, OutputQueue);
+    let output = resource_get!(ecs, OutputQueue);
 
     let mut query = <(Entity, &Position, &Item)>::query();
 

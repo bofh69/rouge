@@ -38,7 +38,7 @@ pub(crate) fn health(world: &mut SubWorld, #[resource] receive_health_queue: &Re
 pub(crate) fn output_die(
     entity: &Entity,
     stats: &mut CombatStats,
-    #[resource] output: &mut OutputQueue,
+    #[resource] output: &OutputQueue,
     #[resource] player_entity: &PlayerEntity,
 ) {
     if stats.hp < 1 {
