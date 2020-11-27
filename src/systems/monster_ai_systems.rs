@@ -4,24 +4,32 @@ use crate::queues::WantsToMeleeQueue;
 use crate::resources::{Map, PlayerEntity, PlayerPosition};
 use crate::RunState;
 use bracket_lib::prelude::*;
-use legion::{Entity, IntoQuery};
+use legion::{system, world::SubWorld, Entity, IntoQuery};
 
 // TODO: Change to proper monster_ai_system
-pub(crate) fn monster_ai_system(ecs: &mut crate::ecs::Ecs) {
-    let rs = *resource_get!(ecs, RunState);
-    if rs != RunState::Tick && rs != RunState::EnergylessTick {
+#[system]
+#[read_component(Monster)]
+#[write_component(Viewshed)]
+#[write_component(Position)]
+#[write_component(Energy)]
+pub(crate) fn monster_ai(
+    world: &mut SubWorld,
+    #[resource] rs: &RunState,
+    #[resource] map: &mut Map,
+    #[resource] player_pos: &mut PlayerPosition,
+    #[resource] player_entity: &mut PlayerEntity,
+    #[resource] wants_to_melee_queue: &WantsToMeleeQueue,
+) {
+    if *rs != RunState::Tick && *rs != RunState::EnergylessTick {
         return;
     }
-    let mut map = resource_get_mut!(ecs, Map);
-    let player_pos = resource_get!(ecs, PlayerPosition).0;
-    let player_entity = resource_get!(ecs, PlayerEntity).0;
-    let wants_to_melee_queue = resource_get!(ecs, WantsToMeleeQueue);
 
-    let mut cb = legion::systems::CommandBuffer::new(&ecs.world);
+    let player_pos = player_pos.0;
+    let player_entity = player_entity.0;
 
     let mut ready: Vec<_> = <(Entity, &mut Viewshed, &mut Position, &mut Energy)>::query()
         .filter(legion::query::component::<Monster>())
-        .iter_mut(&mut ecs.world)
+        .iter_mut(world)
         .filter(|(_, _, _, energy)| energy.energy >= 0)
         .collect();
 
@@ -64,5 +72,4 @@ pub(crate) fn monster_ai_system(ecs: &mut crate::ecs::Ecs) {
             }
         }
     }
-    cb.flush(&mut ecs.world);
 }

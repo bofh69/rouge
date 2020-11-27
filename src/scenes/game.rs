@@ -133,7 +133,10 @@ impl GameScene {
     pub(crate) fn new(ecs: &mut Ecs) -> Self {
         ecs.resources.insert(RunState::PreRun);
         let mut builder = Schedule::builder();
-        builder.add_system(crate::systems::regain_energy_system());
+        builder
+            .add_system(crate::systems::regain_energy_system())
+            .add_system(crate::systems::monster_ai_system())
+            .add_system(crate::systems::melee_combat_system());
         crate::systems::add_viewshed_system(ecs, &mut builder);
 
         let mut builder2 = Schedule::builder();
@@ -161,11 +164,6 @@ impl GameScene {
     fn run_systems(&mut self, ecs: &mut Ecs) {
         self.schedule.execute(&mut ecs.world, &mut ecs.resources);
 
-        crate::systems::monster_ai_system(ecs);
-        let mut schedule = legion::Schedule::builder()
-            .add_system(crate::systems::melee_combat_system())
-            .build();
-        schedule.execute(&mut ecs.world, &mut ecs.resources);
         crate::systems::drop_system(ecs);
         crate::systems::pickup_system(ecs);
         crate::systems::consume_system(ecs);
