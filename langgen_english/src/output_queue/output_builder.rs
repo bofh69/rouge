@@ -10,6 +10,7 @@ where
     QA: QueueAdapter<Entity>,
 {
     queue_adapter: &'a QA,
+    lock: std::sync::LockResult<std::sync::MutexGuard<'a, ()>>,
     _entity: PhantomData<Entity>,
 }
 
@@ -18,9 +19,10 @@ impl<'a, Entity, QA> OutputBuilder<'a, QA, Entity>
 where
     QA: QueueAdapter<Entity>,
 {
-    pub(crate) fn new(queue_adapter: &'a QA) -> Self {
+    pub(crate) fn new(queue_adapter: &'a QA, lock: std::sync::LockResult<std::sync::MutexGuard<'a, ()>>) -> Self {
         Self {
             queue_adapter,
+            lock,
             _entity: PhantomData::default(),
         }
     }
@@ -129,6 +131,7 @@ where
     QA: QueueAdapter<Entity>,
 {
     fn drop(&mut self) {
+        let _ = self.lock.as_ref();
         self.queue_adapter
             .push(FragmentEntry::<Entity>(crate::Fragment::EndOfLine));
     }

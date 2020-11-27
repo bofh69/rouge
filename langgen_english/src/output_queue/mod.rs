@@ -1,6 +1,7 @@
 mod output_builder;
 mod output_helper;
 
+use std::sync::Mutex;
 use crate::traits::EntityAdapter;
 use crate::traits::QueueAdapter;
 use crate::FragmentEntry;
@@ -35,6 +36,7 @@ where
     output_string: String,
     clear_output: bool,
     who: Entity,
+    lock: Mutex<()>,
 }
 
 impl<Entity, QA> OutputQueue<Entity, QA>
@@ -55,11 +57,12 @@ where
             output_string: String::new(),
             clear_output: false,
             who,
+            lock: Mutex::new(()),
         }
     }
 
     fn make_output_builder(&self) -> OutputBuilder<'_, QA, Entity> {
-        OutputBuilder::new(&self.queue_adapter)
+        OutputBuilder::new(&self.queue_adapter, self.lock.lock())
     }
 
     /// Output a/an short-name, Proper-name or something/someone/some/you.
