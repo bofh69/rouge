@@ -148,13 +148,3 @@ pub(crate) struct Viewshed {
     pub dirty: bool,
 }
 register_serialize!(Viewshed);
-
-// TODO should be changed to a message
-// TODO how to handle "get all"?
-#[derive(Serialize, Deserialize, Debug, Clone, TypeUuid)]
-#[uuid = "b71eebb4-dee9-4406-985a-554126e567d4"]
-pub(crate) struct WantsToPickupItem {
-    pub collected_by: Entity,
-    pub item: Entity,
-}
-register_serialize!(WantsToPickupItem);

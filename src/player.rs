@@ -1,7 +1,7 @@
 use crate::{
-    components::{CombatStats, Energy, Item, Position, Viewshed, WantsToPickupItem},
-    messages::WantsToMeleeMessage,
-    queues::WantsToMeleeQueue,
+    components::{CombatStats, Energy, Item, Position, Viewshed},
+    messages::{WantsToMeleeMessage, WantsToPickupMessage},
+    queues::{WantsToMeleeQueue, WantsToPickupQueue},
     resources::{Camera, Map, OutputQueue, PlayerEntity, PlayerPosition, PlayerTarget},
 };
 // use crate::components::*;
@@ -88,13 +88,11 @@ pub(crate) fn get_item(ecs: &mut Ecs) -> RunState {
         }
     }
     if let Some(found_entity) = found_entity {
-        ecs.world
-            .entry(player_entity)
-            .unwrap()
-            .add_component(WantsToPickupItem {
-                collected_by: player_entity,
-                item: found_entity,
-            });
+        let queue = resource_get!(ecs, WantsToPickupQueue);
+        queue.send(WantsToPickupMessage {
+            who: player_entity,
+            item: found_entity,
+        });
         RunState::EnergylessTick
     } else {
         output.s("There is nothing you can pickup here!");

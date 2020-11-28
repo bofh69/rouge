@@ -30,6 +30,11 @@ pub(crate) struct WantsToDropMessage {
     pub item: Entity,
 }
 
+pub(crate) struct WantsToPickupMessage {
+    pub who: Entity,
+    pub item: Entity,
+}
+
 pub(crate) struct WantsToUseMessage {
     pub who: Entity,
     pub item: Entity,

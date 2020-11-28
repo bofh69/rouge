@@ -1,7 +1,7 @@
-use crate::components::{Energy, InBackpack, ItemIndex, Position, WantsToPickupItem};
+use crate::components::{Energy, InBackpack, ItemIndex, Position};
 use crate::ecs::Ecs;
-use crate::messages::WantsToDropMessage;
-use crate::queues::WantsToDropQueue;
+use crate::messages::{WantsToDropMessage, WantsToPickupMessage};
+use crate::queues::{WantsToDropQueue, WantsToPickupQueue};
 use crate::resources::{OutputQueue, PlayerEntity, PlayerPosition};
 use ::bracket_lib::prelude::YELLOW;
 use ::legion::systems::CommandBuffer;
@@ -45,12 +45,13 @@ pub(crate) fn pickup_system(ecs: &mut Ecs) {
     let player_entity = resource_get!(ecs, PlayerEntity).0;
     let output = resource_get!(ecs, OutputQueue);
 
-    let things_to_pickup: Vec<_> = <&WantsToPickupItem>::query()
-        .iter(&ecs.world)
-        .map(|pickup| (pickup.collected_by, pickup.item))
-        .collect();
+    let queue = resource_get!(ecs, WantsToPickupQueue);
 
-    for (who_entity, item_entity) in things_to_pickup {
+    for WantsToPickupMessage {
+        who: who_entity,
+        item: item_entity,
+    } in queue.try_iter()
+    {
         if who_entity == player_entity {
             let mut possible_indexes = std::collections::HashSet::new();
             for c in 0..52 {
@@ -104,6 +105,5 @@ pub(crate) fn pickup_system(ecs: &mut Ecs) {
         item_entry.add_component(InBackpack { owner: who_entity });
         let mut who_entity = ecs.world.entry(who_entity).unwrap();
         who_entity.get_component_mut::<Energy>().unwrap().energy = -90;
-        who_entity.remove_component::<WantsToPickupItem>();
     }
 }
