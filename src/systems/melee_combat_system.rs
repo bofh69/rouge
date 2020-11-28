@@ -17,7 +17,7 @@ pub(crate) fn melee_combat(
     for WantsToMeleeMessage {
         attacker: attacker_entity,
         target: melee_target_entity,
-    } in wants_to_melee_queue.rx.try_iter()
+    } in wants_to_melee_queue.try_iter()
     {
         if let Ok(attacker_entry) = world.entry_ref(attacker_entity) {
             let attacker_power = attacker_entry.get_component::<CombatStats>().unwrap().power;
@@ -40,13 +40,10 @@ pub(crate) fn melee_combat(
                             .v(attacker_entity, "hit")
                             .the(melee_target_entity)
                             .string(format!(", for {} hp", damage));
-                        suffer_damage_queue
-                            .tx
-                            .send(SufferDamageMessage {
-                                target: melee_target_entity,
-                                amount: damage,
-                            })
-                            .unwrap();
+                        suffer_damage_queue.send(SufferDamageMessage {
+                            target: melee_target_entity,
+                            amount: damage,
+                        });
                     }
                 }
             } else {

@@ -3,8 +3,8 @@ use ::crossbeam_channel::*;
 use legion::*;
 
 pub(crate) struct Queue<T> {
-    pub tx: Sender<T>,
-    pub rx: Receiver<T>,
+    tx: Sender<T>,
+    rx: Receiver<T>,
 }
 
 pub(crate) type ReceiveHealthQueue = Queue<ReceiveHealthMessage>;
@@ -22,7 +22,7 @@ pub(crate) fn register_queues(resources: &mut Resources) {
 impl<T> Queue<T> {
     fn new() -> Self {
         let (tx, rx) = unbounded();
-        Self { tx, rx}
+        Self { tx, rx }
     }
 
     pub(crate) fn send(&self, msg: T) {

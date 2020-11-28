@@ -40,13 +40,10 @@ pub(crate) fn monster_ai(
             DistanceAlg::Chebyshev.distance2d(Point::new(pos.0.x, pos.0.y), player_pos.into());
         if distance < 1.5 {
             // Attack goes here
-            wants_to_melee_queue
-                .tx
-                .send(WantsToMeleeMessage {
-                    attacker: *entity,
-                    target: player_entity,
-                })
-                .unwrap();
+            wants_to_melee_queue.send(WantsToMeleeMessage {
+                attacker: *entity,
+                target: player_entity,
+            });
         } else if viewshed.visible_tiles.contains(&player_pos) {
             let path = a_star_search(
                 map.pos_to_idx(*pos) as i32,

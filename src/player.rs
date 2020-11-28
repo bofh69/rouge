@@ -40,13 +40,10 @@ pub(crate) fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut Ecs) -> RunS
                 // let mut output = resource_get_mut!(ecs, OutputQueue);
                 // output.s("From Hell's Heart, I stab thee!");
                 let wants_to_melee_queue = resource_get!(ecs, WantsToMeleeQueue);
-                wants_to_melee_queue
-                    .tx
-                    .send(WantsToMeleeMessage {
-                        attacker: player_entity,
-                        target: *potential_target,
-                    })
-                    .expect("Queue full");
+                wants_to_melee_queue.send(WantsToMeleeMessage {
+                    attacker: player_entity,
+                    target: *potential_target,
+                });
                 return RunState::EnergylessTick;
             }
         }

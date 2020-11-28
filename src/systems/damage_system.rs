@@ -8,7 +8,7 @@ use legion::{system, systems::CommandBuffer, Entity, EntityStore};
 #[system]
 #[write_component(CombatStats)]
 pub(crate) fn damage(world: &mut SubWorld, #[resource] queue: &SufferDamageQueue) {
-    for SufferDamageMessage { target, amount } in queue.rx.try_iter() {
+    for SufferDamageMessage { target, amount } in queue.try_iter() {
         if let Ok(ref mut entry) = world.entry_mut(target) {
             if let Ok(stats) = entry.get_component_mut::<CombatStats>() {
                 stats.hp -= amount;
@@ -20,7 +20,7 @@ pub(crate) fn damage(world: &mut SubWorld, #[resource] queue: &SufferDamageQueue
 #[system]
 #[write_component(CombatStats)]
 pub(crate) fn health(world: &mut SubWorld, #[resource] receive_health_queue: &ReceiveHealthQueue) {
-    for ReceiveHealthMessage { target, amount } in receive_health_queue.rx.try_iter() {
+    for ReceiveHealthMessage { target, amount } in receive_health_queue.try_iter() {
         if let Ok(ref mut entry) = world.entry_mut(target) {
             if let Ok(stats) = entry.get_component_mut::<CombatStats>() {
                 if stats.max_hp == stats.hp {
@@ -71,7 +71,7 @@ pub(crate) fn delete_the_dead(
 #[system]
 #[write_component(Item)]
 pub(crate) fn delete_items(cb: &mut CommandBuffer, #[resource] queue: &mut RemoveItemQueue) {
-    for RemoveItemMessage { target } in queue.rx.try_iter() {
+    for RemoveItemMessage { target } in queue.try_iter() {
         cb.remove(target);
     }
 }

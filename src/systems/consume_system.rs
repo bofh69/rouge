@@ -95,13 +95,10 @@ pub(crate) fn consume_system(ecs: &mut Ecs) {
                             output.the(target).v(target, "feel").s("better");
                         }
 
-                        receive_health_queue
-                            .tx
-                            .send(ReceiveHealthMessage {
-                                target,
-                                amount: heal_amount,
-                            })
-                            .unwrap();
+                        receive_health_queue.send(ReceiveHealthMessage {
+                            target,
+                            amount: heal_amount,
+                        });
                     }
                 } else {
                     let item_damage: Option<_> = {
@@ -122,23 +119,17 @@ pub(crate) fn consume_system(ecs: &mut Ecs) {
                                 .the(target)
                                 .v(target, "lose")
                                 .string(format!("{} hp", item_damage));
-                            suffer_damage_queue
-                                .tx
-                                .send(SufferDamageMessage {
-                                    target,
-                                    amount: item_damage,
-                                })
-                                .unwrap();
+                            suffer_damage_queue.send(SufferDamageMessage {
+                                target,
+                                amount: item_damage,
+                            });
                         }
                     }
                 }
                 let queue = resource_get!(ecs, RemoveItemQueue);
-                queue
-                    .tx
-                    .send(RemoveItemMessage {
-                        target: wants_to_use_item,
-                    })
-                    .expect("Queue full?");
+                queue.send(RemoveItemMessage {
+                    target: wants_to_use_item,
+                });
             } else if user_entity == player_entity {
                 let output = ecs.resources.get::<OutputQueue>().unwrap();
                 output.s("You cannot use").the(wants_to_use_item);
