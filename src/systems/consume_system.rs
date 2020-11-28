@@ -1,7 +1,7 @@
 use crate::components::*;
 use crate::ecs::Ecs;
-use crate::messages::{ReceiveHealthMessage, SufferDamageMessage};
-use crate::queues::{ReceiveHealthQueue, SufferDamageQueue};
+use crate::messages::{ReceiveHealthMessage, RemoveItemMessage, SufferDamageMessage};
+use crate::queues::{ReceiveHealthQueue, RemoveItemQueue, SufferDamageQueue};
 use crate::resources::{Camera, Map, OutputQueue};
 use crate::PlayerEntity;
 use crate::ScreenPosition;
@@ -132,7 +132,13 @@ pub(crate) fn consume_system(ecs: &mut Ecs) {
                         }
                     }
                 }
-                cb.add_component(wants_to_use_item, RemoveItem {});
+                let queue = resource_get!(ecs, RemoveItemQueue);
+                queue
+                    .tx
+                    .send(RemoveItemMessage {
+                        target: wants_to_use_item,
+                    })
+                    .expect("Queue full?");
             } else if user_entity == player_entity {
                 let output = ecs.resources.get::<OutputQueue>().unwrap();
                 output.s("You cannot use").the(wants_to_use_item);

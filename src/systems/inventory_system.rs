@@ -17,6 +17,7 @@ pub(crate) fn drop_system(ecs: &mut Ecs) {
         .collect();
 
     for (dropper_entity, item) in things_to_drop {
+        // TODO: Use Dropper's position.
         let mut entry = ecs.world.entry(item).unwrap();
         entry.add_component(Position(player_position));
         entry.remove_component::<InBackpack>();
@@ -84,6 +85,12 @@ pub(crate) fn pickup_system(ecs: &mut Ecs) {
                 .a(item_entity)
                 .color(YELLOW)
                 .string(format!(" ({})", crate::gui::index_to_letter(idx)));
+        } else {
+            output
+                .the(who_entity)
+                .v(who_entity, "pick")
+                .s("up")
+                .a(item_entity);
         }
 
         let mut item_entry = ecs.world.entry(item_entity).unwrap();

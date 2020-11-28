@@ -130,12 +130,6 @@ pub(crate) struct Ranged {
 }
 register_serialize!(Ranged);
 
-// TODO Change to Message
-#[derive(Serialize, Deserialize, Debug, Clone, TypeUuid)]
-#[uuid = "40d107c1-82fa-4520-ad35-cc2875f846f2"]
-pub(crate) struct RemoveItem {}
-register_serialize!(RemoveItem);
-
 #[derive(Serialize, Deserialize, Clone, TypeUuid)]
 #[uuid = "6315dfee-74b9-42f4-91dc-145b17723c2e"]
 pub(crate) struct Renderable {

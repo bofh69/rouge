@@ -1,6 +1,6 @@
 use crate::components::*;
-use crate::messages::{ReceiveHealthMessage, SufferDamageMessage};
-use crate::queues::{ReceiveHealthQueue, SufferDamageQueue};
+use crate::messages::{ReceiveHealthMessage, RemoveItemMessage, SufferDamageMessage};
+use crate::queues::{ReceiveHealthQueue, RemoveItemQueue, SufferDamageQueue};
 use crate::resources::{Map, OutputQueue, PlayerEntity, Time};
 use legion::world::SubWorld;
 use legion::{system, systems::CommandBuffer, Entity, EntityStore};
@@ -68,9 +68,12 @@ pub(crate) fn delete_the_dead(
     }
 }
 
-#[system(for_each)]
-pub(crate) fn delete_items(entity: &Entity, _remove: &RemoveItem, cb: &mut CommandBuffer) {
-    cb.remove(*entity);
+#[system]
+#[write_component(Item)]
+pub(crate) fn delete_items(cb: &mut CommandBuffer, #[resource] queue: &mut RemoveItemQueue) {
+    for RemoveItemMessage { target } in queue.rx.try_iter() {
+        cb.remove(target);
+    }
 }
 
 #[system(for_each)]

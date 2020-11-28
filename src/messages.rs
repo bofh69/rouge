@@ -17,3 +17,8 @@ pub(crate) struct WantsToMeleeMessage {
     pub attacker: Entity,
     pub target: Entity,
 }
+
+#[derive(Debug, Clone)]
+pub(crate) struct RemoveItemMessage {
+    pub target: Entity,
+}
