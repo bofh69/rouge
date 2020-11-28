@@ -167,12 +167,3 @@ pub(crate) struct WantsToPickupItem {
     pub item: Entity,
 }
 register_serialize!(WantsToPickupItem);
-
-// TODO should be changed to a message
-#[derive(Serialize, Deserialize, Clone, Debug, TypeUuid)]
-#[uuid = "34a530f3-abb5-4bf0-839f-bf3c4bddb25a"]
-pub(crate) struct WantsToUseItem {
-    pub item: Entity,
-    pub target: Option<MapPosition>,
-}
-register_serialize!(WantsToUseItem);

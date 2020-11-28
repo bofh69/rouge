@@ -1,6 +1,8 @@
 use crate::components::*;
 use crate::ecs::Ecs;
+use crate::messages::WantsToUseMessage;
 use crate::player::player_input;
+use crate::queues::WantsToUseQueue;
 use crate::resources::{Camera, Map, PlayerEntity, PlayerPosition};
 use crate::{gui, RunState};
 use ::bracket_lib::prelude::*;
@@ -38,6 +40,10 @@ impl Scene<Ecs> for GameScene {
             }
             RunState::AwaitingInput => {
                 newrunstate = player_input(ecs, ctx);
+                let mut schedule = legion::Schedule::builder()
+                    .add_system(crate::systems::output_system())
+                    .build();
+                schedule.execute(&mut ecs.world, &mut ecs.resources);
             }
             RunState::ReallyQuit => match gui::ask_bool(ctx, "Really quit?") {
                 (gui::ItemMenuResult::Selected, false) | (gui::ItemMenuResult::Cancel, _) => {
@@ -82,11 +88,12 @@ impl Scene<Ecs> for GameScene {
                                 }
                             };
                             if should_add_wants_to_use {
-                                let mut entry = ecs.world.entry(player_entity).unwrap();
-                                entry.add_component(WantsToUseItem {
+                                resource_get!(ecs, WantsToUseQueue).send(WantsToUseMessage {
+                                    who: player_entity,
                                     item: item_entity,
                                     target: None,
                                 });
+
                                 newrunstate = RunState::Tick;
                             }
                         }
@@ -107,13 +114,12 @@ impl Scene<Ecs> for GameScene {
                     (gui::ItemMenuResult::Selected, Some(target_position)) => {
                         let player_entity = resource_get!(ecs, PlayerEntity).0;
 
-                        ecs.world
-                            .entry(player_entity)
-                            .unwrap()
-                            .add_component(WantsToUseItem {
-                                item: item_entity,
-                                target: Some(target_position),
-                            });
+                        resource_get!(ecs, WantsToUseQueue).send(WantsToUseMessage {
+                            who: player_entity,
+                            item: item_entity,
+                            target: Some(target_position),
+                        });
+
                         newrunstate = RunState::Tick;
                     }
                     _ => (),
@@ -141,9 +147,11 @@ impl GameScene {
 
         let mut builder2 = Schedule::builder();
         builder2
-            // .flush()
+            .add_system(crate::systems::consume_system())
+            .flush()
             .add_system(crate::systems::damage_system())
             .add_system(crate::systems::health_system())
+            .flush()
             .add_system(crate::systems::output_die_system())
             .flush()
             .add_system(crate::systems::output_system())
@@ -166,7 +174,6 @@ impl GameScene {
 
         crate::systems::drop_system(ecs);
         crate::systems::pickup_system(ecs);
-        crate::systems::consume_system(ecs);
 
         self.schedule2.execute(&mut ecs.world, &mut ecs.resources);
     }
