@@ -12,7 +12,6 @@ use super::{Scene, SceneResult};
 
 pub(crate) struct GameScene {
     schedule: Schedule,
-    schedule2: Schedule,
 }
 
 impl Scene<Ecs> for GameScene {
@@ -143,11 +142,11 @@ impl GameScene {
             .add_system(crate::systems::regain_energy_system())
             .add_system(crate::systems::monster_ai_system())
             .add_system(crate::systems::melee_combat_system())
-            .add_system(crate::systems::drop_system());
+            .add_system(crate::systems::drop_system())
+            .add_system(crate::systems::pickup_system());
         crate::systems::add_viewshed_system(ecs, &mut builder);
-
-        let mut builder2 = Schedule::builder();
-        builder2
+        builder
+            .flush()
             .add_system(crate::systems::consume_system())
             .flush()
             .add_system(crate::systems::damage_system())
@@ -166,16 +165,11 @@ impl GameScene {
             .add_system(crate::systems::map_indexing_system());
         Self {
             schedule: builder.build(),
-            schedule2: builder2.build(),
         }
     }
 
     fn run_systems(&mut self, ecs: &mut Ecs) {
         self.schedule.execute(&mut ecs.world, &mut ecs.resources);
-
-        crate::systems::pickup_system(ecs);
-
-        self.schedule2.execute(&mut ecs.world, &mut ecs.resources);
     }
 
     fn draw_map(&mut self, ecs: &mut Ecs, ctx: &mut BTerm) {

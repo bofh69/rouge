@@ -1,5 +1,4 @@
 use crate::components::{Energy, InBackpack, ItemIndex, Position};
-use crate::ecs::Ecs;
 use crate::messages::{WantsToDropMessage, WantsToPickupMessage};
 use crate::queues::{WantsToDropQueue, WantsToPickupQueue};
 use crate::resources::{OutputQueue, PlayerEntity, PlayerPosition};
@@ -40,24 +39,30 @@ pub(crate) fn drop(
     }
 }
 
-// TODO: Make a proper system
-pub(crate) fn pickup_system(ecs: &mut Ecs) {
-    let player_entity = resource_get!(ecs, PlayerEntity).0;
-    let output = resource_get!(ecs, OutputQueue);
-
-    let queue = resource_get!(ecs, WantsToPickupQueue);
+#[system]
+#[write_component(Energy)]
+#[write_component(InBackpack)]
+#[write_component(ItemIndex)]
+pub(crate) fn pickup(
+    world: &mut SubWorld,
+    cb: &mut CommandBuffer,
+    #[resource] player_entity: &PlayerEntity,
+    #[resource] wants_to_pickup_queue: &mut WantsToPickupQueue,
+    #[resource] output: &OutputQueue,
+) {
+    let player_entity = player_entity.0;
 
     for WantsToPickupMessage {
         who: who_entity,
         item: item_entity,
-    } in queue.try_iter()
+    } in wants_to_pickup_queue.try_iter()
     {
         if who_entity == player_entity {
             let mut possible_indexes = std::collections::HashSet::new();
             for c in 0..52 {
                 possible_indexes.insert(c);
             }
-            for (item_idx, in_backpack) in <(&ItemIndex, &InBackpack)>::query().iter(&ecs.world) {
+            for (item_idx, in_backpack) in <(&ItemIndex, &InBackpack)>::query().iter(world) {
                 if in_backpack.owner == player_entity {
                     possible_indexes.remove(&item_idx.index);
                 }
@@ -66,24 +71,19 @@ pub(crate) fn pickup_system(ecs: &mut Ecs) {
             possible_indexes.sort_unstable();
 
             let mut idx = 255_u8;
-            if let Ok(ItemIndex { index }) = ecs
-                .world
-                .entry(item_entity)
-                .unwrap()
-                .get_component::<ItemIndex>()
-            {
+            let item_entry = world.entry_mut(item_entity).unwrap();
+            if let Ok(ItemIndex { index }) = item_entry.get_component::<ItemIndex>() {
                 if possible_indexes.contains(index) {
                     idx = *index;
                 }
             }
-            let mut item_entry = ecs.world.entry(item_entity).unwrap();
             if idx == 255_u8 {
                 if possible_indexes.is_empty() {
                     output.s("Your backpack is full.");
                     continue;
                 }
                 idx = possible_indexes[0];
-                item_entry.add_component(ItemIndex { index: idx });
+                cb.add_component(item_entity, ItemIndex { index: idx });
             }
             output
                 .the(who_entity)
@@ -100,10 +100,10 @@ pub(crate) fn pickup_system(ecs: &mut Ecs) {
                 .a(item_entity);
         }
 
-        let mut item_entry = ecs.world.entry(item_entity).unwrap();
-        item_entry.remove_component::<Position>();
-        item_entry.add_component(InBackpack { owner: who_entity });
-        let mut who_entity = ecs.world.entry(who_entity).unwrap();
+        cb.remove_component::<Position>(item_entity);
+        cb.add_component(item_entity, InBackpack { owner: who_entity });
+
+        let mut who_entity = world.entry_mut(who_entity).unwrap();
         who_entity.get_component_mut::<Energy>().unwrap().energy = -90;
     }
 }
