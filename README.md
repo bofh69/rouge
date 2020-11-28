@@ -5,10 +5,10 @@
 An experiment with [bracket_lib](https://github.com/thebracket/bracket-lib)
 and [legion](https://github.com/amethyst/legion), building a simple roguelike.
 
-This started when I followed the the excellent [Rougelike Tutorial in Rust](https://bfnightly.bracketproductions.com/rustbook/),
+This started when I followed the the excellent [Roguelike Tutorial - In Rust](https://bfnightly.bracketproductions.com/rustbook/),
 to learn about ECS. It has diverted a lot.
 
-It is not much of a game yet. Maybe one day it will be more fun playing tha coding it?
+It is not much of a game yet. Maybe one day it will be more fun playing than coding it?
 
 ## Screenshot
 ![Screenshot](screenshots/overview.png)
