@@ -6,7 +6,6 @@ use crate::RunState;
 use bracket_lib::prelude::*;
 use legion::{system, world::SubWorld, Entity, IntoQuery};
 
-// TODO: Change to proper monster_ai_system
 #[system]
 #[read_component(Monster)]
 #[write_component(Viewshed)]

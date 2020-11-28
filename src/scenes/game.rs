@@ -1,8 +1,8 @@
 use crate::components::*;
 use crate::ecs::Ecs;
-use crate::messages::WantsToUseMessage;
+use crate::messages::{WantsToDropMessage, WantsToUseMessage};
 use crate::player::player_input;
-use crate::queues::WantsToUseQueue;
+use crate::queues::{WantsToDropQueue, WantsToUseQueue};
 use crate::resources::{Camera, Map, PlayerEntity, PlayerPosition};
 use crate::{gui, RunState};
 use ::bracket_lib::prelude::*;
@@ -98,10 +98,10 @@ impl Scene<Ecs> for GameScene {
                             }
                         }
                         crate::InventoryType::Drop => {
-                            ecs.world
-                                .entry(player_entity)
-                                .unwrap()
-                                .add_component(WantsToDropItem { item: item_entity });
+                            resource_get!(ecs, WantsToDropQueue).send(WantsToDropMessage {
+                                who: player_entity,
+                                item: item_entity,
+                            });
                             newrunstate = RunState::Tick;
                         }
                     }
@@ -142,7 +142,8 @@ impl GameScene {
         builder
             .add_system(crate::systems::regain_energy_system())
             .add_system(crate::systems::monster_ai_system())
-            .add_system(crate::systems::melee_combat_system());
+            .add_system(crate::systems::melee_combat_system())
+            .add_system(crate::systems::drop_system());
         crate::systems::add_viewshed_system(ecs, &mut builder);
 
         let mut builder2 = Schedule::builder();
@@ -172,7 +173,6 @@ impl GameScene {
     fn run_systems(&mut self, ecs: &mut Ecs) {
         self.schedule.execute(&mut ecs.world, &mut ecs.resources);
 
-        crate::systems::drop_system(ecs);
         crate::systems::pickup_system(ecs);
 
         self.schedule2.execute(&mut ecs.world, &mut ecs.resources);

@@ -150,15 +150,6 @@ pub(crate) struct Viewshed {
 register_serialize!(Viewshed);
 
 // TODO should be changed to a message
-// TODO how to handle "drop all"?
-#[derive(Serialize, Deserialize, Clone, Debug, TypeUuid)]
-#[uuid = "d8d94a6c-53ee-4d7c-aee7-217cd068241c"]
-pub(crate) struct WantsToDropItem {
-    pub item: Entity,
-}
-register_serialize!(WantsToDropItem);
-
-// TODO should be changed to a message
 // TODO how to handle "get all"?
 #[derive(Serialize, Deserialize, Debug, Clone, TypeUuid)]
 #[uuid = "b71eebb4-dee9-4406-985a-554126e567d4"]

@@ -1,36 +1,42 @@
-use crate::components::{
-    Energy, InBackpack, ItemIndex, Position, WantsToDropItem, WantsToPickupItem,
-};
+use crate::components::{Energy, InBackpack, ItemIndex, Position, WantsToPickupItem};
 use crate::ecs::Ecs;
+use crate::messages::WantsToDropMessage;
+use crate::queues::WantsToDropQueue;
 use crate::resources::{OutputQueue, PlayerEntity, PlayerPosition};
 use ::bracket_lib::prelude::YELLOW;
-use ::legion::{Entity, IntoQuery};
+use ::legion::systems::CommandBuffer;
+use ::legion::world::SubWorld;
+use ::legion::*;
 
-// TODO: Make a proper system
-pub(crate) fn drop_system(ecs: &mut Ecs) {
-    let player_position = resource_get!(ecs, PlayerPosition).0;
-    let player_entity = resource_get!(ecs, PlayerEntity).0;
+#[system]
+#[write_component(Energy)]
+pub(crate) fn drop(
+    world: &mut SubWorld,
+    cb: &mut CommandBuffer,
+    #[resource] player_position: &PlayerPosition,
+    #[resource] player_entity: &PlayerEntity,
+    #[resource] wants_to_drop_queue: &mut WantsToDropQueue,
+    #[resource] output: &OutputQueue,
+) {
+    let player_position = player_position.0;
+    let player_entity = player_entity.0;
 
-    let things_to_drop: Vec<_> = <(Entity, &WantsToDropItem)>::query()
-        .iter(&ecs.world)
-        .map(|(entity, drop)| (*entity, drop.item))
-        .collect();
-
-    for (dropper_entity, item) in things_to_drop {
+    for WantsToDropMessage {
+        who: dropper_entity,
+        item,
+    } in wants_to_drop_queue.try_iter()
+    {
         // TODO: Use Dropper's position.
-        let mut entry = ecs.world.entry(item).unwrap();
-        entry.add_component(Position(player_position));
-        entry.remove_component::<InBackpack>();
+        cb.add_component(item, Position(player_position));
+        cb.remove_component::<InBackpack>(item);
         if dropper_entity == player_entity {
-            let output = resource_get!(ecs, OutputQueue);
             output
                 .the(dropper_entity)
                 .v(dropper_entity, "drop")
                 .the(item);
         }
-        let mut who_entity = ecs.world.entry(dropper_entity).unwrap();
+        let mut who_entity = world.entry_mut(dropper_entity).unwrap();
         who_entity.get_component_mut::<Energy>().unwrap().energy = -50;
-        who_entity.remove_component::<WantsToDropItem>();
     }
 }
 
