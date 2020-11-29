@@ -2,7 +2,8 @@ use crate::components::{Player, Position, Viewshed};
 use crate::positions::MapPosition;
 use crate::resources::{Map, PlayerEntity, PlayerTarget};
 use ::bracket_lib::prelude::field_of_view;
-use ::legion::{systems, Entity, IntoQuery, Read, SystemBuilder, Write};
+use ::legion::world::SubWorld;
+use ::legion::*;
 
 struct ViewshedPlayerUpdate(bool);
 
@@ -48,30 +49,32 @@ pub(crate) fn add_viewshed_system(
         );
     schedule_builder.add_system(system);
 
-    let system = SystemBuilder::new("Update Map")
-        .read_resource::<ViewshedPlayerUpdate>()
-        .write_resource::<Map>()
-        .write_resource::<PlayerTarget>()
-        .with_query(<(Write<Viewshed>, Read<Player>)>::query())
-        .build(
-            move |_commands, world, (viewshed_player_update, map, player_target), query| {
-                if viewshed_player_update.0 {
-                    for vt in &mut map.visible_tiles {
-                        *vt = false;
-                    }
+    schedule_builder.add_system(update_map_for_player_system());
+}
 
-                    for (viewshed, _player) in query.iter_mut(world) {
-                        for vis in &viewshed.visible_tiles {
-                            let idx = map.map_pos_to_idx(*vis);
-                            map.revealed_tiles[idx] = true;
-                            map.visible_tiles[idx] = true;
-                            if map.dangerous[idx] {
-                                **player_target = PlayerTarget::None;
-                            }
-                        }
-                    }
+#[system]
+#[read_component(Player)]
+#[write_component(Viewshed)]
+fn update_map_for_player(
+    world: &mut SubWorld,
+    #[resource] player_update: &ViewshedPlayerUpdate,
+    #[resource] map: &mut Map,
+    #[resource] player_target: &mut PlayerTarget,
+) {
+    if player_update.0 {
+        for vt in &mut map.visible_tiles {
+            *vt = false;
+        }
+
+        for (viewshed, _player) in <(&mut Viewshed, &Player)>::query().iter_mut(world) {
+            for vis in &viewshed.visible_tiles {
+                let idx = map.map_pos_to_idx(*vis);
+                map.revealed_tiles[idx] = true;
+                map.visible_tiles[idx] = true;
+                if map.dangerous[idx] {
+                    *player_target = PlayerTarget::None;
                 }
-            },
-        );
-    schedule_builder.add_system(system);
+            }
+        }
+    }
 }
