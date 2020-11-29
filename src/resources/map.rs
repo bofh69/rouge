@@ -2,6 +2,7 @@ use crate::components::Position;
 use crate::ecs::Ecs;
 use crate::positions::{MapPosition, ScreenPosition};
 use crate::resources::Camera;
+use crate::Direction;
 use ::bracket_lib::prelude::*;
 use ::legion::*;
 use ::serde::*;
@@ -64,29 +65,18 @@ impl BaseMap for Map {
         let x = idx as i32 % self.width;
         let y = idx as i32 / self.width;
 
-        if self.is_exit_valid(x - 1, y) {
-            exits.push((idx - 1, 1.0))
-        }
-        if self.is_exit_valid(x + 1, y) {
-            exits.push((idx + 1, 1.0))
-        }
-        if self.is_exit_valid(x, y - 1) {
-            exits.push((idx - self.width as usize, 1.0))
-        }
-        if self.is_exit_valid(x, y + 1) {
-            exits.push((idx + self.width as usize, 1.0))
-        }
-        if self.is_exit_valid(x - 1, y - 1) {
-            exits.push((idx - (self.width - 1) as usize, 1.45));
-        }
-        if self.is_exit_valid(x + 1, y - 1) {
-            exits.push((idx - (self.width + 1) as usize, 1.45));
-        }
-        if self.is_exit_valid(x - 1, y + 1) {
-            exits.push((idx + (self.width - 1) as usize, 1.45));
-        }
-        if self.is_exit_valid(x + 1, y + 1) {
-            exits.push((idx + (self.width + 1) as usize, 1.45));
+        let pos = MapPosition { x, y };
+
+        for dir in Direction::iter() {
+            let pos = pos + *dir;
+            if self.is_exit_valid(pos.x, pos.y) {
+                let (dx, dy): (i32, i32) = (*dir).into();
+                if dx * dy == 0 {
+                    exits.push((self.map_pos_to_idx(pos), 1.0));
+                } else {
+                    exits.push((self.map_pos_to_idx(pos), 1.01));
+                }
+            }
         }
 
         exits
@@ -200,11 +190,11 @@ impl Map {
             Point::new(x - 1, y - 1),
             Point::new(x, y - 1),
             Point::new(x + 1, y - 1),
-            Point::new(x - 1, y),
             Point::new(x + 1, y),
-            Point::new(x - 1, y + 1),
-            Point::new(x, y + 1),
             Point::new(x + 1, y + 1),
+            Point::new(x, y + 1),
+            Point::new(x - 1, y + 1),
+            Point::new(x - 1, y),
         ]
     }
 
@@ -364,6 +354,78 @@ impl Map {
         map.populate_blocked();
 
         map
+    }
+
+    pub(crate) fn find_closest_unknown(&self, pos: MapPosition) -> Option<MapPosition> {
+        // TODO: Change to breadth first search, then return the position,
+        // use autowalk to get there.
+
+        let mut visited: Vec<bool> = Vec::with_capacity((self.height * self.width) as usize);
+        for _y in 0..=self.height - 1 {
+            for _x in 0..=self.width - 1 {
+                visited.push(false);
+            }
+        }
+
+        let mut expand = std::collections::VecDeque::new();
+        expand.push_back(pos);
+
+        while let Some(curr_pos) = expand.pop_front() {
+            let idx = self.pos_to_idx(curr_pos.into());
+            if !visited[idx] {
+                visited[idx] = true;
+                for dir in Direction::iter() {
+                    let pos = curr_pos + *dir;
+                    let idx = self.xy_to_idx(pos.x, pos.y);
+                    if !self.is_solid(pos.into()) && !self.revealed_tiles[idx] {
+                        return curr_pos.into();
+                    } else if !self.is_solid(pos.into()) {
+                        expand.push_back(pos);
+                    }
+                }
+            }
+        }
+
+        None
+
+        /*
+        let mut starts = vec![];
+        for y in 1..self.height - 1 {
+            for x in 1..self.width - 1 {
+                let idx = self.xy_to_idx(x, y);
+                let pos = Point::new(x, y);
+                if !self.is_solid(pos) && !self.revealed_tiles[idx] {
+                    for dir in Direction::iter() {
+                        let pos = pos + *dir;
+                        let idx = self.xy_to_idx(pos.x, pos.y);
+                        if self.revealed_tiles[idx] && !self.is_solid(pos) {
+                            starts.push(idx);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        let dijkstra_map =
+            bracket_lib::prelude::DijkstraMap::new(self.width, self.height, &starts, self, 80.);
+
+        let mut result = Direction::North;
+        let mut min = f32::MAX;
+        for dir in Direction::iter() {
+            let pos = pos + *dir;
+            if !self.is_solid(pos.into()) {
+                let idx = self.xy_to_idx(pos.x, pos.y);
+                let val = dijkstra_map.map[idx];
+
+                if val < min {
+                    result = *dir;
+                    min = val;
+                }
+            }
+        }
+        result
+        */
     }
 }
 

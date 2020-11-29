@@ -12,7 +12,8 @@ use bracket_lib::prelude::*;
 use legion::*;
 use std::cmp::{max, min};
 
-pub(crate) fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut Ecs) -> RunState {
+pub(crate) fn try_move_player(dir: Direction, ecs: &mut Ecs) -> RunState {
+    let (delta_x, delta_y) = dir.into();
     let player_entity = resource_get!(ecs, PlayerEntity).0;
 
     let mut ret = RunState::AwaitingInput;
@@ -137,8 +138,8 @@ fn get_auto_walk_dest(ecs: &mut Ecs) -> Option<(i32, i32)> {
             if path.success && path.steps.len() > 1 {
                 let new_idx = path.steps[1];
                 let new_pos = map.index_to_point2d(new_idx);
-                let (dx, dy) = (new_pos.x - player_pos.x, new_pos.y - player_pos.y);
-                return Some((dx, dy));
+                let dir = (new_pos.x - player_pos.x, new_pos.y - player_pos.y);
+                return Some(dir);
             }
         }
         PlayerTarget::Dir(dir) => {
@@ -159,7 +160,7 @@ fn auto_walk(ecs: &mut Ecs) -> RunState {
     let dest = get_auto_walk_dest(ecs);
 
     if let Some((dx, dy)) = dest {
-        if try_move_player(dx, dy, ecs) == RunState::EnergylessTick {
+        if try_move_player((dx, dy).into(), ecs) == RunState::EnergylessTick {
             return RunState::EnergylessTick;
         }
     }
@@ -183,6 +184,20 @@ pub(crate) fn player_input(ecs: &mut Ecs, ctx: &mut BTerm) -> RunState {
             Some(VirtualKeyCode::Q) => {
                 return RunState::SaveGame;
             }
+            Some(VirtualKeyCode::X) => {
+                let target = {
+                    let map = resource_get!(ecs, Map);
+                    let player_pos = resource_get!(ecs, PlayerPosition).0;
+                    map.find_closest_unknown(player_pos)
+                };
+                dbg!(target);
+                if let Some(target) = target {
+                    let mut target_pos = resource_get_mut!(ecs, PlayerTarget);
+                    *target_pos = PlayerTarget::Position(target);
+                }
+                return auto_walk(ecs);
+            }
+
             Some(key) => {
                 clear_auto_walk(ecs);
                 if let Some(dir) = crate::gui::key_to_dir(key) {
@@ -198,14 +213,22 @@ pub(crate) fn player_input(ecs: &mut Ecs, ctx: &mut BTerm) -> RunState {
                 clear_auto_walk(ecs);
                 match key {
                     // Player movement
-                    VirtualKeyCode::H | VirtualKeyCode::Left => try_move_player(-1, 0, ecs),
-                    VirtualKeyCode::L | VirtualKeyCode::Right => try_move_player(1, 0, ecs),
-                    VirtualKeyCode::K | VirtualKeyCode::Up => try_move_player(0, -1, ecs),
-                    VirtualKeyCode::J | VirtualKeyCode::Down => try_move_player(0, 1, ecs),
-                    VirtualKeyCode::Y => try_move_player(-1, -1, ecs),
-                    VirtualKeyCode::U => try_move_player(1, -1, ecs),
-                    VirtualKeyCode::B => try_move_player(-1, 1, ecs),
-                    VirtualKeyCode::N => try_move_player(1, 1, ecs),
+                    VirtualKeyCode::H | VirtualKeyCode::Left => {
+                        try_move_player(Direction::West, ecs)
+                    }
+                    VirtualKeyCode::L | VirtualKeyCode::Right => {
+                        try_move_player(Direction::East, ecs)
+                    }
+                    VirtualKeyCode::K | VirtualKeyCode::Up => {
+                        try_move_player(Direction::North, ecs)
+                    }
+                    VirtualKeyCode::J | VirtualKeyCode::Down => {
+                        try_move_player(Direction::South, ecs)
+                    }
+                    VirtualKeyCode::Y => try_move_player(Direction::NorthWest, ecs),
+                    VirtualKeyCode::U => try_move_player(Direction::NorthEast, ecs),
+                    VirtualKeyCode::B => try_move_player(Direction::SouthWest, ecs),
+                    VirtualKeyCode::N => try_move_player(Direction::SouthEast, ecs),
 
                     VirtualKeyCode::Space => {
                         let player_entity = resource_get!(ecs, PlayerEntity).0;

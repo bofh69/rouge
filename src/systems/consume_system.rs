@@ -6,6 +6,7 @@ use crate::PlayerEntity;
 use crate::ScreenPosition;
 use legion::*;
 
+#[allow(clippy::too_many_arguments)]
 #[system]
 #[read_component(HealthProvider)]
 #[read_component(InflictsDamage)]

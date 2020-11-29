@@ -31,6 +31,17 @@ impl std::ops::Add<(i32, i32)> for MapPosition {
     }
 }
 
+impl std::ops::Add<Point> for MapPosition {
+    type Output = MapPosition;
+
+    fn add(self, rhs: Point) -> Self::Output {
+        MapPosition {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+        }
+    }
+}
+
 impl std::ops::Sub<MapPosition> for MapPosition {
     type Output = Point;
 
@@ -86,6 +97,16 @@ pub(crate) enum Direction {
     NorthEast = 10,
 }
 
+impl Direction {
+    pub(crate) fn iter() -> impl Iterator<Item = &'static Direction> {
+        use Direction::*;
+        [
+            North, NorthEast, East, SouthEast, South, SouthWest, West, NorthWest,
+        ]
+        .iter()
+    }
+}
+
 fn dir_to_dx_dy(dir: Direction) -> (i32, i32) {
     match dir {
         Direction::West => (-1, 0),
@@ -96,6 +117,22 @@ fn dir_to_dx_dy(dir: Direction) -> (i32, i32) {
         Direction::North => (0, -1),
         Direction::NorthWest => (-1, -1),
         Direction::NorthEast => (1, -1),
+    }
+}
+
+impl Into<Direction> for (i32, i32) {
+    fn into(self) -> Direction {
+        match self {
+            (-1, 0) => Direction::West,
+            (1, 0) => Direction::East,
+            (0, 1) => Direction::South,
+            (-1, 1) => Direction::SouthWest,
+            (1, 1) => Direction::SouthEast,
+            (0, -1) => Direction::North,
+            (-1, -1) => Direction::NorthWest,
+            (1, -1) => Direction::NorthEast,
+            _ => panic!("Incorrect direcion"),
+        }
     }
 }
 
@@ -113,6 +150,15 @@ impl From<Direction> for Point {
 
 impl std::ops::Add<Direction> for Point {
     type Output = Point;
+
+    fn add(self, rhs: Direction) -> Self::Output {
+        let rhs: Point = rhs.into();
+        self + rhs
+    }
+}
+
+impl std::ops::Add<Direction> for MapPosition {
+    type Output = MapPosition;
 
     fn add(self, rhs: Direction) -> Self::Output {
         let rhs: Point = rhs.into();
