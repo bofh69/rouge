@@ -190,7 +190,6 @@ pub(crate) fn player_input(ecs: &mut Ecs, ctx: &mut BTerm) -> RunState {
                     let player_pos = resource_get!(ecs, PlayerPosition).0;
                     map.find_closest_unknown(player_pos)
                 };
-                dbg!(target);
                 if let Some(target) = target {
                     let mut target_pos = resource_get_mut!(ecs, PlayerTarget);
                     *target_pos = PlayerTarget::Position(target);

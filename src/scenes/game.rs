@@ -16,6 +16,12 @@ pub(crate) struct GameScene {
 
 impl Scene<Ecs> for GameScene {
     fn tick(&mut self, ecs: &mut Ecs, ctx: &mut BTerm) -> SceneResult<Ecs> {
+        if let Some(VirtualKeyCode::F1) = ctx.key {
+            return SceneResult::Push(Box::new(super::show_text::ShowText::new(include_str!(
+                "../../assets/help.txt"
+            ))));
+        }
+
         for i in 0..=crate::LAYERS {
             ctx.set_active_console(i);
             ctx.cls();

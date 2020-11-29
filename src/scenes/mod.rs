@@ -1,6 +1,7 @@
 mod game;
 mod main_menu;
 mod save_game;
+mod show_text;
 
 pub(crate) use main_menu::*;
 // pub(crate) use save_game::*;

@@ -1,0 +1,13 @@
+Keys:
+
+hjkl    - left, down, up, right.
+yubn    - left+up, right+up, left+down, right+down.
++ SHIFT - run in the given direction.
+a       - apply/eat
+d       - drop
+,       - pickup
+X       - explore
+Q       - save & quit
+SPACE   - wait
+ESC     - quit
+
