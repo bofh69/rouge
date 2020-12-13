@@ -35,16 +35,14 @@ pub(crate) fn camera_update(
 }
 
 impl Camera {
-    pub fn new(pos: PlayerPosition, width: i32, height: i32) -> Self {
-        let mut camera = Self {
+    pub fn new(width: i32, height: i32) -> Self {
+        Self {
             w: width,
             h: height,
             offset: MapPosition { x: -1, y: -1 },
             sub_tile_offset: (0.0, 0.0),
             old_player_pos: MapPosition { x: -1, y: -1 },
-        };
-        camera.center(pos);
-        camera
+        }
     }
 
     // Hard jump to new position

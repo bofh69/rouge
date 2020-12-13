@@ -35,3 +35,7 @@ pub(crate) struct Time {
     pub last_real_time_ms: i64,
     pub tick: i64,
 }
+
+// TODO: pub(crate) fn new(gs: &State) -> Result<()> {
+// TODO: pub(crate) fn save(gs: &State, writer: &mut dyn Write) -> Result<()> {
+// pub(crate) fn load(gs: &mut State, reader: &mut dyn Read) -> Result<()> {

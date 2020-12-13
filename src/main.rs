@@ -22,7 +22,9 @@ use ::legion::Entity;
 use ::legion_typeuuid::collect_registry;
 use ::std::collections::VecDeque;
 use ::std::sync::Mutex;
+use bincode::Options;
 use legion_typeuuid::SerializableTypeUuid;
+use std::io::Read;
 use std::io::Write;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error + 'static + Send + Sync>>;
@@ -97,14 +99,10 @@ impl GameState for State {
 impl State {}
 
 const LAYERS: usize = 7;
+const SCREEN_WIDTH: i32 = 80;
+const SCREEN_HEIGHT: i32 = 50;
 
 fn main() -> Result<()> {
-    const SCREEN_WIDTH: i32 = 80;
-    const SCREEN_HEIGHT: i32 = 50;
-
-    let map = resources::Map::new_map_rooms_and_corridors();
-    let player_pos = map.rooms[0].center();
-
     let mut builder = BTermBuilder::simple(SCREEN_WIDTH, SCREEN_HEIGHT)?
         .with_title("Rouge World")
         .with_font("terminal8x8.png", 8, 8)
@@ -129,42 +127,21 @@ fn main() -> Result<()> {
         old_shift: false,
     };
 
-    gs.ecs.resources.insert(RandomNumberGenerator::new());
-    gs.ecs.resources.insert(GameLog::new());
+    gs.ecs
+        .resources
+        .insert(Camera::new(SCREEN_WIDTH, SCREEN_HEIGHT - 7));
 
-    for room in map.rooms.iter().skip(1) {
-        spawner::spawn_room(&mut gs.ecs, room);
-    }
-    let player_entity = spawner::player(&mut gs.ecs, player_pos.x, player_pos.y);
-
-    let output_queue = OutputQueue::new(Mutex::new(VecDeque::new()), player_entity);
-    output_queue.s("Welcome to ").color(RED).s("Rouge");
-    gs.ecs.resources.insert(output_queue);
-
-    let player_pos = PlayerPosition(MapPosition {
-        x: player_pos.x,
-        y: player_pos.y,
-    });
-    gs.ecs.resources.insert(Camera::new(
-        player_pos,
-        SCREEN_WIDTH as i32,
-        SCREEN_HEIGHT as i32 - 7,
-    ));
-    gs.ecs.resources.insert(map);
-    gs.ecs.resources.insert(player_pos);
-    gs.ecs.resources.insert(PlayerEntity(player_entity));
-    gs.ecs.resources.insert(PlayerTarget::None);
-    queues::register_queues(&mut gs.ecs.resources);
+    // new(&mut gs.ecs, SCREEN_WIDTH, SCREEN_HEIGHT)?;
 
     gs.scene_manager
         .push(Box::new(scenes::MainMenuScene::new()));
 
+    /*
     {
         let mut fil = std::fs::File::create("save.dat")?;
         save(&gs, &mut fil)?;
     }
 
-    /*
     {
         let mut fil = std::fs::File::open("save.dat")?;
         load(&mut gs, &mut fil)?;
@@ -175,30 +152,78 @@ fn main() -> Result<()> {
     Ok(())
 }
 
+fn bincode_options() -> bincode::DefaultOptions {
+    bincode::DefaultOptions::default()
+}
+
+pub(crate) fn new(ecs: &mut ecs::Ecs) -> Result<()> {
+    let map = resources::Map::new_map_rooms_and_corridors();
+    let player_pos = map.rooms[0].center();
+
+    ecs.resources.insert(RandomNumberGenerator::new());
+    ecs.resources.insert(GameLog::new());
+
+    for room in map.rooms.iter().skip(1) {
+        spawner::spawn_room(ecs, room);
+    }
+    let player_entity = spawner::player(ecs, player_pos.x, player_pos.y);
+
+    let output_queue = OutputQueue::new(Mutex::new(VecDeque::new()), player_entity);
+    output_queue.s("Welcome to ").color(RED).s("Rouge");
+    ecs.resources.insert(output_queue);
+
+    let player_pos = PlayerPosition(MapPosition {
+        x: player_pos.x,
+        y: player_pos.y,
+    });
+    {
+        let mut camera = resource_get_mut!(ecs, Camera);
+        camera.center(player_pos);
+    }
+
+    ecs.resources.insert(map);
+    ecs.resources.insert(player_pos);
+    ecs.resources.insert(PlayerEntity(player_entity));
+    ecs.resources.insert(PlayerTarget::None);
+    queues::register_queues(&mut ecs.resources);
+
+    Ok(())
+}
+
 pub(crate) fn save(gs: &State, writer: &mut dyn Write) -> Result<()> {
-    let bytes = serde_cbor::to_vec(
-        &gs.ecs
-            .world
-            .as_serializable(legion::query::any(), &gs.registry),
-    )?;
-    writer.write_all(&bytes).unwrap();
+    let map = &*resource_get!(gs.ecs, crate::resources::Map);
+    let data = bincode::serialize(&map)?;
+    writer.write_all(&data.len().to_le_bytes())?;
+    writer.write_all(&data)?;
 
-    // Write resources.
-    // TODO: This probably doesn't work to deserialize later, it will be joined with the above code:
-    serde_cbor::to_writer(writer, &*resource_get!(gs.ecs, crate::resources::Map)).unwrap();
+    let serializable = gs
+        .ecs
+        .world
+        .as_serializable(legion::query::any(), &gs.registry);
+    // let encoder = flate2::write::GzEncoder::new(writer, flate2::Compression::fast());
+    bincode_options().serialize_into(writer, &serializable)?;
 
     Ok(())
 }
 
-/*
 pub(crate) fn load(gs: &mut State, reader: &mut dyn Read) -> Result<()> {
-    use serde::de::DeserializeSeed;
-    let obj = serde_cbor::de::from_reader(reader)?;
-    let world: ::legion::World = gs.registry.as_deserialize().deserialize(obj)?;
+    // let mut decoder = flate2::read::GzDecoder::new(reader);
 
-    // Read resources
-    //serde_cbor::to_writer(writer, &*resource_get!(gs.ecs, crate::resources::Map)).unwrap();
+    let map = {
+        let mut data = [0_u8; 8];
+        reader.read_exact(&mut data)?;
+        let len = usize::from_le_bytes(data);
+        let mut data = vec![0_u8; len];
+        reader.read_exact(&mut data)?;
+        bincode::deserialize(&data)?
+    };
+
+    gs.ecs.resources.insert(map);
+
+    let mut deser = bincode::Deserializer::with_reader(reader, bincode_options());
+    let registry = collect_registry();
+    use serde::de::DeserializeSeed;
+    let mut _world = registry.as_deserialize().deserialize(&mut deser).unwrap();
 
     Ok(())
 }
-*/

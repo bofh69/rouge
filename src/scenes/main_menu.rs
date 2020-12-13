@@ -14,7 +14,10 @@ impl Scene<Ecs> for MainMenuScene {
         ctx.cls();
         self.schedule.execute(&mut ecs.world, &mut ecs.resources);
         match crate::gui::show_main_menu(ctx, ecs, self.state) {
-            Selected(New) => SceneResult::Replace(Box::new(super::game::GameScene::new(ecs))),
+            Selected(New) => {
+                crate::new(ecs).unwrap();
+                SceneResult::Replace(Box::new(super::game::GameScene::new(ecs)))
+            }
             Selected(Quit) => SceneResult::Pop,
             Selected(Load) => {
                 // TODO Implement call to load
