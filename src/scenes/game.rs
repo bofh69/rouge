@@ -4,6 +4,7 @@ use crate::messages::{WantsToDropMessage, WantsToUseMessage};
 use crate::player::player_input;
 use crate::queues::{WantsToDropQueue, WantsToUseQueue};
 use crate::resources::{Camera, Map, PlayerEntity, PlayerPosition};
+use crate::State;
 use crate::{gui, RunState};
 use ::bracket_lib::prelude::*;
 use ::legion::*;
@@ -14,8 +15,10 @@ pub(crate) struct GameScene {
     schedule: Schedule,
 }
 
-impl Scene<Ecs> for GameScene {
-    fn tick(&mut self, ecs: &mut Ecs, ctx: &mut BTerm) -> SceneResult<Ecs> {
+impl Scene<State> for GameScene {
+    fn tick(&mut self, gs: &mut State, ctx: &mut BTerm) -> SceneResult<State> {
+        let ecs = &mut gs.ecs;
+
         if let Some(VirtualKeyCode::F1) = ctx.key {
             return SceneResult::Push(Box::new(super::show_text::ShowText::new(include_str!(
                 "../../assets/help.txt"
@@ -141,7 +144,9 @@ impl Scene<Ecs> for GameScene {
 }
 
 impl GameScene {
-    pub(crate) fn new(ecs: &mut Ecs) -> Self {
+    pub(crate) fn new(gs: &mut State) -> Self {
+        let ecs = &mut gs.ecs;
+
         ecs.resources.insert(RunState::PreRun);
         let mut builder = Schedule::builder();
         builder

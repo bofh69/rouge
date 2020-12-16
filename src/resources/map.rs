@@ -12,7 +12,6 @@ pub(crate) const MAP_WIDTH: i32 = 120;
 pub(crate) const MAP_HEIGHT: i32 = 60;
 
 #[derive(Serialize, Deserialize, PartialEq, Copy, Clone, Debug)]
-#[serde(tag = "type")]
 pub(crate) enum WallType {
     Vertical,          /* - */
     Horizontal,        /* | */
@@ -29,7 +28,6 @@ pub(crate) enum WallType {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Copy, Clone, Debug)]
-#[serde(tag = "type")]
 pub(crate) enum TileType {
     Stone,
     Wall(WallType),

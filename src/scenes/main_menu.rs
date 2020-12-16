@@ -1,7 +1,7 @@
 use super::*;
-use crate::ecs::Ecs;
 use crate::gui::MainMenuResult::*;
 use crate::gui::MainMenuState::*;
+use crate::State;
 use legion::Schedule;
 
 pub(crate) struct MainMenuScene {
@@ -9,19 +9,28 @@ pub(crate) struct MainMenuScene {
     schedule: Schedule,
 }
 
-impl Scene<Ecs> for MainMenuScene {
-    fn tick(&mut self, ecs: &mut Ecs, ctx: &mut BTerm) -> SceneResult<Ecs> {
+impl Scene<State> for MainMenuScene {
+    fn tick(&mut self, gs: &mut State, ctx: &mut BTerm) -> SceneResult<State> {
         ctx.cls();
-        self.schedule.execute(&mut ecs.world, &mut ecs.resources);
-        match crate::gui::show_main_menu(ctx, ecs, self.state) {
+        self.schedule
+            .execute(&mut gs.ecs.world, &mut gs.ecs.resources);
+        match crate::gui::show_main_menu(ctx, &mut gs.ecs, self.state) {
             Selected(New) => {
-                crate::new(ecs).unwrap();
-                SceneResult::Replace(Box::new(super::game::GameScene::new(ecs)))
+                crate::new(&mut gs.ecs).unwrap();
+                {
+                    let mut fil = std::fs::File::create("save.dat").unwrap();
+                    crate::save(&gs, &mut fil).unwrap();
+                }
+                SceneResult::Replace(Box::new(super::game::GameScene::new(gs)))
             }
             Selected(Quit) => SceneResult::Pop,
             Selected(Load) => {
-                // TODO Implement call to load
-                SceneResult::Pop
+                if let Ok(mut fil) = std::fs::File::open("save.dat") {
+                    crate::load(&mut gs.ecs, &mut fil).unwrap();
+                    SceneResult::Replace(Box::new(super::game::GameScene::new(gs)))
+                } else {
+                    SceneResult::Continue
+                }
             }
             NoSelection(state) => {
                 self.state = state;

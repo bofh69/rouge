@@ -1,6 +1,7 @@
 use crate::MapPosition;
+use ::serde::*;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Serialize, Deserialize, Debug, Copy, Clone)]
 pub(crate) struct Camera {
     pub w: i32,
     pub h: i32,

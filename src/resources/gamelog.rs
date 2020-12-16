@@ -1,17 +1,19 @@
+use ::serde::*;
 use bracket_lib::prelude::{BTerm, BLACK, WHITE};
 use legion::Entity;
 use std::collections::VecDeque;
 use std::sync::Mutex;
 
 pub(crate) type QueueAdapter = Mutex<VecDeque<langgen_english::FragmentEntry<Entity>>>;
-pub(crate) type OutputQueue<'a> = langgen_english::OutputQueue<Entity, QueueAdapter>;
+pub(crate) type OutputQueue = langgen_english::OutputQueue<Entity, QueueAdapter>;
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 enum LogEntry {
     Text(String),
     Color((u8, u8, u8)),
 }
 
+#[derive(Serialize, Deserialize)]
 pub(crate) struct GameLog {
     entries: Vec<Vec<LogEntry>>,
     current_line: Vec<LogEntry>,

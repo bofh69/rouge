@@ -1,12 +1,16 @@
 use crate::resources::PlayerPosition;
 use ::bracket_lib::prelude::Point;
+use ::legion_typeuuid::*;
 use ::serde::*;
+use ::type_uuid::*;
 
-#[derive(Serialize, Deserialize, PartialEq, Debug, Copy, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Copy, Clone, TypeUuid)]
+#[uuid = "042e6d67-a9dc-47da-89e8-3151a8f96606"]
 pub(crate) struct MapPosition {
     pub x: i32,
     pub y: i32,
 }
+register_serialize!(MapPosition);
 
 impl Into<Point> for MapPosition {
     fn into(self) -> Point {
@@ -50,11 +54,13 @@ impl std::ops::Sub<MapPosition> for MapPosition {
     }
 }
 
-#[derive(PartialEq, Debug, Copy, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Copy, Clone, TypeUuid)]
+#[uuid = "ec3131b4-ee4d-4536-8b07-a4384aa6a9bc"]
 pub(crate) struct ScreenPosition {
     pub x: i32,
     pub y: i32,
 }
+register_serialize!(ScreenPosition);
 
 impl Into<Point> for ScreenPosition {
     fn into(self) -> Point {
@@ -85,7 +91,7 @@ impl Into<ScreenPosition> for Point {
     }
 }
 
-#[derive(PartialEq, Debug, Copy, Clone)]
+#[derive(PartialEq, Debug, Copy, Clone, Serialize, Deserialize)]
 pub(crate) enum Direction {
     West = 1,
     East = 2,
