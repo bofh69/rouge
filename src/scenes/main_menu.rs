@@ -27,6 +27,8 @@ impl Scene<State> for MainMenuScene {
             Selected(Load) => {
                 if let Ok(mut fil) = std::fs::File::open("save.dat") {
                     crate::load(&mut gs.ecs, &mut fil).unwrap();
+                    std::mem::drop(fil);
+                    let _ = std::fs::remove_file("save.dat");
                     SceneResult::Replace(Box::new(super::game::GameScene::new(gs)))
                 } else {
                     SceneResult::Continue
@@ -53,14 +55,6 @@ impl MainMenuScene {
     pub fn new() -> MainMenuScene {
         MainMenuScene {
             state: crate::gui::MainMenuState::New,
-            schedule: Self::build_schedule(),
-        }
-    }
-
-    #[allow(dead_code)]
-    pub fn new_for_load() -> MainMenuScene {
-        MainMenuScene {
-            state: crate::gui::MainMenuState::Load,
             schedule: Self::build_schedule(),
         }
     }

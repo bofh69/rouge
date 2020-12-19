@@ -343,6 +343,43 @@ pub(crate) fn ask_bool(ctx: &mut BTerm, question: &str) -> (ItemMenuResult, bool
     }
 }
 
+/// For A-Z menus, translates the keys A through Z into 0..25
+pub(crate) fn letter_to_option(shift: bool, key: VirtualKeyCode) -> i32 {
+    let val = match key {
+        VirtualKeyCode::A => 0,
+        VirtualKeyCode::B => 1,
+        VirtualKeyCode::C => 2,
+        VirtualKeyCode::D => 3,
+        VirtualKeyCode::E => 4,
+        VirtualKeyCode::F => 5,
+        VirtualKeyCode::G => 6,
+        VirtualKeyCode::H => 7,
+        VirtualKeyCode::I => 8,
+        VirtualKeyCode::J => 9,
+        VirtualKeyCode::K => 10,
+        VirtualKeyCode::L => 11,
+        VirtualKeyCode::M => 12,
+        VirtualKeyCode::N => 13,
+        VirtualKeyCode::O => 14,
+        VirtualKeyCode::P => 15,
+        VirtualKeyCode::Q => 16,
+        VirtualKeyCode::R => 17,
+        VirtualKeyCode::S => 18,
+        VirtualKeyCode::T => 19,
+        VirtualKeyCode::U => 20,
+        VirtualKeyCode::V => 21,
+        VirtualKeyCode::W => 22,
+        VirtualKeyCode::X => 23,
+        VirtualKeyCode::Y => 24,
+        VirtualKeyCode::Z => 25,
+        _ => return -1,
+    };
+    if shift {
+        return val + 26;
+    }
+    val
+}
+
 pub(crate) fn show_inventory(
     ecs: &mut Ecs,
     ctx: &mut BTerm,
@@ -391,7 +428,7 @@ pub(crate) fn show_inventory(
 
     let mut items = std::collections::HashMap::new();
     for (entities, index, name) in inventory {
-        items.insert(index, entities);
+        items.insert(index as i32, entities);
         ctx.set(17, y, RGB::named(WHITE), RGB::named(BLACK), to_cp437('('));
         ctx.set(
             18,
@@ -411,14 +448,10 @@ pub(crate) fn show_inventory(
         Some(key) => match key {
             VirtualKeyCode::Escape => (ItemMenuResult::Cancel, None),
             _ => {
-                let selected = letter_to_option(key);
+                let selected = letter_to_option(ctx.shift, key);
                 if selected < 0 {
                     (ItemMenuResult::NoResponse, None)
                 } else {
-                    let mut selected = selected as u8;
-                    if ctx.shift {
-                        selected += 27_u8;
-                    }
                     if items.contains_key(&selected) {
                         (
                             ItemMenuResult::Selected,
