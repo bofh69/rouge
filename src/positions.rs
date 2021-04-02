@@ -12,9 +12,9 @@ pub(crate) struct MapPosition {
 }
 register_serialize!(MapPosition);
 
-impl Into<Point> for MapPosition {
-    fn into(self) -> Point {
-        Point::new(self.x, self.y)
+impl From<MapPosition> for Point {
+    fn from(pos: MapPosition) -> Self {
+        Point::new(pos.x, pos.y)
     }
 }
 
@@ -62,9 +62,9 @@ pub(crate) struct ScreenPosition {
 }
 register_serialize!(ScreenPosition);
 
-impl Into<Point> for ScreenPosition {
-    fn into(self) -> Point {
-        Point::new(self.x, self.y)
+impl From<ScreenPosition> for Point {
+    fn from(pos: ScreenPosition) -> Point {
+        Point::new(pos.x, pos.y)
     }
 }
 
@@ -74,20 +74,17 @@ impl Into<(i32, i32)> for ScreenPosition {
     }
 }
 
-impl Into<(usize, usize)> for ScreenPosition {
-    fn into(self) -> (usize, usize) {
-        let x = if self.x > 0 { self.x as usize } else { 0 };
-        let y = if self.y > 0 { self.y as usize } else { 0 };
+impl From<ScreenPosition> for (usize, usize) {
+    fn from(pos: ScreenPosition) -> (usize, usize) {
+        let x = if pos.x > 0 { pos.x as usize } else { 0 };
+        let y = if pos.y > 0 { pos.y as usize } else { 0 };
         (x, y)
     }
 }
 
-impl Into<ScreenPosition> for Point {
-    fn into(self) -> ScreenPosition {
-        ScreenPosition {
-            x: self.x,
-            y: self.y,
-        }
+impl From<Point> for ScreenPosition {
+    fn from(pos: Point) -> Self {
+        Self { x: pos.x, y: pos.y }
     }
 }
 
@@ -126,9 +123,9 @@ fn dir_to_dx_dy(dir: Direction) -> (i32, i32) {
     }
 }
 
-impl Into<Direction> for (i32, i32) {
-    fn into(self) -> Direction {
-        match self {
+impl From<(i32, i32)> for Direction {
+    fn from(coord: (i32, i32)) -> Self {
+        match coord {
             (-1, 0) => Direction::West,
             (1, 0) => Direction::East,
             (0, 1) => Direction::South,
@@ -137,7 +134,7 @@ impl Into<Direction> for (i32, i32) {
             (0, -1) => Direction::North,
             (-1, -1) => Direction::NorthWest,
             (1, -1) => Direction::NorthEast,
-            _ => panic!("Incorrect direcion"),
+            _ => panic!("Incorrect direction"),
         }
     }
 }

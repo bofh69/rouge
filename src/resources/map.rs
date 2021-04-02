@@ -51,11 +51,7 @@ pub(crate) struct Map {
 
 impl BaseMap for Map {
     fn is_opaque(&self, idx: usize) -> bool {
-        match self.tiles[idx] {
-            TileType::Wall(_) => true,
-            TileType::Stone => true,
-            _ => false,
-        }
+        matches!(self.tiles[idx], TileType::Wall(_) | TileType::Stone)
     }
 
     fn get_available_exits(&self, idx: usize) -> SmallVec<[(usize, f32); 10]> {
@@ -157,11 +153,7 @@ impl Map {
 
     pub fn populate_blocked(&mut self) {
         for (i, tile) in self.tiles.iter_mut().enumerate() {
-            self.blocked[i] = match *tile {
-                TileType::Wall(_) => true,
-                TileType::Stone => true,
-                _ => false,
-            }
+            self.blocked[i] = matches!(*tile, TileType::Wall(_) | TileType::Stone);
         }
     }
 

@@ -451,15 +451,13 @@ pub(crate) fn show_inventory(
                 let selected = letter_to_option(ctx.shift, key);
                 if selected < 0 {
                     (ItemMenuResult::NoResponse, None)
+                } else if items.contains_key(&selected) {
+                    (
+                        ItemMenuResult::Selected,
+                        Some(*items.get(&selected).unwrap()),
+                    )
                 } else {
-                    if items.contains_key(&selected) {
-                        (
-                            ItemMenuResult::Selected,
-                            Some(*items.get(&selected).unwrap()),
-                        )
-                    } else {
-                        (ItemMenuResult::NoResponse, None)
-                    }
+                    (ItemMenuResult::NoResponse, None)
                 }
             }
         },

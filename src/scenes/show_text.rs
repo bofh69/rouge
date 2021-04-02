@@ -22,7 +22,7 @@ impl<T> super::Scene<T> for ShowText {
         for line in self.text.split('\n') {
             buf.append(line).ln();
         }
-        block.print(&buf);
+        let _ = block.print(&buf);
         block.render_to_draw_batch(&mut draw_batch);
 
         draw_batch.print_color_centered(
