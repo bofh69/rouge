@@ -165,10 +165,12 @@ pub(crate) fn new(ecs: &mut ecs::Ecs) -> Result<()> {
 pub(crate) fn save(gs: &State, writer: &mut dyn Write) -> Result<()> {
     resources::save(&gs.ecs, writer)?;
 
+    let entity_serializer = legion::serialize::Canon::default();
+
     let serializable = gs
         .ecs
         .world
-        .as_serializable(legion::query::any(), &gs.registry);
+        .as_serializable(legion::query::any(), &gs.registry, &entity_serializer);
     // let encoder = flate2::write::GzEncoder::new(writer, flate2::Compression::fast());
     bincode_options().serialize_into(writer, &serializable)?;
 
@@ -184,7 +186,8 @@ pub(crate) fn load(ecs: &mut ecs::Ecs, reader: &mut dyn Read) -> Result<()> {
     let mut deser = bincode::Deserializer::with_reader(reader, bincode_options());
     let registry = collect_registry();
     use serde::de::DeserializeSeed;
-    let world = registry.as_deserialize().deserialize(&mut deser).unwrap();
+    let entity_serializer = legion::serialize::Canon::default();
+    let world = registry.as_deserialize(&entity_serializer).deserialize(&mut deser).unwrap();
     ecs.world = world;
 
     let mut query = <(Entity, &Player)>::query();

@@ -39,7 +39,8 @@ impl Scene<State> for GameScene {
 
         match newrunstate {
             RunState::SaveGame => {
-                // return SceneResult::Replace(Box::new(crate::scenes::SaveScene::new()));
+                // TODO: Implement save
+                // return SceneResult::Push(Box::new(crate::scenes::SaveScene::new()));
                 newrunstate = RunState::AwaitingInput;
             }
             RunState::PreRun => {

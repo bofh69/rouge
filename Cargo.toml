@@ -13,7 +13,7 @@ edition = "2018"
 
 [dependencies]
 bracket-lib = { version = "^0.8.1", path = "vendor/bracket-lib", features=['serde'] }
-legion = { version = "^0.3.1", path = "vendor/legion" }
+legion = { version = "^0.4.0", path = "vendor/legion" }
 legion_typeuuid = { version = "^0.1.0", path = "vendor/legion_typeuuid", features=['type-uuid', 'collect'] }
 langgen_english = { path = "langgen_english" }
 crossbeam-channel = "0.5.0"
@@ -23,7 +23,7 @@ inventory = "0.1.9"
 type-uuid = "0.1.2"
 bincode = "1.3.1"
 # bracket-lib = "0.8.*"
-# legion = "^0.3.2"
+# legion = "^0.4.0"
 # wfc = "*" # For maps?
 # grid_2d = "*" # For the Map and Position/ScreenPosition/MapPosition?
 
