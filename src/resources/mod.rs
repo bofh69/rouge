@@ -8,8 +8,8 @@ pub(crate) use map::*;
 
 use crate::ecs::*;
 
-use ::bracket_lib::random::RandomNumberGenerator;
-use ::bracket_lib::terminal::RED;
+use ::bracket_lib::prelude::RandomNumberGenerator;
+use ::bracket_lib::prelude::RED;
 use ::legion::Entity;
 use ::serde::*;
 use ::std::collections::VecDeque;
