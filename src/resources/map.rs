@@ -162,11 +162,10 @@ impl Map {
             return true;
         }
         let idx = self.point2d_to_index(pos);
-        match self.tiles[idx as usize] {
-            TileType::Wall(_) => true,
-            TileType::Stone => true,
-            _ => false,
-        }
+        matches!(
+            self.tiles[idx as usize],
+            TileType::Wall(_) | TileType::Stone
+        )
     }
 
     pub fn is_visible(&self, pos: MapPosition) -> bool {
@@ -422,10 +421,10 @@ impl Map {
 fn get_glyph_for_wall(map: &Map, idx: usize, x: i32, y: i32, walltype: WallType) -> u16 {
     let mut walls = 0;
 
-    if x > 0 && map.revealed_tiles[idx - 1 as usize] {
+    if x > 0 && map.revealed_tiles[idx - 1_usize] {
         walls += 1 // Left
     }
-    if x < map.width - 2 && map.revealed_tiles[idx + 1 as usize] {
+    if x < map.width - 2 && map.revealed_tiles[idx + 1_usize] {
         walls += 2 // Right
     }
     if y > 0 && map.revealed_tiles[idx - map.width as usize] {

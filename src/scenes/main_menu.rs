@@ -16,7 +16,7 @@ impl Scene<State> for MainMenuScene {
             .execute(&mut gs.ecs.world, &mut gs.ecs.resources);
         match crate::gui::show_main_menu(ctx, &mut gs.ecs, self.state) {
             Selected(New) => {
-                crate::new(&mut gs.ecs).unwrap();
+                crate::new(&mut gs.ecs);
                 {
                     let mut fil = std::fs::File::create("save.dat").unwrap();
                     crate::save(&gs, &mut fil).unwrap();

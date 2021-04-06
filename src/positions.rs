@@ -68,9 +68,9 @@ impl From<ScreenPosition> for Point {
     }
 }
 
-impl Into<(i32, i32)> for ScreenPosition {
-    fn into(self) -> (i32, i32) {
-        (self.x, self.y)
+impl From<ScreenPosition> for (i32, i32) {
+    fn from(pos: ScreenPosition) -> Self {
+        (pos.x, pos.y)
     }
 }
 

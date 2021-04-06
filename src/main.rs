@@ -156,10 +156,8 @@ fn bincode_options() -> bincode::DefaultOptions {
     bincode::DefaultOptions::default()
 }
 
-pub(crate) fn new(ecs: &mut ecs::Ecs) -> Result<()> {
-    resources::new(ecs)?;
-
-    Ok(())
+pub(crate) fn new(ecs: &mut ecs::Ecs) {
+    resources::new(ecs);
 }
 
 pub(crate) fn save(gs: &State, writer: &mut dyn Write) -> Result<()> {

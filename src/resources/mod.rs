@@ -33,9 +33,9 @@ pub(crate) enum PlayerTarget {
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub(crate) struct PlayerPosition(pub MapPosition);
 
-impl Into<Position> for PlayerPosition {
-    fn into(self) -> Position {
-        Position(self.0)
+impl From<PlayerPosition> for Position {
+    fn from(pos: PlayerPosition) -> Self {
+        Self(pos.0)
     }
 }
 
@@ -48,7 +48,7 @@ pub(crate) struct Time {
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error + 'static + Send + Sync>>;
 
-pub(crate) fn new(ecs: &mut Ecs) -> Result<()> {
+pub(crate) fn new(ecs: &mut Ecs) {
     ecs.resources.insert(PlayerTarget::None);
 
     let map = Map::new_map_rooms_and_corridors();
@@ -79,8 +79,6 @@ pub(crate) fn new(ecs: &mut Ecs) -> Result<()> {
     ecs.resources.insert(player_pos);
     ecs.resources.insert(PlayerEntity(player_entity));
     crate::queues::register_queues(&mut ecs.resources);
-
-    Ok(())
 }
 
 fn save_resource<T: 'static + serde::Serialize>(ecs: &Ecs, writer: &mut dyn Write) -> Result<()> {
