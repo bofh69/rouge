@@ -15,14 +15,7 @@ It is not much of a game yet. Maybe one day it will be more fun playing than cod
 
 ## Keys
 
-* Escape - quit.
-* hjkl yubn are used to walk. Hold down shift to walk until you let go of shift.
-* , - pickup a thing.
-* a - apply a thing.
-* d - drop a thing.
-* space - rest.
-* When picking a target, use the mouse or press enter to choose, escape aborts.
-* CTRL-P stores a screenshot in screenshot.png
+* F1 - shows the help.
 
 Lots of things don't work. Create a PR if it bothers you.
 
