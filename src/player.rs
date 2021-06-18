@@ -108,11 +108,10 @@ fn init_auto_walk(ecs: &Ecs, pos: ScreenPosition) {
     let map_pos = camera.transform_screen_pos(pos);
     let idx = map.map_pos_to_idx(map_pos);
 
+    let mut target_pos = resource_get_mut!(ecs, PlayerTarget);
     if camera.is_in_view(map_pos) && map.revealed_tiles[idx] {
-        let mut target_pos = resource_get_mut!(ecs, PlayerTarget);
         *target_pos = PlayerTarget::Position(map_pos);
     } else {
-        let mut target_pos = resource_get_mut!(ecs, PlayerTarget);
         *target_pos = PlayerTarget::None;
     }
 }
