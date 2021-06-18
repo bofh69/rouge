@@ -12,8 +12,6 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-# bracket-lib = { version = "^0.8.1", path = "vendor/bracket-lib", features=['serde'] }
-# legion = { version = "^0.4.0", path = "vendor/legion" }
 legion_typeuuid = { version = "^0.1.0", path = "vendor/legion_typeuuid", features=['type-uuid', 'collect'] }
 langgen_english = { path = "langgen_english" }
 crossbeam-channel = "0.5.0"
