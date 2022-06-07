@@ -19,7 +19,7 @@ impl Scene<State> for MainMenuScene {
                 crate::new(&mut gs.ecs);
                 {
                     let mut fil = std::fs::File::create("save.dat").unwrap();
-                    crate::save(&gs, &mut fil).unwrap();
+                    crate::save(gs, &mut fil).unwrap();
                 }
                 SceneResult::Replace(Box::new(super::game::GameScene::new(gs)))
             }
