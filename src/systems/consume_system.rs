@@ -48,7 +48,7 @@ pub(crate) fn consume(
                         for tile_point in bracket_lib::prelude::field_of_view(
                             screen_point,
                             area_effect.radius,
-                            &*map,
+                            map,
                         )
                         .iter()
                         .filter_map(|p| {
