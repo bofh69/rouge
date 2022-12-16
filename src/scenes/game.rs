@@ -188,7 +188,7 @@ impl GameScene {
         let player_position = resource_get!(ecs, PlayerPosition);
         {
             let mut camera = resource_get_mut!(ecs, Camera);
-            crate::systems::camera_update(&mut *camera, &*player_position);
+            crate::systems::camera_update(&mut camera, &player_position);
         }
 
         crate::resources::draw_map(ecs, ctx);

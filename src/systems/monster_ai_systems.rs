@@ -54,7 +54,7 @@ pub(crate) fn monster_ai(
                 // Walk towards player:
                 energy.energy = -100;
                 let old_idx = map.pos_to_idx(*pos);
-                let new_idx = path.steps[1] as usize;
+                let new_idx = path.steps[1];
                 let new_pos = map.index_to_point2d(new_idx);
                 if !map.blocked[new_idx] {
                     pos.0.x = new_pos.x;

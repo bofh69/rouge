@@ -162,10 +162,7 @@ impl Map {
             return true;
         }
         let idx = self.point2d_to_index(pos);
-        matches!(
-            self.tiles[idx as usize],
-            TileType::Wall(_) | TileType::Stone
-        )
+        matches!(self.tiles[idx], TileType::Wall(_) | TileType::Stone)
     }
 
     pub fn is_visible(&self, pos: MapPosition) -> bool {
@@ -219,7 +216,7 @@ impl Map {
             for x in 0..self.width {
                 let pos = Point::new(x, y);
                 if self.is_solid(pos) {
-                    let idx = self.point2d_to_index(pos) as usize;
+                    let idx = self.point2d_to_index(pos);
                     let count_walls = Self::points_around(x, y)
                         .iter()
                         .filter(|p| !self.is_solid(**p))
@@ -517,7 +514,7 @@ pub(crate) fn draw_map(ecs: &Ecs, ctx: &mut BTerm) {
                         }
                         TileType::Wall(walltype) => {
                             fg = RGB::from_f32(0.7, 0.9, 0.7);
-                            glyph = get_glyph_for_wall(&*map, idx, pos.x, pos.y, walltype)
+                            glyph = get_glyph_for_wall(&map, idx, pos.x, pos.y, walltype)
                         }
                         TileType::Stone => {
                             fg = RGB::from_f32(0.0, 1.0, 0.0);

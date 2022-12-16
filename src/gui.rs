@@ -195,8 +195,8 @@ pub(crate) fn show_main_menu(
     let (screen_width, screen_height) = ctx.get_char_size();
     let (screen_width, screen_height) = (screen_width as i32, screen_height as i32);
     let text_width = 7;
-    let x = (screen_width / 2 - text_width / 2) as i32;
-    let y = (screen_height / 2) as i32 - 1;
+    let x = screen_width / 2 - text_width / 2;
+    let y = (screen_height / 2) - 1;
 
     let mut rnd = RandomNumberGenerator::new();
     {
@@ -257,7 +257,7 @@ pub(crate) fn show_main_menu(
     ctx.draw_box_double(
         x,
         y,
-        text_width as i32,
+        text_width,
         5,
         RGB::named(DEEPSKYBLUE),
         RGB::named(BLACK),
@@ -420,7 +420,7 @@ pub(crate) fn show_inventory(
     ctx.print_color(18, y - 2, RGB::named(YELLOW), RGB::named(BLACK), title);
     ctx.print_color(
         18,
-        y + count as i32 + 1,
+        y + count + 1,
         RGB::named(YELLOW),
         RGB::named(BLACK),
         "ESCAPE to cancel",

@@ -11,7 +11,7 @@ impl<T> super::Scene<T> for ShowText {
         let mut draw_batch = DrawBatch::new();
 
         draw_batch.draw_double_box(
-            Rect::with_size(8, 1, width as u32 - 18, height as u32 - 3),
+            Rect::with_size(8, 1, width - 18, height - 3),
             ColorPair::new(BLUE, BLACK),
         );
         draw_batch.print_color_centered(1, "HELP", ColorPair::new(YELLOW, BLUE));

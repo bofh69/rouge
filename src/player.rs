@@ -10,7 +10,6 @@ use crate::positions::{Direction, ScreenPosition};
 use crate::{InventoryType, RunState};
 use bracket_lib::prelude::*;
 use legion::*;
-use std::cmp::{max, min};
 
 pub(crate) fn try_move_player(dir: Direction, ecs: &mut Ecs) -> RunState {
     let (delta_x, delta_y) = dir.into();
@@ -55,8 +54,8 @@ pub(crate) fn try_move_player(dir: Direction, ecs: &mut Ecs) -> RunState {
             let mut player_entry = ecs.world.entry(player_entity).unwrap();
             let pos = {
                 let pos = player_entry.get_component_mut::<Position>().unwrap();
-                pos.0.x = min(map.width - 1, max(0, x));
-                pos.0.y = min(map.height - 1, max(0, y));
+                pos.0.x = x.clamp(0, map.width - 1);
+                pos.0.y = y.clamp(0, map.height - 1);
                 pos.0
             };
             let viewshed = player_entry.get_component_mut::<Viewshed>().unwrap();
