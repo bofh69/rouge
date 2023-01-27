@@ -39,7 +39,7 @@ pub(crate) fn melee_combat(
                             .the(attacker_entity)
                             .v(attacker_entity, "hit")
                             .the(melee_target_entity)
-                            .string(format!(", for {} hp", damage));
+                            .string(format!(", for {damage} hp"));
                         suffer_damage_queue.send(SufferDamageMessage {
                             target: melee_target_entity,
                             amount: damage,

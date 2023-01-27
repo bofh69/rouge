@@ -106,7 +106,7 @@ pub(crate) fn consume(
                         output
                             .the(target)
                             .v(target, "lose")
-                            .string(format!("{} hp", item_damage));
+                            .string(format!("{item_damage} hp"));
                         suffer_damage_queue.send(SufferDamageMessage {
                             target,
                             amount: item_damage,
