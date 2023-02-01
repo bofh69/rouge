@@ -32,14 +32,14 @@ jobs:
 
     - name: Archive Windows artifacts
       if: matrix.os == 'windows-latest'
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: Windows Executable
         path: target/debug/rouge.exe
 
     - name: Archive MacOS artifacts
       if: matrix.os == 'macos-latest'
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: MacOS Executable
         path: target/debug/rouge
