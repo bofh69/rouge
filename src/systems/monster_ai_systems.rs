@@ -34,7 +34,7 @@ pub(crate) fn monster_ai(
 
     ready.sort_by_key(|(_, _, _, energy)| -energy.energy);
 
-    for (entity, mut viewshed, mut pos, mut energy) in ready {
+    for (entity, viewshed, pos, energy) in ready {
         let distance =
             DistanceAlg::Chebyshev.distance2d(Point::new(pos.0.x, pos.0.y), player_pos.into());
         if distance < 1.5 {
