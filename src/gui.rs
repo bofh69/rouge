@@ -439,7 +439,7 @@ pub(crate) fn show_inventory(
         );
         ctx.set(19, y, RGB::named(WHITE), RGB::named(BLACK), to_cp437(')'));
 
-        ctx.print(21, y, &name.name.to_string());
+        ctx.print(21, y, name.name.to_string());
         y += 1;
     }
 
@@ -566,7 +566,7 @@ fn draw_tooltips(ecs: &Ecs, ctx: &mut BTerm) {
                     y,
                     RGB::named(WHITE),
                     RGB::named(GREY),
-                    &s.to_string(),
+                    s.to_string(),
                 );
                 let padding = (width - s.len() as i32) - 1;
                 for i in 0..padding {
@@ -575,7 +575,7 @@ fn draw_tooltips(ecs: &Ecs, ctx: &mut BTerm) {
                         y,
                         RGB::named(WHITE),
                         RGB::named(GREY),
-                        &" ".to_string(),
+                        " ".to_string(),
                     );
                 }
                 y += 1;
@@ -585,7 +585,7 @@ fn draw_tooltips(ecs: &Ecs, ctx: &mut BTerm) {
                 arrow_pos.y,
                 RGB::named(WHITE),
                 RGB::named(GREY),
-                &"->".to_string(),
+                "->".to_string(),
             );
         } else {
             let arrow_pos = Point::new(mouse_pos.0 + 1, mouse_pos.1);
@@ -597,7 +597,7 @@ fn draw_tooltips(ecs: &Ecs, ctx: &mut BTerm) {
                     y,
                     RGB::named(WHITE),
                     RGB::named(GREY),
-                    &s.to_string(),
+                    s.to_string(),
                 );
                 let padding = (width - s.len() as i32) - 1;
                 for i in 0..padding {
@@ -606,7 +606,7 @@ fn draw_tooltips(ecs: &Ecs, ctx: &mut BTerm) {
                         y,
                         RGB::named(WHITE),
                         RGB::named(GREY),
-                        &" ".to_string(),
+                        " ".to_string(),
                     );
                 }
                 y += 1;
@@ -616,7 +616,7 @@ fn draw_tooltips(ecs: &Ecs, ctx: &mut BTerm) {
                 arrow_pos.y,
                 RGB::named(WHITE),
                 RGB::named(GREY),
-                &"<-".to_string(),
+                "<-".to_string(),
             );
         }
     }

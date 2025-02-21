@@ -32,7 +32,7 @@ impl Scene<State> for GameScene {
 
         self.draw_map(ecs, ctx);
 
-        ctx.print(0, 0, &format!("{} fps", ctx.fps as u32));
+        ctx.print(0, 0, format!("{} fps", ctx.fps as u32));
 
         let oldrunstate = { *resource_get!(ecs, RunState) };
         let mut newrunstate = oldrunstate;

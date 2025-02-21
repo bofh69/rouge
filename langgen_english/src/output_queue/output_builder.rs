@@ -23,7 +23,7 @@ where
         Self {
             queue_adapter,
             _lock: lock,
-            _entity: PhantomData::default(),
+            _entity: PhantomData,
         }
     }
 
@@ -126,7 +126,7 @@ where
 }
 
 /// Drop implementation to send the end of line message.
-impl<'a, Entity, QA> Drop for OutputBuilder<'a, QA, Entity>
+impl<Entity, QA> Drop for OutputBuilder<'_, QA, Entity>
 where
     QA: QueueAdapter<Entity>,
 {

@@ -46,7 +46,6 @@ mod queue_adapter_impls;
 mod traits;
 
 pub use output_queue::*;
-pub use queue_adapter_impls::*;
 pub use traits::*;
 
 /// Messages between `OutputBuilder` and `OutputQueue.process`

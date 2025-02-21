@@ -22,7 +22,7 @@ pub(crate) fn melee_combat(
         if let Ok(attacker_entry) = world.entry_ref(attacker_entity) {
             let attacker_power = attacker_entry.get_component::<CombatStats>().unwrap().power;
             let target = world.entry_ref(melee_target_entity);
-            if let Ok(target) = target {
+            match target { Ok(target) => {
                 let target_stats = target.get_component::<CombatStats>().unwrap();
 
                 if target_stats.hp > 0 {
@@ -46,12 +46,12 @@ pub(crate) fn melee_combat(
                         });
                     }
                 }
-            } else {
+            } _ => {
                 output
                     .the(attacker_entity)
                     .v(attacker_entity, "want")
                     .s("to attak a ghost?");
-            }
+            }}
             let mut entry = world.entry_mut(attacker_entity).unwrap();
             entry.get_component_mut::<Energy>().unwrap().energy = -120;
         }

@@ -24,28 +24,28 @@ impl<'a, 'w> EntityAdapterImpl<'a, 'w> {
     }
 }
 
-impl<'a, 'w> EntityAdapter<Entity> for EntityAdapterImpl<'a, 'w> {
+impl EntityAdapter<Entity> for EntityAdapterImpl<'_, '_> {
     fn is_me(&self, who: Entity) -> bool {
         who == self.player
     }
     fn can_see(&self, who: Entity, obj: Entity) -> bool {
-        if let Ok(who_entry) = self.world.entry_ref(who) {
-            if let Ok(obj_entry) = self.world.entry_ref(obj) {
-                if let Ok(pos) = obj_entry.get_component::<Position>() {
-                    if let Ok(vs) = who_entry.get_component::<Viewshed>() {
+        match self.world.entry_ref(who) { Ok(who_entry) => {
+            match self.world.entry_ref(obj) { Ok(obj_entry) => {
+                match obj_entry.get_component::<Position>() { Ok(pos) => {
+                    match who_entry.get_component::<Viewshed>() { Ok(vs) => {
                         vs.visible_tiles.contains(&pos.0)
-                    } else {
+                    } _ => {
                         true
-                    }
-                } else {
+                    }}
+                } _ => {
                     true
-                }
-            } else {
+                }}
+            } _ => {
                 true
-            }
-        } else {
+            }}
+        } _ => {
             true
-        }
+        }}
     }
     fn gender(&self, _: Entity) -> langgen_english::Gender {
         // TODO:
@@ -53,12 +53,11 @@ impl<'a, 'w> EntityAdapter<Entity> for EntityAdapterImpl<'a, 'w> {
     }
     fn is_thing(&self, who: Entity) -> bool {
         self.world
-            .entry_ref(who)
-            .map_or(false, |e| e.get_component::<Item>().is_ok())
+            .entry_ref(who).is_ok_and(|e| e.get_component::<Item>().is_ok())
     }
     fn has_short_proper(&self, who: Entity) -> bool {
-        self.world.entry_ref(who).map_or(false, |e| {
-            e.get_component::<Name>().map_or(false, |n| n.proper_name)
+        self.world.entry_ref(who).is_ok_and(|e| {
+            e.get_component::<Name>().is_ok_and(|n| n.proper_name)
         })
     }
     fn append_short_name(&self, who: Entity, s: &mut String) {

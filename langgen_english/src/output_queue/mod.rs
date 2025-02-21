@@ -353,7 +353,7 @@ where
                         let mut s = String::new();
                         entity_adapter.append_short_name(obj, &mut s);
                         // TODO; just append string to s.
-                        if let Some(ch) = s.chars().rev().next() {
+                        if let Some(ch) = s.chars().next_back() {
                             let uc = ch.is_uppercase();
                             let add = match ch {
                                 's' | 'S' => "'",
@@ -388,7 +388,7 @@ where
                     } else if entity_adapter.can_see(self.who, obj) {
                         let mut s = String::new();
                         entity_adapter.append_long_name(obj, &mut s);
-                        if let Some(ch) = s.chars().rev().next() {
+                        if let Some(ch) = s.chars().next_back() {
                             let uc = ch.is_uppercase();
                             let add = match ch {
                                 's' | 'S' => "'",

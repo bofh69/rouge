@@ -1,7 +1,7 @@
 use crate::Gender;
 
 pub(crate) fn last_char(s: &str) -> Option<char> {
-    s.chars().rev().next()
+    s.chars().next_back()
 }
 
 pub(crate) fn needs_dot(s: &str) -> bool {

@@ -29,7 +29,7 @@ pub(crate) fn consume(
     {
         let item_entry = world.entry_ref(wants_to_use_item);
 
-        if let Ok(item_entry) = item_entry {
+        match item_entry { Ok(item_entry) => {
             output
                 .the(user_entity)
                 .v(user_entity, "consume")
@@ -74,11 +74,11 @@ pub(crate) fn consume(
                 }
             }
             let heal_amount: Option<_> = {
-                if let Ok(health) = item_entry.get_component::<HealthProvider>() {
+                match item_entry.get_component::<HealthProvider>() { Ok(health) => {
                     Some(health.heal_amount)
-                } else {
+                } _ => {
                     None
-                }
+                }}
             };
             if let Some(heal_amount) = heal_amount {
                 for target in targets {
@@ -95,11 +95,11 @@ pub(crate) fn consume(
                 }
             } else {
                 let item_damage: Option<_> = {
-                    if let Ok(damage) = item_entry.get_component::<InflictsDamage>() {
+                    match item_entry.get_component::<InflictsDamage>() { Ok(damage) => {
                         Some(damage.damage)
-                    } else {
+                    } _ => {
                         None
-                    }
+                    }}
                 };
                 if let Some(item_damage) = item_damage {
                     for target in targets {
@@ -117,8 +117,8 @@ pub(crate) fn consume(
             remove_item_queue.send(RemoveItemMessage {
                 target: wants_to_use_item,
             });
-        } else if user_entity == player_entity.0 {
+        } _ => if user_entity == player_entity.0 {
             output.s("You cannot use").the(wants_to_use_item);
-        }
+        }}
     }
 }

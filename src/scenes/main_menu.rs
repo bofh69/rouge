@@ -25,14 +25,14 @@ impl Scene<State> for MainMenuScene {
             }
             Selected(Quit) => SceneResult::Pop,
             Selected(Load) => {
-                if let Ok(mut fil) = std::fs::File::open("save.dat") {
+                match std::fs::File::open("save.dat") { Ok(mut fil) => {
                     crate::load(&mut gs.ecs, &mut fil).unwrap();
                     std::mem::drop(fil);
                     let _ = std::fs::remove_file("save.dat");
                     SceneResult::Replace(Box::new(super::game::GameScene::new(gs)))
-                } else {
+                } _ => {
                     SceneResult::Continue
-                }
+                }}
             }
             NoSelection(state) => {
                 self.state = state;
